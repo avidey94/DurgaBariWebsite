@@ -1,0 +1,61 @@
+[
+  {
+    "id": "fam-001",
+    "familyName": "Chakraborty",
+    "primaryEmail": "ananya@example.org",
+    "foundingFamily": true,
+    "donations": [
+      {
+        "id": "don-001",
+        "dateISO": "2025-01-15",
+        "amountCents": 25000,
+        "method": "check",
+        "notes": "Annual pledge"
+      },
+      {
+        "id": "don-002",
+        "dateISO": "2025-03-22",
+        "amountCents": 10000,
+        "method": "zelle",
+        "notes": "Saraswati puja"
+      }
+    ]
+  },
+  {
+    "id": "fam-002",
+    "familyName": "Mukherjee",
+    "primaryEmail": "ravi@example.org",
+    "foundingFamily": false,
+    "donations": [
+      {
+        "id": "don-003",
+        "dateISO": "2025-02-01",
+        "amountCents": 5000,
+        "method": "cash",
+        "notes": "Temple visit"
+      }
+    ]
+  },
+  {
+    "id": "fam-003",
+    "familyName": "Banerjee",
+    "primaryEmail": "meera@example.org",
+    "foundingFamily": true,
+    "donations": [
+      {
+        "id": "don-004",
+        "dateISO": "2024-12-20",
+        "amountCents": 40000,
+        "method": "bank_transfer",
+        "notes": "Year-end contribution"
+      },
+      {
+        "id": "don-005",
+        "dateISO": "2025-04-10",
+        "amountCents": 12000,
+        "method": "other",
+        "notes": "Event sponsorship"
+      }
+    ]
+  }
+]

@@ -16,7 +16,7 @@ export default async function PortalPage() {
 
   if (!family) {
     return (
-      <section className="space-y-4">
+      <section className="mx-auto max-w-6xl space-y-4 px-6 py-8">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your Portal</h1>
         <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           No family record found for <strong>{user.email}</strong> in the current data provider.
@@ -26,7 +26,7 @@ export default async function PortalPage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
       <header className="rounded-lg border border-slate-200 bg-white p-6">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your Portal</h1>
         <p className="mt-2 text-sm text-slate-600">Signed in as {user.email}</p>

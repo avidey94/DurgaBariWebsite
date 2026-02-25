@@ -22,7 +22,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const families = await dataProvider.getAllFamilies({ query });
 
   return (
-    <section className="space-y-6">
+    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
       <header>
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Admin Dashboard</h1>
         <p className="mt-2 text-sm text-slate-700">View and search all families in the provider.</p>

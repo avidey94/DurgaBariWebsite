@@ -9,7 +9,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const error = (await searchParams).error;
 
   return (
-    <section className="mx-auto max-w-xl space-y-6">
+    <section className="mx-auto max-w-xl space-y-6 px-6 py-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Sign in</h1>
         <p className="mt-2 text-sm text-slate-700">

@@ -1,13 +1,9 @@
 @import "tailwindcss";
-
-:root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-}
+@import "../styles/theme.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--db-bg);
+  --color-foreground: var(--db-text);
   --font-sans: "Avenir Next", "Segoe UI", "Noto Sans", sans-serif;
   --font-mono: "SFMono-Regular", "Menlo", "Consolas", monospace;
 }
@@ -19,7 +15,21 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 0% 0%, #fff7ed, #f8fafc 30%);
-  color: var(--foreground);
+  color: var(--db-text);
+  background-color: var(--db-bg);
+  background-image:
+    linear-gradient(45deg, rgba(15, 90, 51, 0.04) 25%, transparent 25%, transparent 75%, rgba(15, 90, 51, 0.04) 75%),
+    linear-gradient(-45deg, rgba(15, 90, 51, 0.04) 25%, transparent 25%, transparent 75%, rgba(15, 90, 51, 0.04) 75%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent 35%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
+  background-position: 0 0, 12px 12px, 0 0;
   font-family: var(--font-sans);
+}
+
+a {
+  color: var(--db-link);
+}
+
+a:visited {
+  color: var(--db-link-visited);
 }

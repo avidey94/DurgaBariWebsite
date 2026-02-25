@@ -21,7 +21,13 @@ export interface FamilyProfile {
   familyName: string;
   primaryEmail: string;
   foundingFamily: boolean;
+  totalDuesPaid?: string;
   donations: DonationRecord[];
+  duesMonths?: Array<{
+    month: string;
+    paid: boolean;
+    rawValue: string;
+  }>;
   profileColumns?: Array<{
     header: string;
     value: string;

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { DonationTable } from "@/components/donation-table";
-import { ProfileColumnsTable } from "@/components/profile-columns-table";
+import { DuesStatusTable } from "@/components/dues-status-table";
 import { getCurrentUser } from "@/lib/auth/session";
 import { dataProvider } from "@/lib/data";
 
@@ -30,7 +29,7 @@ export default async function PortalPage() {
       <header className="rounded-lg border border-slate-200 bg-white p-6">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your Portal</h1>
         <p className="mt-2 text-sm text-slate-600">Signed in as {user.email}</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">Family Name</p>
             <p className="text-lg font-semibold text-slate-900">{family.familyName}</p>
@@ -41,17 +40,20 @@ export default async function PortalPage() {
               {family.foundingFamily ? "Yes" : "No"}
             </p>
           </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Total Dues Paid</p>
+            <p className="text-lg font-semibold text-slate-900">{family.totalDuesPaid || "-"}</p>
+          </div>
         </div>
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-slate-900">Sheet Record</h2>
-        <ProfileColumnsTable columns={family.profileColumns ?? []} />
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-slate-900">Parsed Donation Records</h2>
-        <DonationTable donations={family.donations} />
+        <h2 className="text-xl font-semibold text-slate-900">Monthly Dues Status</h2>
+        <p className="text-sm text-slate-600">
+          Each month marked <strong>Paid</strong> in the sheet means your dues for that month are
+          already received.
+        </p>
+        <DuesStatusTable items={family.duesMonths ?? []} />
       </section>
     </section>
   );

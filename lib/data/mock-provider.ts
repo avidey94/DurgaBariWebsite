@@ -19,6 +19,7 @@ export class MockProvider implements DataProvider {
 
     return {
       ...family,
+      totalDuesPaid: "$" + (family.donations[0]?.amountCents ?? 0) / 100,
       profileColumns: [
         { header: "Name", value: family.familyName },
         { header: "Donation", value: "$" + (family.donations[0]?.amountCents ?? 0) / 100 },

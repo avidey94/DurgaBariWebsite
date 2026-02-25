@@ -38,6 +38,10 @@ const normalizeHeader = (header: string | undefined, index: number) => {
   return value && value.length > 0 ? value : `Column ${index + 1}`;
 };
 
+const isGenericHeader = (header: string) => /^column\s+\d+$/i.test(header.trim());
+
+const monthOrder = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"] as const;
+
 const getCellText = (cell: GoogleVizCell | null | undefined) => {
   if (!cell) {
     return "";
@@ -102,6 +106,48 @@ const splitLines = (value: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+const normalizeMonthHeader = (value: string) => {
+  const match = value.trim().match(/^([A-Za-z]+)-(\d{4})$/);
+  if (!match) {
+    return null;
+  }
+
+  const month = match[1].toLowerCase();
+  const year = match[2];
+  const normalizedMonth = month === "sept" ? "sep" : month;
+
+  if (!monthOrder.includes(normalizedMonth as (typeof monthOrder)[number])) {
+    return null;
+  }
+
+  return `${normalizedMonth}-${year}`;
+};
+
+const displayMonthHeader = (normalized: string) => {
+  const [month, year] = normalized.split("-");
+  const displayMonth = month.charAt(0).toUpperCase() + month.slice(1);
+  return `${displayMonth}-${year}`;
+};
+
+const buildMonthRange = (startYear: number, startMonthIndex: number, endYear: number, endMonthIndex: number) => {
+  const result: string[] = [];
+
+  let year = startYear;
+  let monthIndex = startMonthIndex;
+
+  while (year < endYear || (year === endYear && monthIndex <= endMonthIndex)) {
+    result.push(`${monthOrder[monthIndex]}-${year}`);
+    monthIndex += 1;
+
+    if (monthIndex > 11) {
+      monthIndex = 0;
+      year += 1;
+    }
+  }
+
+  return result;
+};
+
 const buildDonationRecords = (
   rowValues: string[],
   headers: string[],
@@ -159,8 +205,18 @@ const getGoogleVizData = async (gid?: string) => {
   const columns = parsed.table?.cols ?? [];
   const rows = parsed.table?.rows ?? [];
 
-  const headers = columns.map((column, index) => normalizeHeader(column.label, index));
-  const values = rows.map((row) => row.c.map((cell) => getCellText(cell)));
+  const inferredHeaders = columns.map((column, index) => normalizeHeader(column.label, index));
+  const rawValues = rows.map((row) => row.c.map((cell) => getCellText(cell)));
+
+  const firstRow = rawValues[0] ?? [];
+  const firstCellLooksLikeHeader = (firstRow[0] ?? "").trim().toLowerCase() === "email";
+  const shouldUseFirstRowAsHeaders =
+    firstCellLooksLikeHeader || inferredHeaders.every((header) => isGenericHeader(header));
+
+  const headers = shouldUseFirstRowAsHeaders
+    ? firstRow.map((value, index) => value.trim() || `Column ${index + 1}`)
+    : inferredHeaders;
+  const values = shouldUseFirstRowAsHeaders ? rawValues.slice(1) : rawValues;
 
   return { headers, values };
 };
@@ -168,21 +224,50 @@ const getGoogleVizData = async (gid?: string) => {
 const toFamilyProfile = (headers: string[], rowValues: string[]): FamilyProfile => {
   const email = (rowValues[0] ?? "").toLowerCase();
   const nameIndex = headers.findIndex((header) => header.toLowerCase() === "name");
-  const foundingIndex = headers.findIndex((header) => header.toLowerCase() === "founding family");
+  const totalDuesPaidIndex = headers.findIndex((header) => header.trim().toLowerCase() === "donation");
   const familyName = rowValues[nameIndex] || email;
-  const foundingText = rowValues[foundingIndex]?.toLowerCase() ?? "";
+  const totalDuesPaidFromHeader =
+    totalDuesPaidIndex >= 0 ? (rowValues[totalDuesPaidIndex] ?? "") : "";
+  const totalDuesPaidFromColumnC = rowValues[2] ?? "";
+  const totalDuesPaid = (totalDuesPaidFromHeader || totalDuesPaidFromColumnC).trim();
 
   const profileColumns = headers
     .map((header, index) => ({ header, value: rowValues[index] ?? "" }))
     .filter((column, index) => index !== 0);
 
+  const duesMonths = headers
+    .map((header, index) => {
+      const normalized = normalizeMonthHeader(header);
+      return {
+        normalized,
+        rawValue: rowValues[index] ?? "",
+      };
+    })
+    .filter((item): item is { normalized: string; rawValue: string } => Boolean(item.normalized));
+
+  const valueByMonth = new Map<string, string>();
+  duesMonths.forEach((item) => {
+    valueByMonth.set(item.normalized, item.rawValue);
+  });
+
+  const canonicalMonths = buildMonthRange(2026, 0, 2028, 11);
+  const fullDuesMonths = canonicalMonths.map((normalizedMonth) => {
+    const rawValue = valueByMonth.get(normalizedMonth) ?? "";
+    return {
+      month: displayMonthHeader(normalizedMonth),
+      rawValue,
+      paid: rawValue.trim().toLowerCase() === "paid",
+    };
+  });
+
   return {
     id: email,
     familyName,
     primaryEmail: email,
-    foundingFamily:
-      foundingText === "yes" || foundingText === "true" || foundingText === "1" || foundingText === "founding",
+    foundingFamily: true,
+    totalDuesPaid,
     donations: buildDonationRecords(rowValues, headers, email),
+    duesMonths: fullDuesMonths,
     profileColumns,
   };
 };

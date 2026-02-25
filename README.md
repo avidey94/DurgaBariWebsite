@@ -69,6 +69,38 @@ npm run format:check
 - `POST /api/auth/logout` clears session cookie
 - `POST /api/payments/checkout` Stripe checkout scaffold endpoint
 
+## Security Checklist (Before Public Repo)
+
+1. Keep all secrets in runtime env only:
+
+- `.env.local` must stay untracked
+- never commit real values for Supabase/Stripe/Google service keys
+
+2. Verify ignored env files:
+
+```bash
+git check-ignore -v .env .env.local
+```
+
+3. Quick tracked-files secret scan:
+
+```bash
+git grep -n -E "sb_publishable_|sb_secret_|sk_live_|BEGIN PRIVATE KEY|STRIPE_SECRET_KEY="
+```
+
+4. Ensure no debug endpoints expose user or sheet metadata in production.
+
+5. If any key was ever committed:
+
+- rotate it immediately in the provider dashboard
+- invalidate old tokens/keys
+
+6. Production defaults:
+
+- `DEV_LOGIN_EMAIL=` (empty)
+- Supabase redirect URLs set correctly
+- least-privilege keys only (publishable key on client; secret keys server-side)
+
 ## Architecture
 
 ### Auth and RBAC

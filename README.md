@@ -26,8 +26,9 @@ cp .env.example .env.local
 
 3. Keep default local-friendly values in `.env.local`:
 
-- `DATA_PROVIDER=mock`
-- `DEV_LOGIN_EMAIL=ananya@example.org` (or your own email)
+- `DATA_PROVIDER=google-sheets`
+- `GOOGLE_SHEETS_SPREADSHEET_ID=...`
+- `DEV_LOGIN_EMAIL=` (empty when testing real Supabase auth)
 
 4. Run the app:
 
@@ -123,11 +124,13 @@ DEV_LOGIN_EMAIL=
 
 ```bash
 GOOGLE_SHEETS_SPREADSHEET_ID=...
+GOOGLE_SHEETS_GID=0
 GOOGLE_SHEETS_CLIENT_EMAIL=...
 GOOGLE_SHEETS_PRIVATE_KEY=...
 ```
 
-3. Implement methods in `lib/data/google-sheets-provider.ts` to map rows into `FamilyProfile`.
+3. Ensure column A stores the login email used in Supabase.
+4. For a public read-only sheet, provider fetches data directly; service-account vars are optional.
 
 ## Add Stripe Later
 

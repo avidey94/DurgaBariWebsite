@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DonationTable } from "@/components/donation-table";
+import { ProfileColumnsTable } from "@/components/profile-columns-table";
 import { getCurrentUser } from "@/lib/auth/session";
 import { dataProvider } from "@/lib/data";
 
@@ -44,7 +45,12 @@ export default async function PortalPage() {
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-slate-900">Donation Records</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Sheet Record</h2>
+        <ProfileColumnsTable columns={family.profileColumns ?? []} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold text-slate-900">Parsed Donation Records</h2>
         <DonationTable donations={family.donations} />
       </section>
     </section>

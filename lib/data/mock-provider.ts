@@ -13,7 +13,18 @@ export class MockProvider implements DataProvider {
       (item) => item.primaryEmail.toLowerCase() === email.toLowerCase(),
     );
 
-    return family ?? null;
+    if (!family) {
+      return null;
+    }
+
+    return {
+      ...family,
+      profileColumns: [
+        { header: "Name", value: family.familyName },
+        { header: "Donation", value: "$" + (family.donations[0]?.amountCents ?? 0) / 100 },
+        { header: "Paid Via", value: family.donations[0]?.method ?? "" },
+      ],
+    };
   }
 
   async getAllFamilies(params?: FamiliesQuery): Promise<FamilyProfile[]> {

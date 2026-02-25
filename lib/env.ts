@@ -10,11 +10,15 @@ export const env = {
   devLoginEmail: process.env.DEV_LOGIN_EMAIL?.trim().toLowerCase() ?? "",
   adminEmails: splitList(process.env.ADMIN_EMAILS),
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+  supabaseAnonKey:
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    "",
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripePublishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   googleSheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? "",
+  googleSheetGid: process.env.GOOGLE_SHEETS_GID ?? "0",
   googleServiceEmail: process.env.GOOGLE_SHEETS_CLIENT_EMAIL ?? "",
   googlePrivateKey: process.env.GOOGLE_SHEETS_PRIVATE_KEY ?? "",
 };

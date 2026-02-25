@@ -22,6 +22,10 @@ export interface FamilyProfile {
   primaryEmail: string;
   foundingFamily: boolean;
   donations: DonationRecord[];
+  profileColumns?: Array<{
+    header: string;
+    value: string;
+  }>;
 }
 
 export interface PortalUser {

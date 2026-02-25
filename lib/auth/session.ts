@@ -1,9 +1,6 @@
-import { cookies } from "next/headers";
-
 import { env } from "@/lib/env";
+import { createServerSupabaseClient } from "@/lib/auth/supabase";
 import type { PortalUser, Role } from "@/lib/types";
-
-export const SESSION_COOKIE_NAME = "durgabari_portal_email";
 
 const getRoleForEmail = (email: string): Role => {
   if (env.adminEmails.includes(email.toLowerCase())) {
@@ -22,16 +19,23 @@ export const getCurrentUser = async (): Promise<PortalUser | null> => {
     };
   }
 
-  const cookieStore = await cookies();
-  const emailFromCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value?.toLowerCase();
+  const supabase = await createServerSupabaseClient();
 
-  if (!emailFromCookie) {
+  if (!supabase) {
     return null;
   }
 
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user?.email) {
+    return null;
+  }
+
+  const email = data.user.email.toLowerCase();
+
   return {
-    email: emailFromCookie,
-    role: getRoleForEmail(emailFromCookie),
+    email,
+    role: getRoleForEmail(email),
     authSource: "supabase",
   };
 };

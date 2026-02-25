@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.redirect(new URL("/", request.url));
+  const authClient = createRouteHandlerSupabaseClient(request);
 
-  response.cookies.set(SESSION_COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  if (authClient) {
+    const { getResponse, setResponse, supabase } = authClient;
+    await supabase.auth.signOut();
+    const response = NextResponse.redirect(new URL("/", request.url));
+    setResponse(response);
 
-  return response;
+    return getResponse();
+  }
+
+  return NextResponse.redirect(new URL("/", request.url));
 }

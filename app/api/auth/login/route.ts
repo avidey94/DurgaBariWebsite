@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { SESSION_COOKIE_NAME } from "@/lib/auth/session";
-import { getSupabaseClient } from "@/lib/auth/supabase";
+import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
 import { env } from "@/lib/env";
 
 interface LoginPayload {
   email?: string;
   password?: string;
-  mode?: "magic-link" | "password";
+  mode?: "magic-link" | "password" | "signup";
 }
+
+const getSafeOrigin = (request: NextRequest) => request.nextUrl.origin;
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as LoginPayload;
@@ -28,9 +29,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = getSupabaseClient();
+  const authClient = createRouteHandlerSupabaseClient(request);
 
-  if (!supabase) {
+  if (!authClient) {
     return NextResponse.json(
       {
         message:
@@ -40,11 +41,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { supabase, getResponse, setResponse } = authClient;
+
   if (body.mode === "magic-link") {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${request.nextUrl.origin}/login`,
+        emailRedirectTo: `${getSafeOrigin(request)}/auth/callback?next=/portal`,
       },
     });
 
@@ -52,7 +55,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "Magic link sent. Check your inbox." }, { status: 200 });
+    return NextResponse.json(
+      { message: "Magic link sent. Check your inbox and click the link to continue." },
+      { status: 200 },
+    );
+  }
+
+  if (body.mode === "signup") {
+    if (!body.password || body.password.length < 8) {
+      return NextResponse.json(
+        { message: "Password must be at least 8 characters." },
+        { status: 400 },
+      );
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: body.password,
+      options: {
+        emailRedirectTo: `${getSafeOrigin(request)}/auth/callback?next=/portal`,
+      },
+    });
+
+    if (error) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+
+    if (data.session) {
+      const response = NextResponse.json({ message: "Account created. You are now logged in." }, { status: 200 });
+      setResponse(response);
+
+      return getResponse();
+    }
+
+    return NextResponse.json(
+      { message: "Account created. Check your email to confirm and finish sign in." },
+      { status: 200 },
+    );
   }
 
   if (body.mode === "password") {
@@ -60,29 +99,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Password is required." }, { status: 400 });
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password: body.password,
     });
 
-    if (error || !data.user?.email) {
-      return NextResponse.json(
-        { message: error?.message ?? "Login failed." },
-        { status: 401 },
-      );
+    if (error) {
+      return NextResponse.json({ message: error.message }, { status: 401 });
     }
 
     const response = NextResponse.json({ message: "Login successful." }, { status: 200 });
+    setResponse(response);
 
-    response.cookies.set(SESSION_COOKIE_NAME, data.user.email.toLowerCase(), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24,
-    });
-
-    return response;
+    return getResponse();
   }
 
   return NextResponse.json({ message: "Unsupported login mode." }, { status: 400 });

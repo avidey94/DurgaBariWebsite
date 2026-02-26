@@ -15,16 +15,19 @@ type Theme = "classic-green" | "classic-red";
 const primaryLinks = [
   { label: "Home", href: "/" },
   { label: "Payments", href: "/portal" },
-  { label: "Puja 2026", href: "#" },
-  { label: "Events", href: "#" },
+  { label: "Member Login", href: "/login" },
+  { label: "Events", href: "/events-festivals" },
   { label: "Notices", href: "#" },
 ];
 
-const navSections = [
-  { label: "Temple", items: ["Darshan Hours", "Festival Calendar", "Priest Contact"] },
-  { label: "Education", items: ["Language Class", "Balak Sangha", "Scholarship"] },
-  { label: "Community", items: ["Membership", "Announcements", "Volunteer"] },
-  { label: "Administration", items: ["Donor Portal", "Forms", "Committee"] },
+const durgaCenterNav = [
+  { label: "Home", href: "/" },
+  { label: "Our Journey", href: "/our-sacred-journey-from-vision-to-temple/" },
+  { label: "About", href: "/about" },
+  { label: "Events & Festivals", href: "/events-festivals" },
+  { label: "Donate", href: "/donate" },
+  { label: "Contact", href: "/contact" },
+  { label: "Get Involved", href: "/get-involved" },
 ];
 
 export function SiteHeader({ user }: SiteHeaderProps) {
@@ -172,39 +175,42 @@ export function SiteHeader({ user }: SiteHeaderProps) {
         className={`${menuOpen ? "block" : "hidden"} border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2 lg:block`}
       >
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2">
-          <Link href="/" className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
-            Home
-          </Link>
-          <Link href="/portal" className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
-            Donations Portal
-          </Link>
-          <Link href="/login" className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
-            Member Login
-          </Link>
+          <details className="relative border-[2px] border-[var(--db-border)] bg-white">
+            <summary className="list-none cursor-pointer px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
+              ▸ The Durga Center
+            </summary>
+            <div className="left-0 top-full z-20 w-full border-t-[2px] border-[var(--db-border)] bg-white lg:absolute lg:min-w-[230px]">
+              <ul className="p-2">
+                {durgaCenterNav.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      href={item.href}
+                      className="block border border-transparent px-2 py-1.5 text-sm font-medium text-[#111] hover:border-[var(--db-border-soft)] hover:bg-[var(--db-muted)]"
+                    >
+                      • {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+          {durgaCenterNav.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
+            >
+              {item.label}
+            </Link>
+          ))}
           {user?.role === "admin" && (
-            <Link href="/admin" className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
+            <Link
+              href="/admin"
+              className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
+            >
               Admin
             </Link>
           )}
-
-          {navSections.map((section) => (
-            <details key={section.label} className="relative border-[2px] border-[var(--db-border)] bg-white">
-              <summary className="list-none cursor-pointer px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
-                ▸ {section.label}
-              </summary>
-              <div className="left-0 top-full z-20 w-full border-t-[2px] border-[var(--db-border)] bg-white lg:absolute lg:min-w-[230px]">
-                <ul className="p-2">
-                  {section.items.map((item) => (
-                    <li key={item}>
-                      <a href="#" className="block border border-transparent px-2 py-1.5 text-sm font-medium text-[#111] hover:border-[var(--db-border-soft)] hover:bg-[var(--db-muted)]">
-                        • {item}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </details>
-          ))}
         </div>
       </nav>
     </header>

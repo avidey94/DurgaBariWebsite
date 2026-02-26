@@ -26,6 +26,7 @@ const durgaCenterNav = [
   { label: "About", href: "/about" },
   { label: "Events & Festivals", href: "/events-festivals" },
   { label: "Donate", href: "/donate" },
+  { label: "Sponsors", href: "/sponsors" },
   { label: "Contact", href: "/contact" },
   { label: "Get Involved", href: "/get-involved" },
 ];

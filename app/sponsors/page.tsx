@@ -175,7 +175,7 @@ const parseActiveDonors = (parsed: GoogleVizResponse): ActiveDonor[] => {
   if (nameIndex < 0 || monthlyIndex < 0) return [];
 
   return values
-    .map((row) => {
+    .reduce<ActiveDonor[]>((donors, row) => {
       const name = (row[nameIndex] ?? "").trim();
       const monthlyCents = parseCurrencyToCents(row[monthlyIndex] ?? "");
       const startDate = startDateIndex >= 0 ? (row[startDateIndex] ?? "").trim() : "";
@@ -187,16 +187,16 @@ const parseActiveDonors = (parsed: GoogleVizResponse): ActiveDonor[] => {
         normalizedStatus === "current" ||
         normalizedStatus === "yes";
 
-      if (!name || monthlyCents <= 0 || !isActive) return null;
+      if (!name || monthlyCents <= 0 || !isActive) return donors;
 
-      return {
+      donors.push({
         name,
         monthlyCents,
         startDate: startDate || undefined,
         status: status || undefined,
-      } satisfies ActiveDonor;
-    })
-    .filter((donor): donor is ActiveDonor => Boolean(donor))
+      });
+      return donors;
+    }, [])
     .sort((a, b) => b.monthlyCents - a.monthlyCents || a.name.localeCompare(b.name));
 };
 

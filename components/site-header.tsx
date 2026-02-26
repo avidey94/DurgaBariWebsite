@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { resolveLanguage, type Language, withLang } from "@/lib/i18n";
 import type { PortalUser } from "@/lib/types";
@@ -72,15 +72,18 @@ const copy = {
 
 export function SiteHeader({ user }: SiteHeaderProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const languageFromQuery = resolveLanguage(searchParams.get("lang") ?? undefined);
-  const [language, setLanguage] = useState<Language>(languageFromQuery);
+  const [language, setLanguage] = useState<Language>("en");
+  const [queryString, setQueryString] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
-    setLanguage(languageFromQuery);
-  }, [languageFromQuery]);
+    // Next.js requires useSearchParams to be wrapped in Suspense; keep this
+    // query parsing client-side so 404/not-found stays prerender-safe.
+    const params = new URLSearchParams(window.location.search);
+    setLanguage(resolveLanguage(params.get("lang") ?? undefined));
+    setQueryString(params.toString());
+  }, [pathname]);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -90,7 +93,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   const displayName = user?.email?.split("@")[0] ?? text.guest;
 
   const toggleLanguageHref = useMemo(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(queryString);
     if (language === "en") {
       params.set("lang", "bn");
     } else {
@@ -98,7 +101,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
     }
     const query = params.toString();
     return `${pathname}${query ? `?${query}` : ""}`;
-  }, [language, pathname, searchParams]);
+  }, [language, pathname, queryString]);
 
   return (
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
@@ -141,6 +144,9 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           <div className="flex items-center gap-2 md:justify-self-end">
             <Link
               href={toggleLanguageHref}
+              onClick={() => {
+                setLanguage((current) => (current === "en" ? "bn" : "en"));
+              }}
               className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
             >
               {text.languageLabel}

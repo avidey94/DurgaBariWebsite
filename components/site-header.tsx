@@ -1,38 +1,90 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
+import { resolveLanguage, type Language, withLang } from "@/lib/i18n";
 import type { PortalUser } from "@/lib/types";
 
 interface SiteHeaderProps {
   user: PortalUser | null;
 }
 
-type Language = "en" | "bn";
 type Theme = "classic-green" | "classic-red";
 
-const primaryLinks = [
-  { label: "Home", href: "/" },
-  { label: "Payments", href: "/portal" },
-  { label: "Member Login", href: "/login" },
-  { label: "Events", href: "/events-festivals" },
-  { label: "Notices", href: "#" },
-];
-
-const durgaCenterNav = [
-  { label: "Home", href: "/" },
-  { label: "Our Journey", href: "/our-sacred-journey-from-vision-to-temple/" },
-  { label: "About", href: "/about" },
-  { label: "Events & Festivals", href: "/events-festivals" },
-  { label: "Donate", href: "/donate" },
-  { label: "Sponsors", href: "/sponsors" },
-  { label: "Contact", href: "/contact" },
-  { label: "Get Involved", href: "/get-involved" },
-];
+const copy = {
+  en: {
+    primaryLinks: [
+      { label: "Home", href: "/" },
+      { label: "Payments", href: "/portal" },
+      { label: "Member Login", href: "/login" },
+      { label: "Events", href: "/events-festivals" },
+      { label: "Notices", href: "#" },
+    ],
+    navItems: [
+      { label: "Home", href: "/" },
+      { label: "Our Journey", href: "/our-sacred-journey-from-vision-to-temple/" },
+      { label: "About", href: "/about" },
+      { label: "Events & Festivals", href: "/events-festivals" },
+      { label: "Donate", href: "/donate" },
+      { label: "Sponsors", href: "/sponsors" },
+      { label: "Contact", href: "/contact" },
+      { label: "Get Involved", href: "/get-involved" },
+    ],
+    publicVisitor: "Public Visitor",
+    login: "Log in",
+    logout: "Log out",
+    siteTitle: "Durgabari Society",
+    siteTagline: "Community • Culture • Devotion",
+    searchLabel: "Search Durgabari site",
+    searchPlaceholder: "Search notices, events, forms",
+    searchButton: "Go",
+    durgaCenter: "The Durga Center",
+    menu: "Menu",
+    admin: "Admin",
+    languageLabel: "বাংলা",
+    theme: "Theme",
+  },
+  bn: {
+    primaryLinks: [
+      { label: "হোম", href: "/" },
+      { label: "পেমেন্ট", href: "/portal" },
+      { label: "সদস্য লগইন", href: "/login" },
+      { label: "ইভেন্ট", href: "/events-festivals" },
+      { label: "নোটিশ", href: "#" },
+    ],
+    navItems: [
+      { label: "হোম", href: "/" },
+      { label: "আমাদের যাত্রা", href: "/our-sacred-journey-from-vision-to-temple/" },
+      { label: "পরিচিতি", href: "/about" },
+      { label: "ইভেন্ট ও উৎসব", href: "/events-festivals" },
+      { label: "দান", href: "/donate" },
+      { label: "স্পন্সর", href: "/sponsors" },
+      { label: "যোগাযোগ", href: "/contact" },
+      { label: "যুক্ত হোন", href: "/get-involved" },
+    ],
+    publicVisitor: "জনসাধারণ দর্শনার্থী",
+    login: "লগইন",
+    logout: "লগ আউট",
+    siteTitle: "দুর্গাবাড়ি সোসাইটি",
+    siteTagline: "কমিউনিটি • সংস্কৃতি • ভক্তি",
+    searchLabel: "দুর্গাবাড়ি সাইটে খুঁজুন",
+    searchPlaceholder: "নোটিশ, ইভেন্ট, ফর্ম খুঁজুন",
+    searchButton: "যান",
+    durgaCenter: "দ্য দুর্গা সেন্টার",
+    menu: "মেনু",
+    admin: "অ্যাডমিন",
+    languageLabel: "English",
+    theme: "থিম",
+  },
+} as const;
 
 export function SiteHeader({ user }: SiteHeaderProps) {
-  const [language, setLanguage] = useState<Language>("en");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const languageFromQuery = resolveLanguage(searchParams.get("lang") ?? undefined);
+  const [language, setLanguage] = useState<Language>(languageFromQuery);
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof document === "undefined") return "classic-green";
     const currentTheme = document.documentElement.dataset.theme as Theme | undefined;
@@ -43,12 +95,29 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    setLanguage(languageFromQuery);
+  }, [languageFromQuery]);
+
+  useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  const text = copy[language];
+
+  const toggleLanguageHref = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (language === "en") {
+      params.set("lang", "bn");
+    } else {
+      params.delete("lang");
+    }
+    const query = params.toString();
+    return `${pathname}${query ? `?${query}` : ""}`;
+  }, [language, pathname, searchParams]);
 
   return (
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
@@ -58,10 +127,10 @@ export function SiteHeader({ user }: SiteHeaderProps) {
       >
         <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-2">
           <nav aria-label="Top utility" className="flex flex-wrap items-center gap-1">
-            {primaryLinks.map((link) => (
+            {text.primaryLinks.map((link) => (
               <Link
                 key={link.label}
-                href={link.href}
+                href={withLang(link.href, language)}
                 className="border border-[#00170a] bg-[#042312] px-3 py-1 text-[13px] font-semibold text-white hover:bg-[#0a3b20]"
               >
                 {link.label}
@@ -70,7 +139,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           </nav>
           <div className="flex flex-wrap items-center gap-2 text-[12px]">
             <span className="border border-[#00170a] bg-[#0b3a20] px-2 py-1 font-semibold uppercase tracking-wide text-white">
-              {user ? `${user.email} • ${user.role}` : "Public Visitor"}
+              {user ? `${user.email} • ${user.role}` : text.publicVisitor}
             </span>
             {user ? (
               <form action="/api/auth/logout" method="post">
@@ -78,15 +147,15 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                   type="submit"
                   className="border border-[#00170a] bg-[#9d1a1a] px-3 py-1 font-semibold text-white hover:bg-[#7f1414]"
                 >
-                  Log out
+                  {text.logout}
                 </button>
               </form>
             ) : (
               <Link
-                href="/login"
+                href={withLang("/login", language)}
                 className="border border-[#00170a] bg-[#123f86] px-3 py-1 font-semibold text-white hover:bg-[#0f3270]"
               >
-                Log in
+                {text.login}
               </Link>
             )}
           </div>
@@ -95,66 +164,54 @@ export function SiteHeader({ user }: SiteHeaderProps) {
 
       <div className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-3 py-3">
         <div className="mx-auto grid max-w-[1240px] gap-3 md:grid-cols-[auto_1fr_auto] md:items-center">
-          <div className="flex items-center gap-3">
+          <Link href={toggleLanguageHref} className="flex items-center gap-3 text-left">
             <div className="grid h-16 w-16 place-items-center border-[3px] border-[#5e2600] bg-[#f6c55a] text-[32px] text-[var(--db-danger)] shadow-[0_2px_0_#4a1c00]">
               ॐ
             </div>
             <div>
               <h1 className="font-serif text-4xl font-bold leading-none tracking-tight text-[#111]">
-                Durgabari Society
+                {text.siteTitle}
               </h1>
               <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--db-text-soft)]">
-                Community • Culture • Devotion
+                {text.siteTagline}
               </p>
             </div>
-          </div>
+          </Link>
 
           <form role="search" className="md:justify-self-center">
             <label htmlFor="site-search" className="mb-1 block text-sm font-bold text-[var(--db-text)]">
-              Search Durgabari site
+              {text.searchLabel}
             </label>
             <div className="flex w-full max-w-[430px] border-[2px] border-[var(--db-border)] bg-white md:w-[430px]">
               <input
                 id="site-search"
                 type="search"
-                placeholder="Search notices, events, forms"
+                placeholder={text.searchPlaceholder}
                 className="w-full border-0 px-3 py-2 text-sm text-[#111] outline-none"
               />
               <button
                 type="submit"
                 className="border-l-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white hover:bg-[var(--db-brand-2)]"
               >
-                Go
+                {text.searchButton}
               </button>
             </div>
           </form>
 
           <div className="flex items-center gap-2 md:justify-self-end">
-            <div className="inline-flex border-[2px] border-[var(--db-border)]" role="group" aria-label="Language toggle">
-              <button
-                type="button"
-                onClick={() => setLanguage("en")}
-                aria-pressed={language === "en"}
-                className={`px-3 py-2 text-xs font-bold ${language === "en" ? "bg-[var(--db-brand)] text-white" : "bg-[var(--db-muted)] text-[#111]"}`}
-              >
-                English
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage("bn")}
-                aria-pressed={language === "bn"}
-                className={`border-l-[2px] border-[var(--db-border)] px-3 py-2 text-xs font-bold ${language === "bn" ? "bg-[var(--db-brand)] text-white" : "bg-[var(--db-muted)] text-[#111]"}`}
-              >
-                বাংলা
-              </button>
-            </div>
+            <Link
+              href={toggleLanguageHref}
+              className="border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
+            >
+              {text.languageLabel}
+            </Link>
 
             <button
               type="button"
               onClick={() => setTheme(theme === "classic-green" ? "classic-red" : "classic-green")}
               className="border-[2px] border-[var(--db-border)] bg-[#f2d8a2] px-3 py-2 text-xs font-bold uppercase text-[#111] hover:bg-[#ebc57b]"
             >
-              Theme
+              {text.theme}
             </button>
 
             <button
@@ -164,7 +221,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               aria-expanded={menuOpen}
               className="inline-flex border-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white lg:hidden"
             >
-              Menu
+              {text.menu}
             </button>
           </div>
         </div>
@@ -178,14 +235,14 @@ export function SiteHeader({ user }: SiteHeaderProps) {
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2">
           <details className="relative border-[2px] border-[var(--db-border)] bg-white">
             <summary className="list-none cursor-pointer px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
-              ▸ The Durga Center
+              ▸ {text.durgaCenter}
             </summary>
             <div className="left-0 top-full z-20 w-full border-t-[2px] border-[var(--db-border)] bg-white lg:absolute lg:min-w-[230px]">
               <ul className="p-2">
-                {durgaCenterNav.map((item) => (
+                {text.navItems.map((item) => (
                   <li key={item.label}>
                     <Link
-                      href={item.href}
+                      href={withLang(item.href, language)}
                       className="block border border-transparent px-2 py-1.5 text-sm font-medium text-[#111] hover:border-[var(--db-border-soft)] hover:bg-[var(--db-muted)]"
                     >
                       • {item.label}
@@ -195,10 +252,10 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               </ul>
             </div>
           </details>
-          {durgaCenterNav.map((item) => (
+          {text.navItems.map((item) => (
             <Link
               key={item.label}
-              href={item.href}
+              href={withLang(item.href, language)}
               className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
             >
               {item.label}
@@ -206,10 +263,10 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           ))}
           {user?.role === "admin" && (
             <Link
-              href="/admin"
+              href={withLang("/admin", language)}
               className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
             >
-              Admin
+              {text.admin}
             </Link>
           )}
         </div>

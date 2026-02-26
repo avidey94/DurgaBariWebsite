@@ -1,3 +1,5 @@
+import type { Language } from "@/lib/i18n";
+
 interface DuesMonthStatus {
   month: string;
   paid: boolean;
@@ -6,6 +8,7 @@ interface DuesMonthStatus {
 
 interface DuesStatusTableProps {
   items: DuesMonthStatus[];
+  language?: Language;
 }
 
 const monthMap: Record<string, number> = {
@@ -39,11 +42,13 @@ const dueDateForMonth = (monthHeader: string) => {
   return `${monthNumber}/15/${yearShort}`;
 };
 
-export function DuesStatusTable({ items }: DuesStatusTableProps) {
+export function DuesStatusTable({ items, language = "en" }: DuesStatusTableProps) {
+  const isBn = language === "bn";
+
   if (items.length === 0) {
     return (
       <p className="border-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-4 py-3 text-sm text-[var(--db-text)]">
-        No month columns found in the sheet.
+        {isBn ? "শিটে কোনো মাসের কলাম পাওয়া যায়নি।" : "No month columns found in the sheet."}
       </p>
     );
   }
@@ -53,8 +58,12 @@ export function DuesStatusTable({ items }: DuesStatusTableProps) {
       <table className="min-w-full text-sm">
         <thead>
           <tr className="bg-[var(--db-muted)] text-[var(--db-text)]">
-            <th className="border-b-[2px] border-[var(--db-border)] px-3 py-2 text-left font-bold">Month</th>
-            <th className="border-b-[2px] border-[var(--db-border)] px-3 py-2 text-left font-bold">Status</th>
+            <th className="border-b-[2px] border-[var(--db-border)] px-3 py-2 text-left font-bold">
+              {isBn ? "মাস" : "Month"}
+            </th>
+            <th className="border-b-[2px] border-[var(--db-border)] px-3 py-2 text-left font-bold">
+              {isBn ? "স্ট্যাটাস" : "Status"}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -80,7 +89,7 @@ export function DuesStatusTable({ items }: DuesStatusTableProps) {
                         }
                   }
                 >
-                  {item.paid ? "PAID" : `DUE ${dueDateForMonth(item.month)}`}
+                  {item.paid ? (isBn ? "পরিশোধিত" : "PAID") : `${isBn ? "বকেয়া" : "DUE"} ${dueDateForMonth(item.month)}`}
                 </span>
               </td>
             </tr>

@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
+import type { Language } from "@/lib/i18n";
+
 interface LoginFormProps {
+  language: Language;
   supabaseConfigured: boolean;
   devBypassEnabled: boolean;
   initialError?: string;
@@ -30,28 +33,35 @@ async function submitAuth(
   return { ok: response.ok, message: data.message };
 }
 
-export function LoginForm({ supabaseConfigured, devBypassEnabled, initialError }: LoginFormProps) {
+export function LoginForm({ language, supabaseConfigured, devBypassEnabled, initialError }: LoginFormProps) {
+  const isBn = language === "bn";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState(initialError ? `Auth error: ${initialError}` : "");
+  const [status, setStatus] = useState(initialError ? (isBn ? `অথ ত্রুটি: ${initialError}` : `Auth error: ${initialError}`) : "");
 
   const runAuth = async (mode: AuthMode) => {
     if (!email) {
-      setStatus("Email is required.");
+      setStatus(isBn ? "ইমেইল আবশ্যক।" : "Email is required.");
       return;
     }
 
     if ((mode === "password" || mode === "signup") && !password) {
-      setStatus("Password is required.");
+      setStatus(isBn ? "পাসওয়ার্ড আবশ্যক।" : "Password is required.");
       return;
     }
 
     setStatus(
       mode === "magic-link"
-        ? "Sending magic link..."
+        ? isBn
+          ? "ম্যাজিক লিংক পাঠানো হচ্ছে..."
+          : "Sending magic link..."
         : mode === "signup"
-          ? "Creating account..."
-          : "Signing in...",
+          ? isBn
+            ? "অ্যাকাউন্ট তৈরি করা হচ্ছে..."
+            : "Creating account..."
+          : isBn
+            ? "সাইন ইন করা হচ্ছে..."
+            : "Signing in...",
     );
 
     const result = await submitAuth({
@@ -71,10 +81,12 @@ export function LoginForm({ supabaseConfigured, devBypassEnabled, initialError }
     <div className="space-y-6">
       {devBypassEnabled && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-          DEV_LOGIN_EMAIL is enabled. Authentication is bypassed in development.
+          {isBn
+            ? "DEV_LOGIN_EMAIL সক্রিয় আছে। ডেভেলপমেন্টে অথেন্টিকেশন বাইপাস করা হচ্ছে।"
+            : "DEV_LOGIN_EMAIL is enabled. Authentication is bypassed in development."}
           <div className="mt-2">
             <a className="font-semibold underline" href="/portal">
-              Continue to portal
+              {isBn ? "পোর্টালে যান" : "Continue to portal"}
             </a>
           </div>
         </div>
@@ -82,13 +94,16 @@ export function LoginForm({ supabaseConfigured, devBypassEnabled, initialError }
 
       {!supabaseConfigured && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Supabase is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and
-          NEXT_PUBLIC_SUPABASE_ANON_KEY to enable live authentication.
+          {isBn
+            ? "Supabase এখনও কনফিগার করা হয়নি। লাইভ অথেন্টিকেশন চালু করতে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_ANON_KEY যোগ করুন।"
+            : "Supabase is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable live authentication."}
         </p>
       )}
 
       <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="text-base font-semibold text-slate-900">Email Authentication</h2>
+        <h2 className="text-base font-semibold text-slate-900">
+          {isBn ? "ইমেইল অথেন্টিকেশন" : "Email Authentication"}
+        </h2>
         <input
           required
           type="email"
@@ -101,7 +116,7 @@ export function LoginForm({ supabaseConfigured, devBypassEnabled, initialError }
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="Password (required for sign up / password login)"
+          placeholder={isBn ? "পাসওয়ার্ড (সাইন আপ / পাসওয়ার্ড লগইনের জন্য আবশ্যক)" : "Password (required for sign up / password login)"}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
         />
 
@@ -111,21 +126,21 @@ export function LoginForm({ supabaseConfigured, devBypassEnabled, initialError }
             onClick={() => runAuth("magic-link")}
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
-            Send magic link
+            {isBn ? "ম্যাজিক লিংক পাঠান" : "Send magic link"}
           </button>
           <button
             type="button"
             onClick={() => runAuth("password")}
             className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
           >
-            Sign in
+            {isBn ? "সাইন ইন" : "Sign in"}
           </button>
           <button
             type="button"
             onClick={() => runAuth("signup")}
             className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
           >
-            Create account
+            {isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account"}
           </button>
         </div>
       </div>

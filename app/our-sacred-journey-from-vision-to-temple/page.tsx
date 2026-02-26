@@ -64,7 +64,7 @@ function Module({ title, children }: { title: string; children: React.ReactNode 
   return (
     <section className="border-[2px] border-[var(--db-border)] bg-[#fffef9] shadow-[inset_0_1px_0_#fff,0_1px_0_#b8c5b6]">
       <div className="border-b-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#c91d1d,#951515)] px-4 py-2">
-        <h2 className="font-serif text-[30px] font-bold leading-tight text-white">{title}</h2>
+        <h2 className="font-serif text-[26px] font-bold leading-tight text-white sm:text-[30px]">{title}</h2>
       </div>
       <div className="p-4 text-[17px] leading-8 text-[#1f2a22] md:p-5">{children}</div>
     </section>
@@ -83,18 +83,18 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
   return (
     <section className="mx-auto max-w-[1120px] px-4 py-6 md:py-8">
       <article className="border-[3px] border-[var(--db-border-strong)] bg-[var(--db-panel)] p-3 shadow-[inset_0_1px_0_#fff,0_2px_0_#173522] md:p-4">
-        <header className="border-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#ffe6b5,#f5cc75)] p-5">
-          <div className="flex items-start gap-4">
-            <div className="grid h-14 w-14 shrink-0 place-items-center border-[2px] border-[#6b2a00] bg-[#f3b53a] text-[30px] text-[#8a1a1a]">
+        <header className="border-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#ffe6b5,#f5cc75)] p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center border-[2px] border-[#6b2a00] bg-[#f3b53a] text-[26px] text-[#8a1a1a] sm:h-14 sm:w-14 sm:text-[30px]">
               ॐ
             </div>
-            <div>
-              <h1 className="font-serif text-5xl font-bold leading-[1.05] text-[#132a1f] md:text-6xl">
+            <div className="min-w-0">
+              <h1 className="break-words font-serif text-[clamp(2.2rem,13.5vw,3.75rem)] font-bold leading-[1.02] text-[#132a1f]">
                 {isBn
                   ? "আমাদের পবিত্র যাত্রা: ভাবনা থেকে মন্দির"
                   : "Our Sacred Journey: From Vision to Temple"}
               </h1>
-              <p className="mt-2 text-[20px] font-semibold text-[#223a2d]">
+              <p className="mt-2 text-[clamp(1.125rem,5.1vw,1.25rem)] font-semibold leading-snug text-[#223a2d]">
                 {isBn
                   ? "দুর্গা বাড়ি গড়তে হাতে হাত মিলান - আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র"
                   : "Join Hands to Build Durga Bari - Center for Spiritual and Cultural Excellence"}

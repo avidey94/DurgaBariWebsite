@@ -107,19 +107,19 @@ export function SiteHeader({ user }: SiteHeaderProps) {
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
       <div className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-3 py-3">
         <div className="mx-auto grid max-w-[1240px] gap-3 md:grid-cols-[auto_1fr_auto] md:items-center">
-          <Link href={withLang("/", language)} className="flex items-center gap-3 text-left">
-            <div className="grid h-16 w-16 place-items-center border-[3px] border-[#5e2600] bg-[#f6c55a] text-[32px] text-[var(--db-danger)] shadow-[0_2px_0_#4a1c00]">
+          <Link href={withLang("/", language)} className="flex min-w-0 items-center gap-3 text-left">
+            <div className="grid h-12 w-12 place-items-center border-[2px] border-[#5e2600] bg-[#f6c55a] text-[26px] text-[var(--db-danger)] shadow-[0_2px_0_#4a1c00] sm:h-16 sm:w-16 sm:border-[3px] sm:text-[32px]">
               ॐ
             </div>
-            <div>
-              <h1 className="font-serif text-4xl font-bold leading-none tracking-tight text-[#111]">
+            <div className="min-w-0">
+              <h1 className="break-words font-serif text-[clamp(2rem,9.4vw,3rem)] font-bold leading-[0.95] tracking-tight text-[#111]">
                 {text.siteTitle}
               </h1>
-              <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--db-text-soft)]">
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--db-text-soft)] sm:text-[13px] sm:tracking-[0.12em]">
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                Version 1.6
+                Version 1.7
               </p>
             </div>
           </Link>
@@ -144,13 +144,13 @@ export function SiteHeader({ user }: SiteHeaderProps) {
             </div>
           </form>
 
-          <div className="flex items-center gap-2 md:justify-self-end">
+          <div className="flex flex-wrap items-center gap-2 md:justify-self-end">
             <Link
               href={toggleLanguageHref}
               onClick={() => {
                 setLanguage((current) => (current === "en" ? "bn" : "en"));
               }}
-              className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
+              className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2] sm:flex-none"
             >
               {text.languageLabel}
             </Link>
@@ -167,7 +167,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                   aria-expanded={accountOpen}
                   aria-haspopup="menu"
                 onClick={() => setAccountOpen((value) => !value)}
-                className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2] sm:flex-none"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -220,7 +220,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               <Link
                 href={withLang("/login", language)}
                 aria-label={text.login}
-                className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2] sm:flex-none"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -246,7 +246,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               onClick={() => setMenuOpen((value) => !value)}
               aria-controls="main-site-nav"
               aria-expanded={menuOpen}
-              className="inline-flex border-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white lg:hidden"
+              className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white sm:flex-none lg:hidden"
             >
               {text.menu}
             </button>

@@ -40,8 +40,8 @@ export default async function Home({ searchParams }: HomePageProps) {
   return (
     <section className="pb-16">
       <div className="grid min-h-[520px] grid-cols-1 bg-white lg:grid-cols-[280px_1fr_330px]">
-        <aside className="bg-[#c40505] px-10 py-10 text-white">
-          <h2 className="text-4xl font-semibold uppercase leading-tight">
+        <aside className="bg-[#c40505] px-6 py-8 text-white sm:px-10 sm:py-10">
+          <h2 className="text-3xl font-semibold uppercase leading-tight sm:text-4xl">
             {isBn ? "মন্দির সময়সূচি ও যোগাযোগ" : "Temple Hours & Contact"}
           </h2>
           <div className="mt-8 space-y-5 text-xl leading-relaxed">
@@ -67,13 +67,13 @@ export default async function Home({ searchParams }: HomePageProps) {
           </div>
         </aside>
 
-        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_20%_10%,#f59e0b_0%,#b91c1c_45%,#2a0000_100%)] p-10 text-white">
+        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_20%_10%,#f59e0b_0%,#b91c1c_45%,#2a0000_100%)] p-6 text-white sm:p-10">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_45%)]" />
           <div className="relative z-10 flex h-full flex-col justify-end">
             <p className="text-sm uppercase tracking-[0.22em] text-amber-200">
               {isBn ? "ভক্তি দিয়ে পরিবারকে সেবা" : "Serving families with devotion"}
             </p>
-            <h1 className="mt-4 max-w-3xl font-serif text-6xl leading-[1.05]">
+            <h1 className="mt-4 max-w-3xl break-words font-serif text-[clamp(2.2rem,13.5vw,3.75rem)] leading-[1.02]">
               {isBn ? "দুর্গা বাড়ি কমিউনিটি ও সাংস্কৃতিক কেন্দ্র" : "Durga Bari Community and Cultural Center"}
             </h1>
             <p className="mt-5 max-w-2xl text-xl text-amber-50/95">
@@ -98,8 +98,8 @@ export default async function Home({ searchParams }: HomePageProps) {
           </div>
         </div>
 
-        <aside className="bg-[#ececec] px-8 py-8">
-          <h2 className="text-4xl font-semibold uppercase text-[#222]">
+        <aside className="bg-[#ececec] px-6 py-8 sm:px-8">
+          <h2 className="text-3xl font-semibold uppercase text-[#222] sm:text-4xl">
             {isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}
           </h2>
           <div className="mt-6 space-y-4">
@@ -109,7 +109,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                   <span className="text-5xl font-bold leading-none">{event.day}</span>
                   <span className="mt-1 text-xs font-semibold tracking-wide">{event.month}</span>
                 </div>
-                <div className="flex items-center px-4 text-3xl font-medium leading-tight text-slate-700">
+                <div className="flex items-center px-4 text-2xl font-medium leading-tight text-slate-700 sm:text-3xl">
                   {event.title}
                 </div>
               </article>

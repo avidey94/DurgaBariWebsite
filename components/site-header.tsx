@@ -11,17 +11,8 @@ interface SiteHeaderProps {
   user: PortalUser | null;
 }
 
-type Theme = "classic-green" | "classic-red";
-
 const copy = {
   en: {
-    primaryLinks: [
-      { label: "Home", href: "/" },
-      { label: "Payments", href: "/portal" },
-      { label: "Member Login", href: "/login" },
-      { label: "Events", href: "/events-festivals" },
-      { label: "Notices", href: "#" },
-    ],
     navItems: [
       { label: "Home", href: "/" },
       { label: "Our Journey", href: "/our-sacred-journey-from-vision-to-temple/" },
@@ -32,9 +23,8 @@ const copy = {
       { label: "Contact", href: "/contact" },
       { label: "Get Involved", href: "/get-involved" },
     ],
-    publicVisitor: "Public Visitor",
     login: "Log in",
-    logout: "Log out",
+    memberPortal: "Member Portal",
     siteTitle: "Durgabari Society",
     siteTagline: "Community • Culture • Devotion",
     searchLabel: "Search Durgabari site",
@@ -44,16 +34,13 @@ const copy = {
     menu: "Menu",
     admin: "Admin",
     languageLabel: "বাংলা",
-    theme: "Theme",
+    account: "Account",
+    guest: "Guest",
+    signedInAs: "Signed in as",
+    profileLabel: "Open account menu",
+    signOut: "Sign out",
   },
   bn: {
-    primaryLinks: [
-      { label: "হোম", href: "/" },
-      { label: "পেমেন্ট", href: "/portal" },
-      { label: "সদস্য লগইন", href: "/login" },
-      { label: "ইভেন্ট", href: "/events-festivals" },
-      { label: "নোটিশ", href: "#" },
-    ],
     navItems: [
       { label: "হোম", href: "/" },
       { label: "আমাদের যাত্রা", href: "/our-sacred-journey-from-vision-to-temple/" },
@@ -64,9 +51,8 @@ const copy = {
       { label: "যোগাযোগ", href: "/contact" },
       { label: "যুক্ত হোন", href: "/get-involved" },
     ],
-    publicVisitor: "জনসাধারণ দর্শনার্থী",
     login: "লগইন",
-    logout: "লগ আউট",
+    memberPortal: "সদস্য পোর্টাল",
     siteTitle: "দুর্গাবাড়ি সোসাইটি",
     siteTagline: "কমিউনিটি • সংস্কৃতি • ভক্তি",
     searchLabel: "দুর্গাবাড়ি সাইটে খুঁজুন",
@@ -76,7 +62,11 @@ const copy = {
     menu: "মেনু",
     admin: "অ্যাডমিন",
     languageLabel: "English",
-    theme: "থিম",
+    account: "অ্যাকাউন্ট",
+    guest: "অতিথি",
+    signedInAs: "লগইন করা আছে",
+    profileLabel: "অ্যাকাউন্ট মেনু খুলুন",
+    signOut: "সাইন আউট",
   },
 } as const;
 
@@ -85,14 +75,8 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   const searchParams = useSearchParams();
   const languageFromQuery = resolveLanguage(searchParams.get("lang") ?? undefined);
   const [language, setLanguage] = useState<Language>(languageFromQuery);
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof document === "undefined") return "classic-green";
-    const currentTheme = document.documentElement.dataset.theme as Theme | undefined;
-    return currentTheme === "classic-red" || currentTheme === "classic-green"
-      ? currentTheme
-      : "classic-green";
-  });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
     setLanguage(languageFromQuery);
@@ -102,11 +86,8 @@ export function SiteHeader({ user }: SiteHeaderProps) {
     document.documentElement.lang = language;
   }, [language]);
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
   const text = copy[language];
+  const displayName = user?.email?.split("@")[0] ?? text.guest;
 
   const toggleLanguageHref = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -121,50 +102,9 @@ export function SiteHeader({ user }: SiteHeaderProps) {
 
   return (
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
-      <div
-        className="border-b-[2px] border-[var(--db-border-strong)] px-3 py-2 text-white"
-        style={{ backgroundImage: "linear-gradient(180deg, var(--db-brand), var(--db-brand-2))" }}
-      >
-        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-2">
-          <nav aria-label="Top utility" className="flex flex-wrap items-center gap-1">
-            {text.primaryLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={withLang(link.href, language)}
-                className="border border-[#00170a] bg-[#042312] px-3 py-1 text-[13px] font-semibold text-white hover:bg-[#0a3b20]"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex flex-wrap items-center gap-2 text-[12px]">
-            <span className="border border-[#00170a] bg-[#0b3a20] px-2 py-1 font-semibold uppercase tracking-wide text-white">
-              {user ? `${user.email} • ${user.role}` : text.publicVisitor}
-            </span>
-            {user ? (
-              <form action="/api/auth/logout" method="post">
-                <button
-                  type="submit"
-                  className="border border-[#00170a] bg-[#9d1a1a] px-3 py-1 font-semibold text-white hover:bg-[#7f1414]"
-                >
-                  {text.logout}
-                </button>
-              </form>
-            ) : (
-              <Link
-                href={withLang("/login", language)}
-                className="border border-[#00170a] bg-[#123f86] px-3 py-1 font-semibold text-white hover:bg-[#0f3270]"
-              >
-                {text.login}
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-3 py-3">
         <div className="mx-auto grid max-w-[1240px] gap-3 md:grid-cols-[auto_1fr_auto] md:items-center">
-          <Link href={toggleLanguageHref} className="flex items-center gap-3 text-left">
+          <Link href={withLang("/", language)} className="flex items-center gap-3 text-left">
             <div className="grid h-16 w-16 place-items-center border-[3px] border-[#5e2600] bg-[#f6c55a] text-[32px] text-[var(--db-danger)] shadow-[0_2px_0_#4a1c00]">
               ॐ
             </div>
@@ -201,18 +141,96 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           <div className="flex items-center gap-2 md:justify-self-end">
             <Link
               href={toggleLanguageHref}
-              className="border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
+              className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
             >
               {text.languageLabel}
             </Link>
 
-            <button
-              type="button"
-              onClick={() => setTheme(theme === "classic-green" ? "classic-red" : "classic-green")}
-              className="border-[2px] border-[var(--db-border)] bg-[#f2d8a2] px-3 py-2 text-xs font-bold uppercase text-[#111] hover:bg-[#ebc57b]"
-            >
-              {text.theme}
-            </button>
+            {user ? (
+              <div
+                className="relative"
+                onMouseEnter={() => setAccountOpen(true)}
+                onMouseLeave={() => setAccountOpen(false)}
+              >
+                <button
+                  type="button"
+                  aria-label={text.profileLabel}
+                  aria-expanded={accountOpen}
+                  aria-haspopup="menu"
+                onClick={() => setAccountOpen((value) => !value)}
+                className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  width="24"
+                  height="24"
+                  style={{ display: "block" }}
+                  fill="none"
+                  stroke="#1f4f32"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21a8 8 0 1 0-16 0" />
+                  <circle cx="12" cy="8" r="4" />
+                </svg>
+              </button>
+                <div
+                  className={`${accountOpen ? "block" : "hidden"} absolute right-0 top-full z-30 w-64 pt-2`}
+                  role="menu"
+                >
+                  <div className="border-[2px] border-[var(--db-border)] bg-white p-3 text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--db-text-soft)]">{text.account}</p>
+                    <p className="mt-1 text-base font-semibold text-[var(--db-text)]">{displayName}</p>
+                    <p className="mt-1 text-xs text-[var(--db-text-soft)]">
+                      {text.signedInAs} {user.email}
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <Link
+                        href={withLang("/portal", language)}
+                        onClick={() => setAccountOpen(false)}
+                        className="inline-flex w-full items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 font-bold text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                      >
+                        {text.memberPortal}
+                      </Link>
+                      <form action="/api/auth/logout" method="post">
+                        <button
+                          type="submit"
+                          className="inline-flex w-full items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 font-bold text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                        >
+                          {text.signOut}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link
+                href={withLang("/login", language)}
+                aria-label={text.login}
+                className="inline-flex h-[42px] min-w-[92px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  width="24"
+                  height="24"
+                  style={{ display: "block" }}
+                  fill="none"
+                  stroke="#1f4f32"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21a8 8 0 1 0-16 0" />
+                  <circle cx="12" cy="8" r="4" />
+                </svg>
+              </Link>
+            )}
 
             <button
               type="button"
@@ -232,7 +250,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
         aria-label="Main site navigation"
         className={`${menuOpen ? "block" : "hidden"} border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2 lg:block`}
       >
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
           <details className="relative border-[2px] border-[var(--db-border)] bg-white">
             <summary className="list-none cursor-pointer px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
               ▸ {text.durgaCenter}

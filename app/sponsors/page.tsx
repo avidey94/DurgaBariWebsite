@@ -1,5 +1,7 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
+import { ActiveDonorsSection, type ActiveDonor } from "@/components/active-donors-section";
 import { dataProvider } from "@/lib/data";
+import { env } from "@/lib/env";
 import { resolveLanguage } from "@/lib/i18n";
 import type { FamilyProfile } from "@/lib/types";
 
@@ -16,7 +18,7 @@ const tiers = {
   en: [
     {
       id: "grand-benefactor",
-      title: "Grand Benefactor Member",
+      title: "Grand Benefactor — Lifetime Recognition",
       contribution: "$25,000+ (one-time or cumulative)",
       recognition:
         "Top placement on the Founder & Benefactor Plaque; lifetime listing on website and annual report; VIP acknowledgment at inaugurations and major festivals; invitation to ground-blessing/stone-laying pujas.",
@@ -25,7 +27,7 @@ const tiers = {
     },
     {
       id: "benefactor",
-      title: "Benefactor Member",
+      title: "Benefactor — Lifetime Recognition",
       contribution: "$15,000 to $24,999",
       recognition:
         "Benefactors section on donor wall; acknowledgment in annual communications; reserved seating at select events; invitation to Patron & Benefactor appreciation.",
@@ -34,27 +36,18 @@ const tiers = {
     },
     {
       id: "grand-patron",
-      title: "Grand Patron Member",
+      title: "Grand Patron — Lifetime Recognition",
       contribution: "$10,000 to $14,999",
       recognition:
         "Patron plaque listing; acknowledgement during annual Durga Puja; invitations to cultural appreciation events.",
       minCents: 1_000_000,
       maxCents: 1_499_999,
     },
-    {
-      id: "patron",
-      title: "Patron Member",
-      contribution: "$5,000 to $9,999",
-      recognition:
-        "Patron roll at temple/website; priority invitations to programs. Reserve Seat at Front Row in all programs.",
-      minCents: 500_000,
-      maxCents: 999_999,
-    },
   ],
   bn: [
     {
       id: "grand-benefactor",
-      title: "গ্র্যান্ড বেনিফ্যাক্টর সদস্য",
+      title: "গ্র্যান্ড বেনিফ্যাক্টর সদস্য — আজীবন স্বীকৃতি",
       contribution: "$25,000+ (এককালীন বা মোট)",
       recognition:
         "Founder & Benefactor ফলকে সর্বোচ্চ স্থানে নাম; ওয়েবসাইট ও বার্ষিক প্রতিবেদনে আজীবন উল্লেখ; উদ্বোধন ও প্রধান উৎসবে VIP স্বীকৃতি; ভূমিপূজন/শিলান্যাসে আমন্ত্রণ।",
@@ -63,7 +56,7 @@ const tiers = {
     },
     {
       id: "benefactor",
-      title: "বেনিফ্যাক্টর সদস্য",
+      title: "বেনিফ্যাক্টর সদস্য — আজীবন স্বীকৃতি",
       contribution: "$15,000 থেকে $24,999",
       recognition:
         "ডোনার ওয়ালে Benefactors বিভাগে নাম; বার্ষিক যোগাযোগে স্বীকৃতি; নির্বাচিত অনুষ্ঠানে সংরক্ষিত আসন; Patron & Benefactor সংবর্ধনায় আমন্ত্রণ।",
@@ -72,21 +65,12 @@ const tiers = {
     },
     {
       id: "grand-patron",
-      title: "গ্র্যান্ড প্যাট্রন সদস্য",
+      title: "গ্র্যান্ড প্যাট্রন সদস্য — আজীবন স্বীকৃতি",
       contribution: "$10,000 থেকে $14,999",
       recognition:
         "Patron ফলকে নাম; বার্ষিক দুর্গাপূজায় স্বীকৃতি; সাংস্কৃতিক সংবর্ধনা অনুষ্ঠানে আমন্ত্রণ।",
       minCents: 1_000_000,
       maxCents: 1_499_999,
-    },
-    {
-      id: "patron",
-      title: "প্যাট্রন সদস্য",
-      contribution: "$5,000 থেকে $9,999",
-      recognition:
-        "মন্দির/ওয়েবসাইটে Patron রোলে নাম; প্রোগ্রামে অগ্রাধিকারমূলক আমন্ত্রণ; সামনের সারির সংরক্ষিত আসন।",
-      minCents: 500_000,
-      maxCents: 999_999,
     },
   ],
 } as const satisfies Record<"en" | "bn", SponsorTier[]>;
@@ -104,11 +88,135 @@ interface SponsorsPageProps {
   searchParams: Promise<{ q?: string; lang?: string }>;
 }
 
+interface GoogleVizColumn {
+  label?: string;
+}
+
+interface GoogleVizCell {
+  v?: unknown;
+  f?: string;
+}
+
+interface GoogleVizRow {
+  c: Array<GoogleVizCell | null>;
+}
+
+interface GoogleVizResponse {
+  table?: {
+    cols?: GoogleVizColumn[];
+    rows?: GoogleVizRow[];
+  };
+}
+
+const fallbackActiveDonors: ActiveDonor[] = [
+  { name: "Asha Mukherjee", monthlyCents: 10_000 },
+  { name: "Rohan Das", monthlyCents: 10_000 },
+  { name: "Priya Banerjee", monthlyCents: 50_000 },
+  { name: "Neel Chatterjee", monthlyCents: 50_000 },
+  { name: "Suman Ghosh", monthlyCents: 100_000 },
+  { name: "Anika Sen", monthlyCents: 150_000 },
+];
+
 const parseCurrencyToCents = (value?: string) => {
   if (!value) return 0;
   const normalized = value.replace(/[^\d.-]/g, "");
   const amount = Number.parseFloat(normalized);
   return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+};
+
+const normalizeHeader = (value: string) => value.trim().toLowerCase().replace(/[\s_-]+/g, " ");
+
+const getCellText = (cell: GoogleVizCell | null | undefined) => {
+  if (!cell) return "";
+  if (typeof cell.f === "string") return cell.f.trim();
+  if (typeof cell.v === "string") return cell.v.trim();
+  if (typeof cell.v === "number") return String(cell.v);
+  return "";
+};
+
+const parseGoogleViz = (rawText: string) => {
+  const prefix = "google.visualization.Query.setResponse(";
+  const suffix = ");";
+  const start = rawText.indexOf(prefix);
+  const end = rawText.lastIndexOf(suffix);
+  if (start < 0 || end < 0) return null;
+  const jsonText = rawText.slice(start + prefix.length, end);
+  return JSON.parse(jsonText) as GoogleVizResponse;
+};
+
+const parseActiveDonors = (parsed: GoogleVizResponse): ActiveDonor[] => {
+  const columns = parsed.table?.cols ?? [];
+  const rows = parsed.table?.rows ?? [];
+  const inferredHeaders = columns.map((column, index) => (column.label?.trim() ? column.label.trim() : `Column ${index + 1}`));
+  const rawValues = rows.map((row) => row.c.map((cell) => getCellText(cell)));
+  const firstRow = rawValues[0] ?? [];
+
+  const firstRowLooksLikeHeader = normalizeHeader(firstRow[0] ?? "") === "name";
+  const headers =
+    firstRowLooksLikeHeader || inferredHeaders.every((header) => /^column\s+\d+$/i.test(header))
+      ? firstRow.map((value, index) => value.trim() || `Column ${index + 1}`)
+      : inferredHeaders;
+  const values = firstRowLooksLikeHeader ? rawValues.slice(1) : rawValues;
+
+  const normalizedHeaders = headers.map(normalizeHeader);
+  const nameIndex = normalizedHeaders.findIndex((header) => header === "name" || header === "display name");
+  const monthlyIndex = normalizedHeaders.findIndex(
+    (header) =>
+      header === "monthly" ||
+      header === "monthly amount" ||
+      header === "monthly commitment" ||
+      header === "monthly amount usd" ||
+      header === "monthly amount $" ||
+      header === "monthly_amount",
+  );
+  const startDateIndex = normalizedHeaders.findIndex((header) => header === "start date" || header === "since");
+  const statusIndex = normalizedHeaders.findIndex((header) => header === "status");
+
+  if (nameIndex < 0 || monthlyIndex < 0) return [];
+
+  return values
+    .map((row) => {
+      const name = (row[nameIndex] ?? "").trim();
+      const monthlyCents = parseCurrencyToCents(row[monthlyIndex] ?? "");
+      const startDate = startDateIndex >= 0 ? (row[startDateIndex] ?? "").trim() : "";
+      const status = statusIndex >= 0 ? (row[statusIndex] ?? "").trim() : "";
+      const normalizedStatus = status.toLowerCase();
+      const isActive =
+        normalizedStatus.length === 0 ||
+        normalizedStatus === "active" ||
+        normalizedStatus === "current" ||
+        normalizedStatus === "yes";
+
+      if (!name || monthlyCents <= 0 || !isActive) return null;
+
+      return {
+        name,
+        monthlyCents,
+        startDate: startDate || undefined,
+        status: status || undefined,
+      } satisfies ActiveDonor;
+    })
+    .filter((donor): donor is ActiveDonor => Boolean(donor))
+    .sort((a, b) => b.monthlyCents - a.monthlyCents || a.name.localeCompare(b.name));
+};
+
+const getActiveDonors = async (): Promise<ActiveDonor[]> => {
+  if (!env.googleSheetId) return fallbackActiveDonors;
+
+  try {
+    const endpoint = `https://docs.google.com/spreadsheets/d/${env.googleSheetId}/gviz/tq?tqx=out:json&sheet=ActiveDonors`;
+    const response = await fetch(endpoint, { next: { revalidate: 60 } });
+    if (!response.ok) return fallbackActiveDonors;
+
+    const rawText = await response.text();
+    const parsed = parseGoogleViz(rawText);
+    if (!parsed) return fallbackActiveDonors;
+
+    const donors = parseActiveDonors(parsed);
+    return donors.length > 0 ? donors : fallbackActiveDonors;
+  } catch {
+    return fallbackActiveDonors;
+  }
 };
 
 const fallbackDonationSum = (family: FamilyProfile) =>
@@ -134,7 +242,7 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
   const isBn = lang === "bn";
   const query = params.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
-  const families = await dataProvider.getAllFamilies({ query });
+  const [families, activeDonors] = await Promise.all([dataProvider.getAllFamilies({ query }), getActiveDonors()]);
 
   const members: SponsorMember[] = families
     .map((family) => ({
@@ -297,6 +405,8 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
             )}
           </div>
         </ContentModule>
+
+        <ActiveDonorsSection donors={activeDonors} lang={lang} />
 
         <ContentPlaceholder
           label={isBn ? "স্পন্সর ওয়াল" : "Sponsor Wall"}

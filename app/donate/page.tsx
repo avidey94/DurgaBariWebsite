@@ -38,12 +38,6 @@ const donorTiers = {
       recognition:
         "Patron plaque listing; acknowledgement during annual Durga Puja; invitations to cultural appreciation events.",
     },
-    {
-      title: "Patron Member",
-      contribution: "$5,000-$9,999",
-      recognition:
-        "Patron roll at temple/website; priority invitations to programs. Reserve Seat at Front Row in all programs.",
-    },
   ],
   bn: [
     {
@@ -63,12 +57,6 @@ const donorTiers = {
       contribution: "$10,000-$14,999",
       recognition:
         "Patron ফলকে নাম; বার্ষিক দুর্গাপূজায় স্বীকৃতি; সাংস্কৃতিক সংবর্ধনা অনুষ্ঠানে আমন্ত্রণ।",
-    },
-    {
-      title: "প্যাট্রন সদস্য",
-      contribution: "$5,000-$9,999",
-      recognition:
-        "মন্দির/ওয়েবসাইটে Patron রোলে নাম; প্রোগ্রামে অগ্রাধিকারমূলক আমন্ত্রণ; বড় প্রোগ্রামে সামনের সারির সংরক্ষিত আসন।",
     },
   ],
 } as const;

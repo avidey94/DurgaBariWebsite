@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { env } from "@/lib/env";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
 const upcomingEvents = {
@@ -36,6 +37,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
+  const youtubeLiveEmbedUrl = env.youtubeLiveEmbedUrl.trim();
 
   return (
     <section className="pb-16">
@@ -120,6 +122,39 @@ export default async function Home({ searchParams }: HomePageProps) {
           </button>
         </aside>
       </div>
+
+      <section className="bg-[#f5f1e8] px-6 py-10 md:px-10">
+        <div className="mx-auto w-full max-w-6xl rounded-md border-[3px] border-[var(--db-border-strong)] bg-white p-4 shadow-[inset_0_1px_0_#fff,0_2px_0_#173522] md:p-5">
+          <h2 className="font-serif text-3xl font-bold leading-tight text-[#132a1f] md:text-4xl">
+            {isBn ? "লাইভ সম্প্রচার" : "Live Stream"}
+          </h2>
+          <p className="mt-2 text-base text-[#35513d] md:text-lg">
+            {isBn
+              ? "মন্দির অনুষ্ঠান ও সম্প্রচারের লাইভ ভিডিও এখানে দেখুন।"
+              : "Watch temple events and broadcasts live here."}
+          </p>
+
+          {youtubeLiveEmbedUrl ? (
+            <div className="mt-4 overflow-hidden rounded-md border-[2px] border-[var(--db-border)] bg-black">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  src={youtubeLiveEmbedUrl}
+                  title={isBn ? "দুর্গাবাড়ি লাইভ স্ট্রিম" : "Durgabari live stream"}
+                  className="absolute inset-0 h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 rounded-md border border-dashed border-[#3d6148] bg-[#eef4ec] px-3 py-2 text-sm text-[#35513d]">
+              {isBn
+                ? "লাইভ স্ট্রিম চালু করতে NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL সেট করুন।"
+                : "Set NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL to enable the livestream player."}
+            </p>
+          )}
+        </div>
+      </section>
 
       <div className="bg-[#efefef] px-6 py-16">
         <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-3">

@@ -21,6 +21,7 @@ export const env = {
   googleSheetGid: process.env.GOOGLE_SHEETS_GID ?? "0",
   googleServiceEmail: process.env.GOOGLE_SHEETS_CLIENT_EMAIL ?? "",
   googlePrivateKey: process.env.GOOGLE_SHEETS_PRIVATE_KEY ?? "",
+  youtubeLiveEmbedUrl: process.env.NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL ?? "",
 };
 
 export const isSupabaseConfigured =

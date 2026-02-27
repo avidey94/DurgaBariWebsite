@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { CmsEditableList } from "@/components/cms/CmsEditableList";
 import { getCurrentUser } from "@/lib/auth/session";
+import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
@@ -83,10 +85,16 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "our-sacred-journey-from-vision-to-temple-bn" : "our-sacred-journey-from-vision-to-temple";
-  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const waysToGiveSlug = `${cmsSlug}-ways-to-give`;
+  const [user, cmsIntro, cmsWaysToGive] = await Promise.all([
+    getCurrentUser(),
+    getCmsPageContent(cmsSlug),
+    getCmsPageContent(waysToGiveSlug),
+  ]);
   const journeyIntroDefaultHtml = isBn
     ? "<p><em>দিব্য শক্তি ও সাংস্কৃতিক উৎকর্ষের এক পবিত্র আবাস</em></p><p>দুর্গা বাড়ি একটি কমিউনিটি-নেতৃত্বাধীন উদ্যোগ, যার লক্ষ্য উপাসনা, শিক্ষা এবং বাঙালি সাংস্কৃতিক উৎকর্ষের কেন্দ্র গড়া।</p>"
     : "<p><em>A Sacred Abode of Divine Energy and Cultural Excellence</em></p><p>Durga Bari is a community-led initiative to establish a center of worship, learning, and Bengali cultural excellence.</p>";
+  const waysToGiveItems = parseCmsListContent(cmsWaysToGive?.content_html, [...waysToGive[lang]]);
 
   return (
     <section className="mx-auto max-w-[1120px] px-4 py-6 md:py-8">
@@ -128,16 +136,12 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
           </Module>
 
           <Module title={isBn ? "দান করার উপায়" : "Ways to Give"}>
-            <ul className="space-y-1">
-              {waysToGive[lang].map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span aria-hidden="true" className="font-bold text-[#9b1616]">
-                    ▸
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+            <CmsEditableList
+              slug={waysToGiveSlug}
+              initialItems={waysToGiveItems}
+              isAdmin={Boolean(user?.isAdmin)}
+              emptyItemLabel={isBn ? "দানের উপায়" : "Way to give"}
+            />
 
             <div className="mt-4 border-[2px] border-[#3d6148] bg-[#dde9de] p-3">
               <p>

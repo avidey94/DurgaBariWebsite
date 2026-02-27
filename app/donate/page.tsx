@@ -2,7 +2,9 @@ import Link from "next/link";
 
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { CmsEditableList } from "@/components/cms/CmsEditableList";
 import { getCurrentUser } from "@/lib/auth/session";
+import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
@@ -92,10 +94,16 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "donate-bn" : "donate";
-  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const waysToGiveSlug = `${cmsSlug}-ways-to-give`;
+  const [user, cmsIntro, cmsWaysToGive] = await Promise.all([
+    getCurrentUser(),
+    getCmsPageContent(cmsSlug),
+    getCmsPageContent(waysToGiveSlug),
+  ]);
   const donateIntroDefaultHtml = isBn
     ? "<p>দুর্গা বাড়ি একটি কমিউনিটি-নেতৃত্বাধীন উদ্যোগ, যার লক্ষ্য উপাসনা, শিক্ষা এবং বাঙালি সাংস্কৃতিক উৎকর্ষের কেন্দ্র গড়া। আজকের আপনার উদারতা বীজ-তহবিল থেকে পূর্ণ মন্দিরের পথ আলোকিত করবে।</p>"
     : "<p>Durga Bari is a community-led initiative to establish a center of worship, learning, and Bengali cultural excellence. Your generosity today lights the path from seed funding to sanctum.</p>";
+  const waysToGiveItems = parseCmsListContent(cmsWaysToGive?.content_html, [...waysToGive[lang]]);
 
   return (
     <ContentPageFrame>
@@ -128,14 +136,12 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
         </ContentModule>
 
         <ContentModule title={isBn ? "দান করার উপায়" : "Ways to Give"}>
-          <ul className="space-y-1">
-            {waysToGive[lang].map((item) => (
-              <li key={item} className="flex gap-2">
-                <span className="text-[#9b1616]">▸</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <CmsEditableList
+            slug={waysToGiveSlug}
+            initialItems={waysToGiveItems}
+            isAdmin={Boolean(user?.isAdmin)}
+            emptyItemLabel={isBn ? "দানের উপায়" : "Way to give"}
+          />
 
           <div className="mt-3 border-[2px] border-[#3d6148] bg-[#dde9de] p-3">
             <p>

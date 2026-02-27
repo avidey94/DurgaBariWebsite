@@ -1,4 +1,5 @@
 import { createBrowserClient, createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
@@ -89,4 +90,14 @@ export const updateSupabaseSession = async (request: NextRequest) => {
   await supabase.auth.getUser();
 
   return response;
+};
+
+export const createServiceRoleSupabaseClient = () => {
+  if (!env.supabaseUrl || !env.supabaseServiceRoleKey) {
+    return null;
+  }
+
+  return createClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 };

@@ -119,7 +119,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                Version 1.7
+                Version 1.8
               </p>
             </div>
           </Link>

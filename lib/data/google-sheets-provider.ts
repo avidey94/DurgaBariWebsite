@@ -225,11 +225,16 @@ const toFamilyProfile = (headers: string[], rowValues: string[]): FamilyProfile 
   const email = (rowValues[0] ?? "").toLowerCase();
   const nameIndex = headers.findIndex((header) => header.toLowerCase() === "name");
   const totalDuesPaidIndex = headers.findIndex((header) => header.trim().toLowerCase() === "donation");
+  const isAdminIndex = headers.findIndex(
+    (header) => header.trim().toLowerCase().replace(/\s+/g, "") === "isadmin",
+  );
   const familyName = rowValues[nameIndex] || email;
   const totalDuesPaidFromHeader =
     totalDuesPaidIndex >= 0 ? (rowValues[totalDuesPaidIndex] ?? "") : "";
-  const totalDuesPaidFromColumnC = rowValues[2] ?? "";
-  const totalDuesPaid = (totalDuesPaidFromHeader || totalDuesPaidFromColumnC).trim();
+  const totalDuesPaidFromColumnD = rowValues[3] ?? "";
+  const totalDuesPaid = (totalDuesPaidFromHeader || totalDuesPaidFromColumnD).trim();
+  const isAdminRaw = isAdminIndex >= 0 ? rowValues[isAdminIndex] ?? "" : rowValues[2] ?? "";
+  const isAdmin = isAdminRaw.trim().toLowerCase() === "yes";
 
   const profileColumns = headers
     .map((header, index) => ({ header, value: rowValues[index] ?? "" }))
@@ -266,6 +271,7 @@ const toFamilyProfile = (headers: string[], rowValues: string[]): FamilyProfile 
     primaryEmail: email,
     foundingFamily: true,
     totalDuesPaid,
+    isAdmin,
     donations: buildDonationRecords(rowValues, headers, email),
     duesMonths: fullDuesMonths,
     profileColumns,

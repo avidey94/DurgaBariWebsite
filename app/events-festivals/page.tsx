@@ -1,4 +1,7 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
+import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 
 const festivalSections = {
@@ -24,6 +27,11 @@ export default async function EventsFestivalsPage({ searchParams }: EventsFestiv
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
+  const cmsSlug = lang === "bn" ? "events-festivals-bn" : "events-festivals";
+  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const eventsIntroDefaultHtml = isBn
+    ? "<p>দুর্গা বাড়ি একদিন এমন প্রাণবন্ত কেন্দ্র হবে যেখানে আমরা সবাই এক পরিবার হিসেবে আমাদের ঐতিহ্য উদযাপন করব, দেবদেবীর আরাধনা করব এবং সংস্কৃতির আনন্দ ভাগ করে নেব।</p>"
+    : "<p>Durga Bari will one day be a vibrant center where we come together as one family to celebrate our traditions, honor our deities, and rejoice in our cultural heritage.</p>";
 
   return (
     <ContentPageFrame>
@@ -35,11 +43,12 @@ export default async function EventsFestivalsPage({ searchParams }: EventsFestiv
 
       <div className="mt-4 space-y-4">
         <ContentModule title={isBn ? "উদযাপন নিয়ে আমাদের ভাবনা" : "Our Vision for Celebrations"}>
-          <p>
-            {isBn
-              ? "দুর্গা বাড়ি একদিন এমন প্রাণবন্ত কেন্দ্র হবে যেখানে আমরা সবাই এক পরিবার হিসেবে আমাদের ঐতিহ্য উদযাপন করব, দেবদেবীর আরাধনা করব এবং সংস্কৃতির আনন্দ ভাগ করে নেব।"
-              : "Durga Bari will one day be a vibrant center where we come together as one family to celebrate our traditions, honor our deities, and rejoice in our cultural heritage."}
-          </p>
+          <CmsEditableBlock
+            slug={cmsSlug}
+            initialTitle={isBn ? "উদযাপন নিয়ে আমাদের ভাবনা" : "Our Vision for Celebrations"}
+            initialHtml={cmsIntro?.content_html || eventsIntroDefaultHtml}
+            isAdmin={Boolean(user?.isAdmin)}
+          />
 
           <p className="mt-2">
             {isBn

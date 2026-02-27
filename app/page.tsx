@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getCmsPageContent } from "@/lib/cms/page-content";
 import { env } from "@/lib/env";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
@@ -38,6 +41,11 @@ export default async function Home({ searchParams }: HomePageProps) {
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const youtubeLiveEmbedUrl = env.youtubeLiveEmbedUrl.trim();
+  const cmsSlug = lang === "bn" ? "home-bn" : "home";
+  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const homeIntroDefaultHtml = isBn
+    ? "<p>উপাসনা, শিক্ষা, স্বেচ্ছাসেবা এবং স্বচ্ছ দানের তথ্য - সব এক প্ল্যাটফর্মে।</p>"
+    : "<p>Worship, education, volunteerism, and transparent donation records in one unified platform.</p>";
 
   return (
     <section className="pb-16">
@@ -78,11 +86,14 @@ export default async function Home({ searchParams }: HomePageProps) {
             <h1 className="mt-4 max-w-3xl break-words font-serif text-[clamp(2.2rem,13.5vw,3.75rem)] leading-[1.02]">
               {isBn ? "দুর্গা বাড়ি কমিউনিটি ও সাংস্কৃতিক কেন্দ্র" : "Durga Bari Community and Cultural Center"}
             </h1>
-            <p className="mt-5 max-w-2xl text-xl text-amber-50/95">
-              {isBn
-                ? "উপাসনা, শিক্ষা, স্বেচ্ছাসেবা এবং স্বচ্ছ দানের তথ্য - সব এক প্ল্যাটফর্মে।"
-                : "Worship, education, volunteerism, and transparent donation records in one unified platform."}
-            </p>
+            <div className="mt-5 max-w-2xl text-xl text-amber-50/95">
+              <CmsEditableBlock
+                slug={cmsSlug}
+                initialTitle={isBn ? "হোম ইন্ট্রো" : "Home Intro"}
+                initialHtml={cmsIntro?.content_html || homeIntroDefaultHtml}
+                isAdmin={Boolean(user?.isAdmin)}
+              />
+            </div>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href={withLang("/portal", lang)}

@@ -22,6 +22,7 @@ export interface FamilyProfile {
   primaryEmail: string;
   foundingFamily: boolean;
   totalDuesPaid?: string;
+  isAdmin?: boolean;
   donations: DonationRecord[];
   duesMonths?: Array<{
     month: string;
@@ -35,8 +36,10 @@ export interface FamilyProfile {
 }
 
 export interface PortalUser {
+  id?: string;
   email: string;
   role: Role;
+  isAdmin: boolean;
   authSource: "dev-bypass" | "supabase";
 }
 

@@ -43,7 +43,7 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
         <p className="mt-2 text-sm text-slate-600">
           {isBn ? "লগইন করেছেন" : "Signed in as"} {user.email}
         </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">{isBn ? "পরিবারের নাম" : "Family Name"}</p>
             <p className="text-lg font-semibold text-slate-900">{family.familyName}</p>
@@ -57,6 +57,12 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">{isBn ? "মোট পরিশোধিত" : "Total Dues Paid"}</p>
             <p className="text-lg font-semibold text-slate-900">{family.totalDuesPaid || "-"}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-slate-500">{isBn ? "অ্যাডমিন" : "Is Admin"}</p>
+            <p className="text-lg font-semibold text-slate-900">
+              {user.isAdmin ? (isBn ? "হ্যাঁ" : "Yes") : isBn ? "না" : "No"}
+            </p>
           </div>
         </div>
       </header>

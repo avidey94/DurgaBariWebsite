@@ -1,4 +1,7 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
+import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getCmsPageContent } from "@/lib/cms/page-content";
 import { ActiveDonorsSection, type ActiveDonor } from "@/components/active-donors-section";
 import { dataProvider } from "@/lib/data";
 import { env } from "@/lib/env";
@@ -240,9 +243,18 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
+  const cmsSlug = lang === "bn" ? "sponsors-bn" : "sponsors";
   const query = params.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
-  const [families, activeDonors] = await Promise.all([dataProvider.getAllFamilies({ query }), getActiveDonors()]);
+  const [families, activeDonors, user, cmsIntro] = await Promise.all([
+    dataProvider.getAllFamilies({ query }),
+    getActiveDonors(),
+    getCurrentUser(),
+    getCmsPageContent(cmsSlug),
+  ]);
+  const sponsorIntroDefaultHtml = isBn
+    ? "<p>এই পৃষ্ঠায় দানকারী সদস্যদের মোট অবদান অনুযায়ী বিভিন্ন স্পন্সর স্তরে দেখানো হয়।</p>"
+    : "<p>This page shows members who have donated and groups them into sponsor tiers using the total contribution amount from your source data.</p>";
 
   const members: SponsorMember[] = families
     .map((family) => ({
@@ -291,11 +303,12 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
 
       <div className="mt-4 space-y-4">
         <ContentModule title={isBn ? "স্পন্সর স্তর" : "Sponsor Tiers"}>
-          <p>
-            {isBn
-              ? "এই পৃষ্ঠায় দানকারী সদস্যদের মোট অবদান অনুযায়ী বিভিন্ন স্পন্সর স্তরে দেখানো হয়।"
-              : "This page shows members who have donated and groups them into sponsor tiers using the total contribution amount from your source data."}
-          </p>
+          <CmsEditableBlock
+            slug={cmsSlug}
+            initialTitle={isBn ? "স্পন্সর স্তর" : "Sponsor Tiers"}
+            initialHtml={cmsIntro?.content_html || sponsorIntroDefaultHtml}
+            isAdmin={Boolean(user?.isAdmin)}
+          />
           <p className="mt-2 border-l-4 border-[#9b1616] bg-[#fff4e7] px-3 py-2">
             <strong>{isBn ? "দ্রষ্টব্য:" : "Note:"}</strong>{" "}
             {isBn
@@ -386,8 +399,8 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
             </p>
             <p className="mt-1 text-sm text-[#35513d]">
               {isBn
-                ? "যেসব পরিবার সাইন আপ করেছেন কিন্তু এখনও পেমেন্ট করেননি (Column C ফাঁকা)।"
-                : "Families who signed up but have not made a payment yet (Column C is blank)."}
+                ? "যেসব পরিবার সাইন আপ করেছেন কিন্তু এখনও পেমেন্ট করেননি (Column D ফাঁকা)।"
+                : "Families who signed up but have not made a payment yet (Column D is blank)."}
             </p>
             {promisedFounders.length === 0 ? (
               <p className="mt-2 text-[#35513d]">

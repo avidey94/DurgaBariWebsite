@@ -1,4 +1,7 @@
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
+import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 
 interface ContactPageProps {
@@ -9,6 +12,11 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
+  const cmsSlug = lang === "bn" ? "contact-bn" : "contact";
+  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const contactIntroDefaultHtml = isBn
+    ? "<p>প্রশ্ন, স্বেচ্ছাসেবক হিসেবে আগ্রহ এবং দান সংক্রান্ত সহায়তার জন্য নিচের অফিসিয়াল ফর্মটি ব্যবহার করুন।</p>"
+    : "<p>Use the official form below for questions, volunteering interest, and donation support.</p>";
 
   return (
     <ContentPageFrame>
@@ -19,11 +27,14 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
       />
       <div className="mt-4">
         <ContentModule title={isBn ? "যোগাযোগ ফর্ম" : "Contact Form"}>
-          <p className="mb-3">
-            {isBn
-              ? "প্রশ্ন, স্বেচ্ছাসেবক হিসেবে আগ্রহ এবং দান সংক্রান্ত সহায়তার জন্য নিচের অফিসিয়াল ফর্মটি ব্যবহার করুন।"
-              : "Use the official form below for questions, volunteering interest, and donation support."}
-          </p>
+          <div className="mb-3">
+            <CmsEditableBlock
+              slug={cmsSlug}
+              initialTitle={isBn ? "যোগাযোগ ফর্ম" : "Contact Form"}
+              initialHtml={cmsIntro?.content_html || contactIntroDefaultHtml}
+              isAdmin={Boolean(user?.isAdmin)}
+            />
+          </div>
           <div className="border-[2px] border-[var(--db-border)] bg-white p-2">
             <iframe
               title={isBn ? "দুর্গা বাড়ি যোগাযোগ ফর্ম" : "Durga Bari Contact Form"}

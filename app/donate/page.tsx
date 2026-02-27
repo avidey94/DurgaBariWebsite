@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
+import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
 const waysToGive = {
@@ -88,6 +91,11 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
+  const cmsSlug = lang === "bn" ? "donate-bn" : "donate";
+  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const donateIntroDefaultHtml = isBn
+    ? "<p>দুর্গা বাড়ি একটি কমিউনিটি-নেতৃত্বাধীন উদ্যোগ, যার লক্ষ্য উপাসনা, শিক্ষা এবং বাঙালি সাংস্কৃতিক উৎকর্ষের কেন্দ্র গড়া। আজকের আপনার উদারতা বীজ-তহবিল থেকে পূর্ণ মন্দিরের পথ আলোকিত করবে।</p>"
+    : "<p>Durga Bari is a community-led initiative to establish a center of worship, learning, and Bengali cultural excellence. Your generosity today lights the path from seed funding to sanctum.</p>";
 
   return (
     <ContentPageFrame>
@@ -103,11 +111,12 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
 
       <div className="mt-4 space-y-4">
         <ContentModule title={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}>
-          <p>
-            {isBn
-              ? "দুর্গা বাড়ি একটি কমিউনিটি-নেতৃত্বাধীন উদ্যোগ, যার লক্ষ্য উপাসনা, শিক্ষা এবং বাঙালি সাংস্কৃতিক উৎকর্ষের কেন্দ্র গড়া। আজকের আপনার উদারতা বীজ-তহবিল থেকে পূর্ণ মন্দিরের পথ আলোকিত করবে।"
-              : "Durga Bari is a community-led initiative to establish a center of worship, learning, and Bengali cultural excellence. Your generosity today lights the path from seed funding to sanctum."}
-          </p>
+          <CmsEditableBlock
+            slug={cmsSlug}
+            initialTitle={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}
+            initialHtml={cmsIntro?.content_html || donateIntroDefaultHtml}
+            isAdmin={Boolean(user?.isAdmin)}
+          />
           <p className="mt-2 border-l-4 border-[var(--db-brand)] bg-[#edf3ea] px-3 py-2">
             <strong>{isBn ? "এখনই অঙ্গীকার করতে চান?" : "Ready to pledge now?"}</strong>{" "}
             {isBn ? "ইমেইল করুন" : "Email"} <strong>info@thedurgacenter.org</strong> {isBn ? "অথবা যোগাযোগ ফর্ম ব্যবহার করুন:" : "or use the contact form:"}{" "}

@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
 const waysToGive = {
@@ -79,6 +82,11 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
+  const cmsSlug = lang === "bn" ? "our-sacred-journey-from-vision-to-temple-bn" : "our-sacred-journey-from-vision-to-temple";
+  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const journeyIntroDefaultHtml = isBn
+    ? "<p><em>দিব্য শক্তি ও সাংস্কৃতিক উৎকর্ষের এক পবিত্র আবাস</em></p><p>দুর্গা বাড়ি একটি কমিউনিটি-নেতৃত্বাধীন উদ্যোগ, যার লক্ষ্য উপাসনা, শিক্ষা এবং বাঙালি সাংস্কৃতিক উৎকর্ষের কেন্দ্র গড়া।</p>"
+    : "<p><em>A Sacred Abode of Divine Energy and Cultural Excellence</em></p><p>Durga Bari is a community-led initiative to establish a center of worship, learning, and Bengali cultural excellence.</p>";
 
   return (
     <section className="mx-auto max-w-[1120px] px-4 py-6 md:py-8">
@@ -105,18 +113,12 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
 
         <div className="mt-4 space-y-4">
           <Module title={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}>
-            <p>
-              <em>
-                {isBn
-                  ? "দিব্য শক্তি ও সাংস্কৃতিক উৎকর্ষের এক পবিত্র আবাস"
-                  : "A Sacred Abode of Divine Energy and Cultural Excellence"}
-              </em>
-            </p>
-            <p className="mt-2">
-              {isBn
-                ? "দুর্গা বাড়ি একটি কমিউনিটি-নেতৃত্বাধীন উদ্যোগ, যার লক্ষ্য উপাসনা, শিক্ষা এবং বাঙালি সাংস্কৃতিক উৎকর্ষের কেন্দ্র গড়া।"
-                : "Durga Bari is a community-led initiative to establish a center of worship, learning, and Bengali cultural excellence."}
-            </p>
+            <CmsEditableBlock
+              slug={cmsSlug}
+              initialTitle={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}
+              initialHtml={cmsIntro?.content_html || journeyIntroDefaultHtml}
+              isAdmin={Boolean(user?.isAdmin)}
+            />
             <p className="mt-2 border-l-4 border-[var(--db-brand)] bg-[#edf3ea] px-3 py-2">
               <strong>{isBn ? "এখনই অঙ্গীকার করতে চান?" : "Ready to pledge now?"}</strong> Email <strong>info@thedurgacenter.org</strong> {isBn ? "অথবা যোগাযোগ ফর্ম ব্যবহার করুন:" : "or use the contact form:"}
               <Link href={withLang("/contact", lang)} className="ml-1 font-semibold underline">

@@ -105,12 +105,12 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
               ॐ
             </div>
             <div className="min-w-0">
-              <h1 className="break-words font-serif text-[clamp(2.2rem,13.5vw,3.75rem)] font-bold leading-[1.02] text-[#132a1f]">
+              <h1 className="break-words font-serif text-[clamp(1.9rem,9.6vw,3.35rem)] font-bold leading-[1.03] text-[#132a1f]">
                 {isBn
                   ? "আমাদের পবিত্র যাত্রা: ভাবনা থেকে মন্দির"
                   : "Our Sacred Journey: From Vision to Temple"}
               </h1>
-              <p className="mt-2 text-[clamp(1.125rem,5.1vw,1.25rem)] font-semibold leading-snug text-[#223a2d]">
+              <p className="mt-2 text-[clamp(1rem,4.1vw,1.2rem)] font-semibold leading-snug text-[#223a2d]">
                 {isBn
                   ? "দুর্গা বাড়ি গড়তে হাতে হাত মিলান - আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র"
                   : "Join Hands to Build Durga Bari - Center for Spiritual and Cultural Excellence"}

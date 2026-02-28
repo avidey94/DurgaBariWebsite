@@ -83,6 +83,8 @@ export function SiteHeader({ user }: SiteHeaderProps) {
     const params = new URLSearchParams(window.location.search);
     setLanguage(resolveLanguage(params.get("lang") ?? undefined));
     setQueryString(params.toString());
+    setMenuOpen(false);
+    setAccountOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -106,13 +108,129 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   return (
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
       <div className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-3 py-3">
-        <div className="mx-auto grid max-w-[1240px] gap-3 md:grid-cols-[auto_1fr_auto] md:items-center">
+        <div className="mx-auto max-w-[1240px] lg:hidden">
+          <div className="mb-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              aria-controls="main-site-nav"
+              aria-expanded={menuOpen}
+              aria-label={text.menu}
+              className="inline-flex h-[38px] w-[38px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)]"
+            >
+              <span className="flex flex-col gap-1">
+                <span className="block h-[2px] w-4 bg-[var(--db-text)]" />
+                <span className="block h-[2px] w-4 bg-[var(--db-text)]" />
+                <span className="block h-[2px] w-4 bg-[var(--db-text)]" />
+              </span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href={toggleLanguageHref}
+                onClick={() => {
+                  setLanguage((current) => (current === "en" ? "bn" : "en"));
+                }}
+                className="inline-flex h-[38px] min-w-[86px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
+              >
+                {text.languageLabel}
+              </Link>
+
+              {user ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label={text.profileLabel}
+                    aria-expanded={accountOpen}
+                    aria-haspopup="menu"
+                    onClick={() => setAccountOpen((value) => !value)}
+                    className="inline-flex h-[38px] w-[38px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      width="22"
+                      height="22"
+                      style={{ display: "block" }}
+                      fill="none"
+                      stroke="#1f4f32"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M20 21a8 8 0 1 0-16 0" />
+                      <circle cx="12" cy="8" r="4" />
+                    </svg>
+                  </button>
+                  <div
+                    className={`${accountOpen ? "block" : "hidden"} absolute right-0 top-full z-30 w-64 pt-2`}
+                    role="menu"
+                  >
+                    <div className="border-[2px] border-[var(--db-border)] bg-white p-3 text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)]">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--db-text-soft)]">{text.account}</p>
+                      <p className="mt-1 text-base font-semibold text-[var(--db-text)]">{displayName}</p>
+                      <p className="mt-1 text-xs text-[var(--db-text-soft)]">
+                        {text.signedInAs} {user.email}
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Link
+                          href={withLang("/portal", language)}
+                          onClick={() => setAccountOpen(false)}
+                          className="inline-flex w-full items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 font-bold text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                        >
+                          {text.memberPortal}
+                        </Link>
+                        <form action="/api/auth/logout" method="post">
+                          <button
+                            type="submit"
+                            className="inline-flex w-full items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 font-bold text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                          >
+                            {text.signOut}
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  href={withLang("/login", language)}
+                  aria-label={text.login}
+                  className="inline-flex h-[38px] w-[38px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    width="22"
+                    height="22"
+                    style={{ display: "block" }}
+                    fill="none"
+                    stroke="#1f4f32"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 21a8 8 0 1 0-16 0" />
+                    <circle cx="12" cy="8" r="4" />
+                  </svg>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto grid max-w-[1240px] gap-3 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+          <div className="hidden lg:block">
+          </div>
+
           <Link href={withLang("/", language)} className="flex min-w-0 items-center gap-3 text-left">
             <div className="grid h-12 w-12 place-items-center border-[2px] border-[#5e2600] bg-[#f6c55a] text-[26px] text-[var(--db-danger)] shadow-[0_2px_0_#4a1c00] sm:h-16 sm:w-16 sm:border-[3px] sm:text-[32px]">
               ॐ
             </div>
             <div className="min-w-0">
-              <h1 className="break-words font-serif text-[clamp(2rem,9.4vw,3rem)] font-bold leading-[0.95] tracking-tight text-[#111]">
+              <h1 className="break-words font-serif text-[clamp(1.6rem,7.2vw,2.6rem)] font-bold leading-[0.98] tracking-tight text-[#111]">
                 {text.siteTitle}
               </h1>
               <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--db-text-soft)] sm:text-[13px] sm:tracking-[0.12em]">
@@ -144,7 +262,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
             </div>
           </form>
 
-          <div className="flex flex-wrap items-center gap-2 md:justify-self-end">
+          <div className="hidden flex-wrap items-center gap-2 lg:flex lg:justify-self-end">
             <Link
               href={toggleLanguageHref}
               onClick={() => {
@@ -241,15 +359,6 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               </Link>
             )}
 
-            <button
-              type="button"
-              onClick={() => setMenuOpen((value) => !value)}
-              aria-controls="main-site-nav"
-              aria-expanded={menuOpen}
-              className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white sm:flex-none lg:hidden"
-            >
-              {text.menu}
-            </button>
           </div>
         </div>
       </div>
@@ -257,7 +366,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
       <nav
         id="main-site-nav"
         aria-label="Main site navigation"
-        className={`${menuOpen ? "block" : "hidden"} border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2 lg:block`}
+        className="hidden border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2 lg:block"
       >
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
           <details className="relative border-[2px] border-[var(--db-border)] bg-white">
@@ -270,6 +379,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                   <li key={item.label}>
                     <Link
                       href={withLang(item.href, language)}
+                      onClick={() => setMenuOpen(false)}
                       className="block border border-transparent px-2 py-1.5 text-sm font-medium text-[#111] hover:border-[var(--db-border-soft)] hover:bg-[var(--db-muted)]"
                     >
                       • {item.label}
@@ -283,6 +393,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
             <Link
               key={item.label}
               href={withLang(item.href, language)}
+              onClick={() => setMenuOpen(false)}
               className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
             >
               {item.label}
@@ -291,6 +402,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           {user?.role === "admin" && (
             <Link
               href={withLang("/admin", language)}
+              onClick={() => setMenuOpen(false)}
               className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
             >
               {text.admin}
@@ -298,6 +410,56 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           )}
         </div>
       </nav>
+
+      <div className={`fixed inset-0 z-40 bg-black/35 transition-opacity duration-200 lg:hidden ${menuOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setMenuOpen(false)} />
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-[82%] max-w-[320px] border-r-[3px] border-[var(--db-border-strong)] bg-[var(--db-panel)] p-3 shadow-[6px_0_18px_rgba(0,0,0,0.2)] transition-transform duration-200 lg:hidden ${
+          menuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        aria-label={`${text.menu} panel`}
+      >
+        <div className="mb-3 flex items-center justify-between border-b-[2px] border-[var(--db-border)] pb-2">
+          <div className="flex items-center gap-2">
+            <div className="grid h-9 w-9 place-items-center border-[2px] border-[#6b2a00] bg-[#f3b53a] text-[22px] text-[#8a1a1a]">
+              ॐ
+            </div>
+            <p className="text-sm font-bold uppercase tracking-[0.08em] text-[#173724]">{text.menu}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            className="inline-flex h-8 w-8 items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-lg leading-none text-[#173724]"
+            aria-label="Close menu"
+          >
+            ×
+          </button>
+        </div>
+
+        <ul className="space-y-2">
+          {text.navItems.map((item) => (
+            <li key={`sheet-${item.label}`}>
+              <Link
+                href={withLang(item.href, language)}
+                onClick={() => setMenuOpen(false)}
+                className="block border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+          {user?.role === "admin" ? (
+            <li>
+              <Link
+                href={withLang("/admin", language)}
+                onClick={() => setMenuOpen(false)}
+                className="block border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
+              >
+                {text.admin}
+              </Link>
+            </li>
+          ) : null}
+        </ul>
+      </aside>
     </header>
   );
 }

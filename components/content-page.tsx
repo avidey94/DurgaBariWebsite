@@ -40,10 +40,10 @@ export function ContentHero({
           {kicker ? (
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#5b3d16] sm:text-[11px] sm:tracking-[0.2em]">{kicker}</p>
           ) : null}
-          <h1 className="mt-1 break-words font-serif text-[clamp(2.2rem,13.5vw,3.75rem)] font-bold leading-[1.02] text-[#132a1f]">
+          <h1 className="mt-1 break-words font-serif text-[clamp(1.9rem,9.6vw,3.35rem)] font-bold leading-[1.03] text-[#132a1f]">
             {title}
           </h1>
-          <p className="mt-2 text-[clamp(1.125rem,5.1vw,1.25rem)] font-semibold leading-snug text-[#223a2d]">{subtitle}</p>
+          <p className="mt-2 text-[clamp(1rem,4.1vw,1.2rem)] font-semibold leading-snug text-[#223a2d]">{subtitle}</p>
         </div>
       </div>
     </header>

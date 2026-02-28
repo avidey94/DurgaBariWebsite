@@ -3,6 +3,7 @@
 import Link from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { useEffect } from "react";
 
 interface InlineRichEditorProps {
   value: string;
@@ -33,6 +34,16 @@ export function InlineRichEditor({ value, onChange }: InlineRichEditorProps) {
       },
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const currentHtml = editor.getHTML();
+    if (currentHtml === value) return;
+
+    // Keep TipTap content in sync when parent state changes (e.g. Load/Rollback).
+    editor.commands.setContent(value, { emitUpdate: false });
+  }, [editor, value]);
 
   if (!editor) return null;
 

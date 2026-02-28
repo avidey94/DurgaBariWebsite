@@ -72,7 +72,7 @@ export function NavBar({ user }: NavBarProps) {
               ॐ
             </div>
             <div>
-              <p className="font-serif text-4xl leading-none text-[#151515]">Durgabari Society</p>
+              <p className="font-serif text-4xl leading-none text-[#151515]">Durgabari Bay Area</p>
               <p className="mt-1 text-sm tracking-[0.12em] text-[#a30000]">COMMUNITY • CULTURE • DEVOTION</p>
             </div>
           </div>

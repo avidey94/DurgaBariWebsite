@@ -6,8 +6,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Durgabari Donation Portal",
-  description: "Secure donor portal for Durgabari families.",
+  title: "Durgabari Bay Area",
+  description: "Community, culture, and devotion for Durgabari Bay Area.",
 };
 
 export default async function RootLayout({

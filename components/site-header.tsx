@@ -25,7 +25,7 @@ const copy = {
     ],
     login: "Log in",
     memberPortal: "Member Portal",
-    siteTitle: "Durgabari Society",
+    siteTitle: "Durgabari Bay Area",
     siteTagline: "Community • Culture • Devotion",
     searchLabel: "Search Durgabari site",
     searchPlaceholder: "Search notices, events, forms",
@@ -53,7 +53,7 @@ const copy = {
     ],
     login: "লগইন",
     memberPortal: "সদস্য পোর্টাল",
-    siteTitle: "দুর্গাবাড়ি সোসাইটি",
+    siteTitle: "দুর্গাবাড়ি বে এরিয়া",
     siteTagline: "কমিউনিটি • সংস্কৃতি • ভক্তি",
     searchLabel: "দুর্গাবাড়ি সাইটে খুঁজুন",
     searchPlaceholder: "নোটিশ, ইভেন্ট, ফর্ম খুঁজুন",
@@ -119,7 +119,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v1.9
+                v2.0
               </p>
             </div>
           </Link>

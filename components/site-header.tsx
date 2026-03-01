@@ -76,6 +76,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   const [queryString, setQueryString] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     // Next.js requires useSearchParams to be wrapped in Suspense; keep this
@@ -90,6 +91,29 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const updateViewport = () => {
+      setIsDesktop(mediaQuery.matches);
+    };
+
+    updateViewport();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", updateViewport);
+      return () => mediaQuery.removeEventListener("change", updateViewport);
+    }
+
+    mediaQuery.addListener(updateViewport);
+    return () => mediaQuery.removeListener(updateViewport);
+  }, []);
+
+  useEffect(() => {
+    if (isDesktop) {
+      setMenuOpen(false);
+    }
+  }, [isDesktop]);
 
   const text = copy[language];
   const displayName = user?.email?.split("@")[0] ?? text.guest;
@@ -108,7 +132,8 @@ export function SiteHeader({ user }: SiteHeaderProps) {
   return (
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
       <div className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-3 py-3">
-        <div className="mx-auto max-w-[1240px] lg:hidden">
+        {!isDesktop ? (
+        <div className="mx-auto max-w-[1240px]">
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
@@ -125,7 +150,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               </span>
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="mr-3 flex items-center gap-2 xl:mr-5">
               <Link
                 href={toggleLanguageHref}
                 onClick={() => {
@@ -220,8 +245,9 @@ export function SiteHeader({ user }: SiteHeaderProps) {
             </div>
           </div>
         </div>
+        ) : null}
 
-        <div className="mx-auto grid max-w-[1240px] gap-3 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+        <div className="mx-auto max-w-[1240px] space-y-3">
           <div className="hidden lg:block">
           </div>
 
@@ -237,12 +263,13 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v2.0
+                v2.1
               </p>
             </div>
           </Link>
 
-          <form role="search" className="md:justify-self-center">
+          {!isDesktop ? (
+          <form role="search">
             <label htmlFor="site-search" className="mb-1 block text-sm font-bold text-[var(--db-text)]">
               {text.searchLabel}
             </label>
@@ -261,14 +288,37 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               </button>
             </div>
           </form>
+          ) : null}
 
-          <div className="hidden flex-wrap items-center gap-2 lg:flex lg:justify-self-end">
+          {isDesktop ? (
+          <div className="mx-auto flex w-full max-w-[1120px] items-end justify-between gap-4">
+            <form role="search" className="w-full max-w-[520px]">
+              <label htmlFor="site-search-desktop" className="mb-1 block text-sm font-bold text-[var(--db-text)]">
+                {text.searchLabel}
+              </label>
+              <div className="flex w-full border-[2px] border-[var(--db-border)] bg-white">
+                <input
+                  id="site-search-desktop"
+                  type="search"
+                  placeholder={text.searchPlaceholder}
+                  className="w-full border-0 px-3 py-2 text-sm text-[#111] outline-none"
+                />
+                <button
+                  type="submit"
+                  className="border-l-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white hover:bg-[var(--db-brand-2)]"
+                >
+                  {text.searchButton}
+                </button>
+              </div>
+            </form>
+
+            <div className="flex items-center gap-2">
             <Link
               href={toggleLanguageHref}
               onClick={() => {
                 setLanguage((current) => (current === "en" ? "bn" : "en"));
               }}
-              className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2] sm:flex-none"
+              className="inline-flex h-[42px] min-w-[84px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
             >
               {text.languageLabel}
             </Link>
@@ -285,7 +335,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                   aria-expanded={accountOpen}
                   aria-haspopup="menu"
                 onClick={() => setAccountOpen((value) => !value)}
-                className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2] sm:flex-none"
+                className="inline-flex h-[42px] min-w-[84px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -338,7 +388,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
               <Link
                 href={withLang("/login", language)}
                 aria-label={text.login}
-                className="inline-flex h-[42px] min-w-[84px] flex-1 items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2] sm:flex-none"
+                className="inline-flex h-[42px] min-w-[84px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white text-[var(--db-text)] hover:bg-[#f2f2f2]"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -358,15 +408,17 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                 </svg>
               </Link>
             )}
-
+            </div>
           </div>
+          ) : null}
         </div>
       </div>
 
+      {isDesktop ? (
       <nav
         id="main-site-nav"
         aria-label="Main site navigation"
-        className="hidden border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2 lg:block"
+        className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2"
       >
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
           <details className="relative border-[2px] border-[var(--db-border)] bg-white">
@@ -410,10 +462,13 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           )}
         </div>
       </nav>
+      ) : null}
 
-      <div className={`fixed inset-0 z-40 bg-black/35 transition-opacity duration-200 lg:hidden ${menuOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setMenuOpen(false)} />
+      {!isDesktop ? (
+      <>
+      <div className={`fixed inset-0 z-40 bg-black/35 transition-opacity duration-200 ${menuOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setMenuOpen(false)} />
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[82%] max-w-[320px] border-r-[3px] border-[var(--db-border-strong)] bg-[var(--db-panel)] p-3 shadow-[6px_0_18px_rgba(0,0,0,0.2)] transition-transform duration-200 lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-[82%] max-w-[320px] border-r-[3px] border-[var(--db-border-strong)] bg-[var(--db-panel)] p-3 shadow-[6px_0_18px_rgba(0,0,0,0.2)] transition-transform duration-200 ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label={`${text.menu} panel`}
@@ -460,6 +515,8 @@ export function SiteHeader({ user }: SiteHeaderProps) {
           ) : null}
         </ul>
       </aside>
+      </>
+      ) : null}
     </header>
   );
 }

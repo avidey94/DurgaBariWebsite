@@ -8,6 +8,23 @@ interface AdminPageProps {
   searchParams: Promise<{ q?: string; lang?: string }>;
 }
 
+const annualDuesPerMemberCents = 120_000;
+
+const parseCurrencyToCents = (value?: string) => {
+  if (!value) return 0;
+  const normalized = value.replace(/[^\d.-]/g, "");
+  const amount = Number.parseFloat(normalized);
+  return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+};
+
+const formatCurrency = (amountCents: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amountCents / 100);
+
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
   const lang = resolveLanguage(params.lang);
@@ -21,8 +38,29 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     redirect("/portal");
   }
 
-  const query = params.q?.trim();
-  const families = await dataProvider.getAllFamilies({ query });
+  const query = params.q?.trim() ?? "";
+  const normalizedQuery = query.toLowerCase();
+  const allFamilies = await dataProvider.getAllFamilies();
+  const families =
+    normalizedQuery.length === 0
+      ? allFamilies
+      : allFamilies.filter(
+          (family) =>
+            family.familyName.toLowerCase().includes(normalizedQuery) ||
+            family.primaryEmail.toLowerCase().includes(normalizedQuery),
+        );
+
+  const membersCount = allFamilies.length;
+  const collectedTotalCents = allFamilies.reduce(
+    (sum, family) => sum + Math.max(0, parseCurrencyToCents(family.totalDuesPaid)),
+    0,
+  );
+  const paidMembersCount = allFamilies.filter(
+    (family) => parseCurrencyToCents(family.totalDuesPaid) > 0,
+  ).length;
+  const unpaidMembersCount = Math.max(0, membersCount - paidMembersCount);
+  const expectedTotalCents = membersCount * annualDuesPerMemberCents;
+  const outstandingCents = Math.max(0, expectedTotalCents - collectedTotalCents);
 
   return (
     <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
@@ -34,6 +72,44 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           {isBn ? "প্রোভাইডারের সব পরিবার দেখুন ও খুঁজুন।" : "View and search all families in the provider."}
         </p>
       </header>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <article className="rounded-lg border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-4 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-800">
+            {isBn ? "সংগৃহীত মোট" : "Collected Total"}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-emerald-900">{formatCurrency(collectedTotalCents)}</p>
+          <p className="mt-1 text-sm text-emerald-700">
+            {isBn
+              ? `${paidMembersCount} জন সদস্য পরিশোধ করেছেন`
+              : `${paidMembersCount} members paid`}
+          </p>
+        </article>
+
+        <article className="rounded-lg border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-4 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-amber-800">
+            {isBn ? "বকেয়া" : "Outstanding"}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-amber-900">{formatCurrency(outstandingCents)}</p>
+          <p className="mt-1 text-sm text-amber-700">
+            {isBn
+              ? `${unpaidMembersCount} জন সদস্য বাকি`
+              : `${unpaidMembersCount} members unpaid`}
+          </p>
+        </article>
+
+        <article className="rounded-lg border border-blue-200 bg-gradient-to-b from-blue-50 to-white p-4 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-blue-800">
+            {isBn ? "প্রত্যাশিত মোট" : "Total Expected"}
+          </p>
+          <p className="mt-2 text-3xl font-bold text-blue-900">{formatCurrency(expectedTotalCents)}</p>
+          <p className="mt-1 text-sm text-blue-700">
+            {isBn
+              ? `${membersCount} × $1,200 (বার্ষিক)`
+              : `${membersCount} members × $1,200`}
+          </p>
+        </article>
+      </section>
 
       <form className="flex gap-3" method="get">
         {lang === "bn" ? <input type="hidden" name="lang" value="bn" /> : null}

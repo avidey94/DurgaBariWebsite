@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DuesStatusTable } from "@/components/dues-status-table";
+import { PortalEventsPanel } from "@/components/portal-events-panel";
 import { getCurrentUser } from "@/lib/auth/session";
 import { dataProvider } from "@/lib/data";
 import { resolveLanguage } from "@/lib/i18n";
@@ -80,6 +81,8 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
         </p>
         <DuesStatusTable items={family.duesMonths ?? []} language={lang} />
       </section>
+
+      <PortalEventsPanel />
     </section>
   );
 }

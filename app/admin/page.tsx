@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { AdminEventsManager } from "@/components/admin-events-manager";
 import { getCurrentUser, isAdmin } from "@/lib/auth/session";
 import { dataProvider } from "@/lib/data";
 import { resolveLanguage } from "@/lib/i18n";
@@ -152,6 +153,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           </tbody>
         </table>
       </div>
+
+      <AdminEventsManager />
     </section>
   );
 }

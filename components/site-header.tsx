@@ -20,6 +20,7 @@ const copy = {
       { label: "About", href: "/about" },
       { label: "Events & Festivals", href: "/events-festivals" },
       { label: "Donate", href: "/donate" },
+      { label: "Projects", href: "/projects" },
       { label: "Sponsors", href: "/sponsors" },
       { label: "Contact", href: "/contact" },
       { label: "Get Involved", href: "/get-involved" },
@@ -48,6 +49,7 @@ const copy = {
       { label: "পরিচিতি", href: "/about" },
       { label: "ইভেন্ট ও উৎসব", href: "/events-festivals" },
       { label: "দান", href: "/donate" },
+      { label: "প্রজেক্টস", href: "/projects" },
       { label: "স্পন্সর", href: "/sponsors" },
       { label: "যোগাযোগ", href: "/contact" },
       { label: "যুক্ত হোন", href: "/get-involved" },
@@ -285,7 +287,7 @@ export function SiteHeader({ user, preview }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v3.0
+                v3.1
               </p>
             </div>
           </Link>

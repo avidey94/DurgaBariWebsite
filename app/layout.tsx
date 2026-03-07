@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getActivePreviewState, getCurrentUser } from "@/lib/auth/session";
 
 import "./globals.css";
 
@@ -15,12 +15,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
+  const [user, preview] = await Promise.all([getCurrentUser(), getActivePreviewState()]);
 
   return (
     <html lang="en" data-theme="classic-green">
       <body className="bg-[var(--db-bg)] text-[var(--db-text)] antialiased">
-        <SiteHeader user={user} />
+        <SiteHeader user={user} preview={preview} />
         <main className="min-h-[calc(100vh-73px)]">{children}</main>
       </body>
     </html>

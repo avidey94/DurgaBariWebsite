@@ -5,10 +5,11 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { resolveLanguage, type Language, withLang } from "@/lib/i18n";
-import type { PortalUser } from "@/lib/types";
+import type { PortalUser, PreviewState } from "@/lib/types";
 
 interface SiteHeaderProps {
   user: PortalUser | null;
+  preview: PreviewState | null;
 }
 
 const copy = {
@@ -70,7 +71,7 @@ const copy = {
   },
 } as const;
 
-export function SiteHeader({ user }: SiteHeaderProps) {
+export function SiteHeader({ user, preview }: SiteHeaderProps) {
   const pathname = usePathname();
   const [language, setLanguage] = useState<Language>("en");
   const [queryString, setQueryString] = useState("");
@@ -129,8 +130,29 @@ export function SiteHeader({ user }: SiteHeaderProps) {
     return `${pathname}${query ? `?${query}` : ""}`;
   }, [language, pathname, queryString]);
 
+  const stopPreview = async () => {
+    await fetch("/api/admin/preview", { method: "DELETE" });
+    window.location.href = "/";
+  };
+
   return (
     <header className="border-b-[3px] border-[var(--db-border-strong)] bg-[var(--db-surface)] text-[var(--db-text)] shadow-[var(--db-shadow-panel)]">
+      {preview?.active ? (
+        <div className="border-b border-amber-300 bg-amber-100 px-3 py-2 text-sm text-amber-900">
+          <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-3">
+            <p>
+              Preview mode: {preview.mode === "logged_out" ? "logged out visitor" : `family ${preview.targetEmail ?? ""}`}
+            </p>
+            <button
+              type="button"
+              onClick={() => void stopPreview()}
+              className="rounded-md border border-amber-500 bg-white px-2 py-1 text-xs font-semibold text-amber-900 hover:bg-amber-50"
+            >
+              Stop preview
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-panel)] px-3 py-3">
         {!isDesktop ? (
         <div className="mx-auto max-w-[1240px]">
@@ -263,7 +285,7 @@ export function SiteHeader({ user }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v2.5
+                v3.0
               </p>
             </div>
           </Link>

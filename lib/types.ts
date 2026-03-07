@@ -41,6 +41,21 @@ export interface PortalUser {
   role: Role;
   isAdmin: boolean;
   authSource: "dev-bypass" | "supabase";
+  preview?: {
+    active: boolean;
+    mode: "family" | "logged_out";
+    actorEmail: string;
+    targetFamilyId?: string | null;
+    targetEmail?: string | null;
+  };
+}
+
+export interface PreviewState {
+  active: boolean;
+  mode: "family" | "logged_out";
+  actorEmail: string;
+  targetFamilyId?: string | null;
+  targetEmail?: string | null;
 }
 
 export interface DonationApiResponse {

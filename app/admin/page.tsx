@@ -1,160 +1,82 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AdminEventsManager } from "@/components/admin-events-manager";
-import { getCurrentUser, isAdmin } from "@/lib/auth/session";
-import { dataProvider } from "@/lib/data";
-import { resolveLanguage } from "@/lib/i18n";
+import { canAccessAdminHome, getAdminAccessContext } from "@/lib/portal/admin-auth";
+import { hasPortalPermission } from "@/lib/portal/rbac";
 
-interface AdminPageProps {
-  searchParams: Promise<{ q?: string; lang?: string }>;
+interface AdminTile {
+  href: string;
+  title: string;
+  description: string;
 }
 
-const annualDuesPerMemberCents = 120_000;
+export default async function AdminPage() {
+  const access = await getAdminAccessContext();
 
-const parseCurrencyToCents = (value?: string) => {
-  if (!value) return 0;
-  const normalized = value.replace(/[^\d.-]/g, "");
-  const amount = Number.parseFloat(normalized);
-  return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
-};
-
-const formatCurrency = (amountCents: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amountCents / 100);
-
-export default async function AdminPage({ searchParams }: AdminPageProps) {
-  const [user, params] = await Promise.all([getCurrentUser(), searchParams]);
-  const lang = resolveLanguage(params.lang);
-  const isBn = lang === "bn";
-
-  if (!user) {
+  if (!access) {
     redirect("/login");
   }
 
-  if (!isAdmin(user)) {
+  if (!canAccessAdminHome(access)) {
     redirect("/portal");
   }
 
-  const query = params.q?.trim() ?? "";
-  const normalizedQuery = query.toLowerCase();
-  const allFamilies = await dataProvider.getAllFamilies();
-  const families =
-    normalizedQuery.length === 0
-      ? allFamilies
-      : allFamilies.filter(
-          (family) =>
-            family.familyName.toLowerCase().includes(normalizedQuery) ||
-            family.primaryEmail.toLowerCase().includes(normalizedQuery),
-        );
+  const tiles: AdminTile[] = [];
 
-  const membersCount = allFamilies.length;
-  const collectedTotalCents = allFamilies.reduce(
-    (sum, family) => sum + Math.max(0, parseCurrencyToCents(family.totalDuesPaid)),
-    0,
-  );
-  const paidMembersCount = allFamilies.filter(
-    (family) => parseCurrencyToCents(family.totalDuesPaid) > 0,
-  ).length;
-  const unpaidMembersCount = Math.max(0, membersCount - paidMembersCount);
-  const expectedTotalCents = membersCount * annualDuesPerMemberCents;
-  const outstandingCents = Math.max(0, expectedTotalCents - collectedTotalCents);
+  if (hasPortalPermission(access.roles, "donations.manage")) {
+    tiles.push({
+      href: "/admin/donations",
+      title: "Donations",
+      description: "Reconcile, classify, and edit donation ledger entries.",
+    });
+  }
+
+  if (hasPortalPermission(access.roles, "projects.manage")) {
+    tiles.push({
+      href: "/admin/projects",
+      title: "Projects",
+      description: "Create and manage Kickstarter-style funding projects.",
+    });
+  }
+
+  if (hasPortalPermission(access.roles, "events.manage")) {
+    tiles.push({
+      href: "/admin/events",
+      title: "Events",
+      description: "Manage events, RSVPs, and attendance breakdowns.",
+    });
+  }
+
+  if (hasPortalPermission(access.roles, "roles.manage")) {
+    tiles.push({
+      href: "/admin/roles",
+      title: "Roles",
+      description: "Role administration is planned for the next phase.",
+    });
+  }
 
   return (
     <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          {isBn ? "অ্যাডমিন ড্যাশবোর্ড" : "Admin Dashboard"}
-        </h1>
-        <p className="mt-2 text-sm text-slate-700">
-          {isBn ? "প্রোভাইডারের সব পরিবার দেখুন ও খুঁজুন।" : "View and search all families in the provider."}
+      <header className="rounded-lg border border-slate-200 bg-white p-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Admin Console</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Signed in as <strong>{access.userEmail}</strong>
         </p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">Roles: {access.roles.join(", ")}</p>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-lg border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-800">
-            {isBn ? "সংগৃহীত মোট" : "Collected Total"}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-emerald-900">{formatCurrency(collectedTotalCents)}</p>
-          <p className="mt-1 text-sm text-emerald-700">
-            {isBn
-              ? `${paidMembersCount} জন সদস্য পরিশোধ করেছেন`
-              : `${paidMembersCount} members paid`}
-          </p>
-        </article>
-
-        <article className="rounded-lg border border-amber-200 bg-gradient-to-b from-amber-50 to-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-amber-800">
-            {isBn ? "বকেয়া" : "Outstanding"}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-amber-900">{formatCurrency(outstandingCents)}</p>
-          <p className="mt-1 text-sm text-amber-700">
-            {isBn
-              ? `${unpaidMembersCount} জন সদস্য বাকি`
-              : `${unpaidMembersCount} members unpaid`}
-          </p>
-        </article>
-
-        <article className="rounded-lg border border-blue-200 bg-gradient-to-b from-blue-50 to-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-blue-800">
-            {isBn ? "প্রত্যাশিত মোট" : "Total Expected"}
-          </p>
-          <p className="mt-2 text-3xl font-bold text-blue-900">{formatCurrency(expectedTotalCents)}</p>
-          <p className="mt-1 text-sm text-blue-700">
-            {isBn
-              ? `${membersCount} × $1,200 (বার্ষিক)`
-              : `${membersCount} members × $1,200`}
-          </p>
-        </article>
-      </section>
-
-      <form className="flex gap-3" method="get">
-        {lang === "bn" ? <input type="hidden" name="lang" value="bn" /> : null}
-        <input
-          type="text"
-          name="q"
-          defaultValue={query}
-          placeholder={isBn ? "পরিবার বা ইমেইল দিয়ে খুঁজুন" : "Search by family or email"}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2"
-        />
-        <button
-          type="submit"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          {isBn ? "খুঁজুন" : "Search"}
-        </button>
-      </form>
-
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-700">
-            <tr>
-              <th className="px-4 py-3 font-semibold">{isBn ? "পরিবার" : "Family"}</th>
-              <th className="px-4 py-3 font-semibold">{isBn ? "প্রাথমিক ইমেইল" : "Primary Email"}</th>
-              <th className="px-4 py-3 font-semibold">{isBn ? "প্রতিষ্ঠাতা পরিবার" : "Founding Family"}</th>
-              <th className="px-4 py-3 font-semibold">{isBn ? "ডোনেশন এন্ট্রি" : "Donation Entries"}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {families.map((family) => (
-              <tr key={family.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-900">{family.familyName}</td>
-                <td className="px-4 py-3 text-slate-700">{family.primaryEmail}</td>
-                <td className="px-4 py-3 text-slate-700">
-                  {family.foundingFamily ? (isBn ? "হ্যাঁ" : "Yes") : isBn ? "না" : "No"}
-                </td>
-                <td className="px-4 py-3 text-slate-700">{family.donations.length}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid gap-4 md:grid-cols-2">
+        {tiles.map((tile) => (
+          <Link
+            key={tile.href}
+            href={tile.href}
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow"
+          >
+            <h2 className="text-lg font-semibold text-slate-900">{tile.title}</h2>
+            <p className="mt-2 text-sm text-slate-700">{tile.description}</p>
+          </Link>
+        ))}
       </div>
-
-      <AdminEventsManager />
     </section>
   );
 }

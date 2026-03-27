@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PortalExpenseSubmission } from "@/components/portal-expense-submission";
 import { PortalEventsPanel } from "@/components/portal-events-panel";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -293,6 +294,8 @@ export default async function PortalPage() {
           </div>
         </section>
       ) : null}
+
+      <PortalExpenseSubmission />
 
       <div className="flex flex-wrap gap-3">
         <Link

@@ -31,6 +31,14 @@ export default async function AdminPage() {
     });
   }
 
+  if (hasPortalPermission(access.roles, "expenses.manage")) {
+    tiles.push({
+      href: "/admin/expenses",
+      title: "Expenses",
+      description: "Track operating costs, invoices, reimbursements, and finance approvals.",
+    });
+  }
+
   if (hasPortalPermission(access.roles, "projects.manage")) {
     tiles.push({
       href: "/admin/projects",

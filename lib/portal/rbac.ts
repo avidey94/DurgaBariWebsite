@@ -8,6 +8,8 @@ export type PortalPermission =
   | "projects.read"
   | "donations.read_all"
   | "donations.manage"
+  | "expenses.read_all"
+  | "expenses.manage"
   | "events.manage"
   | "admin.settings"
   | "member.self.read"
@@ -22,6 +24,8 @@ const permissionsByRole: Record<FamilyRole, PortalPermission[]> = {
     "projects.read",
     "donations.read_all",
     "donations.manage",
+    "expenses.read_all",
+    "expenses.manage",
     "events.manage",
     "admin.settings",
     "member.self.read",
@@ -33,6 +37,8 @@ const permissionsByRole: Record<FamilyRole, PortalPermission[]> = {
     "projects.read",
     "donations.read_all",
     "donations.manage",
+    "expenses.read_all",
+    "expenses.manage",
     "member.self.read",
     "member.self.update",
   ],

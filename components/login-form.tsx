@@ -15,7 +15,7 @@ interface LoginResponse {
   message: string;
 }
 
-type AuthMode = "magic-link" | "password" | "signup";
+type AuthMode = "password" | "signup";
 
 async function submitAuth(
   payload: Record<string, string>,
@@ -37,31 +37,28 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
   const isBn = language === "bn";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<AuthMode>("password");
   const [status, setStatus] = useState(initialError ? (isBn ? `অথ ত্রুটি: ${initialError}` : `Auth error: ${initialError}`) : "");
 
-  const runAuth = async (mode: AuthMode) => {
+  const runAuth = async () => {
     if (!email) {
       setStatus(isBn ? "ইমেইল আবশ্যক।" : "Email is required.");
       return;
     }
 
-    if ((mode === "password" || mode === "signup") && !password) {
+    if (!password) {
       setStatus(isBn ? "পাসওয়ার্ড আবশ্যক।" : "Password is required.");
       return;
     }
 
     setStatus(
-      mode === "magic-link"
+      mode === "signup"
         ? isBn
-          ? "ম্যাজিক লিংক পাঠানো হচ্ছে..."
-          : "Sending magic link..."
-        : mode === "signup"
-          ? isBn
-            ? "অ্যাকাউন্ট তৈরি করা হচ্ছে..."
-            : "Creating account..."
-          : isBn
-            ? "সাইন ইন করা হচ্ছে..."
-            : "Signing in...",
+          ? "অ্যাকাউন্ট তৈরি করা হচ্ছে..."
+          : "Creating account..."
+        : isBn
+          ? "সাইন ইন করা হচ্ছে..."
+          : "Signing in...",
     );
 
     const result = await submitAuth({
@@ -72,7 +69,7 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
 
     setStatus(result.message);
 
-    if (result.ok && (mode === "password" || mode === "signup")) {
+    if (result.ok && mode === "password") {
       window.location.href = "/portal";
     }
   };
@@ -101,9 +98,46 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
       )}
 
       <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="text-base font-semibold text-slate-900">
-          {isBn ? "ইমেইল অথেন্টিকেশন" : "Email Authentication"}
+        <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
+          {mode === "signup"
+            ? isBn
+              ? "নতুন অ্যাকাউন্ট সাইন আপ"
+              : "New account sign up"
+            : isBn
+              ? "সাইন ইন"
+              : "Sign In"}
         </h2>
+        <p className="text-sm text-slate-700">
+          {mode === "signup" ? (
+            <>
+              {isBn
+                ? "অ্যাকাউন্ট তৈরি করতে ইমেইল ও পাসওয়ার্ড দিন। "
+                : "Enter an email and password to create an account. "}
+              <button
+                type="button"
+                onClick={() => setMode("password")}
+                className="font-semibold underline"
+              >
+                {isBn ? "এখানে" : "HERE"}
+              </button>
+              {isBn
+                ? " ক্লিক করে বিদ্যমান অ্যাকাউন্ট দিয়ে সাইন ইন করুন।"
+                : " to sign in with an already created account."}
+            </>
+          ) : (
+            <>
+              {isBn ? "ইমেইল/পাসওয়ার্ড দিয়ে লগইন করুন। " : "Log in with your email/password. Click "}
+              <button
+                type="button"
+                onClick={() => setMode("signup")}
+                className="font-semibold underline"
+              >
+                {isBn ? "এখানে" : "HERE"}
+              </button>
+              {isBn ? " ক্লিক করে নতুন অ্যাকাউন্ট তৈরি করুন।" : " to create a new account."}
+            </>
+          )}
+        </p>
         <input
           required
           type="email"
@@ -116,33 +150,17 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder={isBn ? "পাসওয়ার্ড (সাইন আপ / পাসওয়ার্ড লগইনের জন্য আবশ্যক)" : "Password (required for sign up / password login)"}
+          placeholder={isBn ? "পাসওয়ার্ড" : "Password"}
           className="w-full rounded-md border border-slate-300 px-3 py-2"
         />
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <button
-            type="button"
-            onClick={() => runAuth("magic-link")}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            {isBn ? "ম্যাজিক লিংক পাঠান" : "Send magic link"}
-          </button>
-          <button
-            type="button"
-            onClick={() => runAuth("password")}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
-          >
-            {isBn ? "সাইন ইন" : "Sign in"}
-          </button>
-          <button
-            type="button"
-            onClick={() => runAuth("signup")}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
-          >
-            {isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void runAuth()}
+          className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          {mode === "signup" ? (isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account") : isBn ? "সাইন ইন" : "Sign In"}
+        </button>
       </div>
 
       {status && <p className="text-sm text-slate-700">{status}</p>}

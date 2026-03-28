@@ -58,20 +58,37 @@ export default async function PortalPledgePage() {
     );
   }
 
+  const approvedTier = context.family.activeDonorStatus !== "none" ? context.family.activeDonorStatus : null;
+
   return (
     <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
       <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Become an Active Donor</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          {approvedTier ? "Active Donor Portal" : "Become an Active Donor"}
+        </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Learn about Bronze, Silver, and Gold active donor tiers. Choose your intended tier, donate using QR, then
-          submit your request for admin approval.
+          {approvedTier
+            ? "You are an approved active donor. Review all tiers, your current level highlight, and continue supporting via QR."
+            : "Learn about Bronze, Silver, and Gold active donor tiers. Choose your intended tier, donate using QR, then submit your request for admin approval."}
         </p>
       </header>
 
       <section className="grid gap-4 md:grid-cols-3">
         {tiers.map((tier) => (
-          <article key={tier.id} className="rounded-lg border border-slate-200 bg-white p-5">
+          <article
+            key={tier.id}
+            className={`rounded-lg border bg-white p-5 ${
+              approvedTier === tier.id
+                ? "border-2 border-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.22)]"
+                : "border-slate-200"
+            }`}
+          >
             <h2 className="text-lg font-semibold text-slate-900">{tier.title}</h2>
+            {approvedTier === tier.id ? (
+              <p className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                Your approved tier
+              </p>
+            ) : null}
             <p className="mt-1 text-sm text-slate-700">{tier.contribution}</p>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
               {tier.perks.map((perk) => (

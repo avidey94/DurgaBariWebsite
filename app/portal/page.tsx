@@ -202,6 +202,12 @@ export default async function PortalPage() {
     activeRoleLabels.unshift("Founding Family");
   }
 
+  if (context.family.activeDonorStatus !== "none") {
+    const tierLabel =
+      context.family.activeDonorStatus[0].toUpperCase() + context.family.activeDonorStatus.slice(1);
+    activeRoleLabels.push(`Active ${tierLabel} Donor`);
+  }
+
   if (donorTier) {
     activeRoleLabels.push(`${donorTier[0].toUpperCase()}${donorTier.slice(1)} Donor`);
   }
@@ -282,7 +288,7 @@ export default async function PortalPage() {
           href="/portal/pledge"
           className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
         >
-          Become an active donor
+          {context.family.activeDonorStatus !== "none" ? "View Active Donor Portal" : "Become an active donor"}
         </Link>
         <Link
           href="/portal/expense"

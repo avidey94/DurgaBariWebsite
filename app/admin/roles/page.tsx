@@ -11,7 +11,7 @@ export default async function AdminRolesPage() {
     redirect("/login");
   }
 
-  if (!hasPortalPermission(access.roles, "roles.manage")) {
+  if (!hasPortalPermission(access.roles, "roles.read_all")) {
     redirect("/admin");
   }
 
@@ -21,7 +21,10 @@ export default async function AdminRolesPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Roles Admin</h1>
         <p className="mt-2 text-sm text-slate-600">Assign roles and run preview mode audits.</p>
       </header>
-      <AdminRolesManager />
+      <AdminRolesManager
+        canManageRoles={hasPortalPermission(access.roles, "roles.manage")}
+        canUsePreview={access.roles.includes("super_admin")}
+      />
     </section>
   );
 }

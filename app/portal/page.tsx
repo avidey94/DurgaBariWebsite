@@ -89,6 +89,8 @@ const roleLabel = (role: FamilyRole) => {
   if (role === "super_admin") return "Active Super Admin";
   if (role === "treasurer") return "Treasurer";
   if (role === "event_manager") return "Event Manager";
+  if (role === "site_content_manager") return "Site Content Manager";
+  if (role === "membership_manager") return "Membership Manager";
   return "Member";
 };
 

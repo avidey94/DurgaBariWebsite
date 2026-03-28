@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
@@ -86,8 +86,8 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "our-sacred-journey-from-vision-to-temple-bn" : "our-sacred-journey-from-vision-to-temple";
   const waysToGiveSlug = `${cmsSlug}-ways-to-give`;
-  const [user, cmsIntro, cmsWaysToGive] = await Promise.all([
-    getCurrentUser(),
+  const [canManageCms, cmsIntro, cmsWaysToGive] = await Promise.all([
+    canCurrentUserManageCms(),
     getCmsPageContent(cmsSlug),
     getCmsPageContent(waysToGiveSlug),
   ]);
@@ -125,7 +125,7 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
               slug={cmsSlug}
               initialTitle={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}
               initialHtml={cmsIntro?.content_html || journeyIntroDefaultHtml}
-              isAdmin={Boolean(user?.isAdmin)}
+              isAdmin={canManageCms}
             />
             <p className="mt-2 border-l-4 border-[var(--db-brand)] bg-[#edf3ea] px-3 py-2">
               <strong>{isBn ? "এখনই অঙ্গীকার করতে চান?" : "Ready to pledge now?"}</strong> Email <strong>info@thedurgacenter.org</strong> {isBn ? "অথবা যোগাযোগ ফর্ম ব্যবহার করুন:" : "or use the contact form:"}
@@ -139,7 +139,7 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
             <CmsEditableList
               slug={waysToGiveSlug}
               initialItems={waysToGiveItems}
-              isAdmin={Boolean(user?.isAdmin)}
+              isAdmin={canManageCms}
               emptyItemLabel={isBn ? "দানের উপায়" : "Way to give"}
             />
 

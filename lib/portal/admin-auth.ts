@@ -48,6 +48,7 @@ export const canAccessAdminHome = (ctx: AdminAccessContext): boolean => {
     hasPortalPermission(ctx.roles, "expenses.manage") ||
     hasPortalPermission(ctx.roles, "projects.manage") ||
     hasPortalPermission(ctx.roles, "families.read_all") ||
+    hasPortalPermission(ctx.roles, "roles.read_all") ||
     hasPortalPermission(ctx.roles, "roles.manage")
   );
 };

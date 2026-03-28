@@ -3,7 +3,9 @@ import type { FamilyRole } from "@/lib/portal/types";
 export type PortalPermission =
   | "families.read_all"
   | "families.manage"
+  | "roles.read_all"
   | "roles.manage"
+  | "cms.manage"
   | "projects.manage"
   | "projects.read"
   | "donations.read_all"
@@ -19,7 +21,9 @@ const permissionsByRole: Record<FamilyRole, PortalPermission[]> = {
   super_admin: [
     "families.read_all",
     "families.manage",
+    "roles.read_all",
     "roles.manage",
+    "cms.manage",
     "projects.manage",
     "projects.read",
     "donations.read_all",
@@ -45,6 +49,19 @@ const permissionsByRole: Record<FamilyRole, PortalPermission[]> = {
   event_manager: [
     "projects.read",
     "events.manage",
+    "member.self.read",
+    "member.self.update",
+  ],
+  site_content_manager: [
+    "cms.manage",
+    "projects.read",
+    "member.self.read",
+    "member.self.update",
+  ],
+  membership_manager: [
+    "families.read_all",
+    "families.manage",
+    "roles.read_all",
     "member.self.read",
     "member.self.update",
   ],

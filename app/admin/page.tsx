@@ -55,11 +55,11 @@ export default async function AdminPage() {
     });
   }
 
-  if (hasPortalPermission(access.roles, "roles.manage")) {
+  if (hasPortalPermission(access.roles, "roles.read_all") || hasPortalPermission(access.roles, "roles.manage")) {
     tiles.push({
       href: "/admin/roles",
       title: "Roles",
-      description: "Role administration is planned for the next phase.",
+      description: "Manage member profiles and role assignments.",
     });
   }
 

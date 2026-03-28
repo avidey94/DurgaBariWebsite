@@ -1,6 +1,6 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 
@@ -59,7 +59,7 @@ export default async function GetInvolvedPage({ searchParams }: GetInvolvedPageP
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "get-involved-bn" : "get-involved";
-  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
   const getInvolvedIntroDefaultHtml = isBn
     ? "<p>দুর্গা মন্দির শুধু একটি মন্দির নয় - এটি আধ্যাত্মিকতা, সংস্কৃতি ও কমিউনিটির জীবন্ত কেন্দ্র। আপনার অংশগ্রহণ এই ভাবনাকে বাস্তবে রূপ দেয়। একসঙ্গে আমরা এমন পবিত্র স্থান গড়তে পারি যেখানে বিশ্বাস, সংস্কৃতি ও ঐক্য বিকশিত হবে।</p>"
     : "<p>Durga Mandir is more than a temple - it is a living center of spirituality, culture, and community. Your participation helps bring this vision to life. Together, we can create a sacred space where faith, culture, and unity flourish.</p>";
@@ -78,7 +78,7 @@ export default async function GetInvolvedPage({ searchParams }: GetInvolvedPageP
             slug={cmsSlug}
             initialTitle={isBn ? "মিশনে যুক্ত হোন" : "Join the Mission"}
             initialHtml={cmsIntro?.content_html || getInvolvedIntroDefaultHtml}
-            isAdmin={Boolean(user?.isAdmin)}
+            isAdmin={canManageCms}
           />
 
           <div className="mt-3 border-[2px] border-[#3d6148] bg-[#dde9de] p-3">

@@ -1,4 +1,10 @@
-export type FamilyRole = "super_admin" | "treasurer" | "event_manager" | "member";
+export type FamilyRole =
+  | "super_admin"
+  | "treasurer"
+  | "event_manager"
+  | "site_content_manager"
+  | "membership_manager"
+  | "member";
 
 export type FoundingFamilyStatus =
   | "not_founding"

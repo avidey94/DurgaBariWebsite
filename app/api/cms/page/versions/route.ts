@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { getCurrentUser } from "@/lib/auth/session";
 import { listCmsPageVersions } from "@/lib/cms/page-content";
+import { getAdminAccessContext } from "@/lib/portal/admin-auth";
+import { hasPortalPermission } from "@/lib/portal/rbac";
 
 const normalizeSlug = (value: string) =>
   value
@@ -11,13 +12,13 @@ const normalizeSlug = (value: string) =>
     .replace(/\/+$/, "");
 
 export async function GET(request: Request) {
-  const user = await getCurrentUser();
+  const access = await getAdminAccessContext();
 
-  if (!user) {
+  if (!access) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (!user.isAdmin) {
+  if (!hasPortalPermission(access.roles, "cms.manage")) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 

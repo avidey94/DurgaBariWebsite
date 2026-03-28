@@ -42,7 +42,7 @@ export async function PATCH(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  if (!hasPortalPermission(access.roles, "roles.manage")) {
+  if (!hasPortalPermission(access.roles, "families.manage")) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 

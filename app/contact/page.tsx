@@ -1,6 +1,6 @@
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 
@@ -13,7 +13,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "contact-bn" : "contact";
-  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
   const contactIntroDefaultHtml = isBn
     ? "<p>প্রশ্ন, স্বেচ্ছাসেবক হিসেবে আগ্রহ এবং দান সংক্রান্ত সহায়তার জন্য নিচের অফিসিয়াল ফর্মটি ব্যবহার করুন।</p>"
     : "<p>Use the official form below for questions, volunteering interest, and donation support.</p>";
@@ -32,7 +32,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
               slug={cmsSlug}
               initialTitle={isBn ? "যোগাযোগ ফর্ম" : "Contact Form"}
               initialHtml={cmsIntro?.content_html || contactIntroDefaultHtml}
-              isAdmin={Boolean(user?.isAdmin)}
+              isAdmin={canManageCms}
             />
           </div>
           <div className="border-[2px] border-[var(--db-border)] bg-white p-2">

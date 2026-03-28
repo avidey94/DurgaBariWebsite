@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { env } from "@/lib/env";
 import { resolveLanguage, withLang } from "@/lib/i18n";
@@ -42,7 +42,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const isBn = lang === "bn";
   const youtubeLiveEmbedUrl = env.youtubeLiveEmbedUrl.trim();
   const cmsSlug = lang === "bn" ? "home-bn" : "home";
-  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
   const homeIntroDefaultHtml = isBn
     ? "<p>উপাসনা, শিক্ষা, স্বেচ্ছাসেবা এবং স্বচ্ছ দানের তথ্য - সব এক প্ল্যাটফর্মে।</p>"
     : "<p>Worship, education, volunteerism, and transparent donation records in one unified platform.</p>";
@@ -91,7 +91,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                 slug={cmsSlug}
                 initialTitle={isBn ? "হোম ইন্ট্রো" : "Home Intro"}
                 initialHtml={cmsIntro?.content_html || homeIntroDefaultHtml}
-                isAdmin={Boolean(user?.isAdmin)}
+                isAdmin={canManageCms}
               />
             </div>
             <div className="mt-8 flex flex-wrap gap-4">

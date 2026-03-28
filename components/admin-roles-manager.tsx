@@ -59,7 +59,19 @@ interface FamilyDraft {
   roles: FamilyRole[];
 }
 
-const allRoles: FamilyRole[] = ["super_admin", "treasurer", "event_manager", "member"];
+interface AdminRolesManagerProps {
+  canManageRoles: boolean;
+  canUsePreview: boolean;
+}
+
+const allRoles: FamilyRole[] = [
+  "super_admin",
+  "treasurer",
+  "event_manager",
+  "site_content_manager",
+  "membership_manager",
+  "member",
+];
 
 const resizeNames = (names: string[], targetCount: number, placeholderPrefix: string) => {
   const safeTarget = Number.isFinite(targetCount) ? Math.max(0, Math.floor(targetCount)) : 0;
@@ -76,7 +88,7 @@ const resizeNames = (names: string[], targetCount: number, placeholderPrefix: st
   return next;
 };
 
-export function AdminRolesManager() {
+export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesManagerProps) {
   const [families, setFamilies] = useState<FamilyRow[]>([]);
   const [roleGrants, setRoleGrants] = useState<RoleGrant[]>([]);
   const [preview, setPreview] = useState<PreviewState>({ active: false });
@@ -121,27 +133,31 @@ export function AdminRolesManager() {
     setError(null);
 
     try {
-      const [rolesResponse, previewResponse] = await Promise.all([
-        fetch("/api/admin/roles", { cache: "no-store" }),
-        fetch("/api/admin/preview", { cache: "no-store" }),
-      ]);
+      const rolesResponse = await fetch("/api/admin/roles", { cache: "no-store" });
 
       const rolesPayload = (await rolesResponse.json()) as RolesApiPayload;
-      const previewPayload = (await previewResponse.json()) as { preview?: PreviewState; message?: string };
 
       if (!rolesResponse.ok) {
         throw new Error(rolesPayload.message ?? "Unable to load role data.");
-      }
-
-      if (!previewResponse.ok) {
-        throw new Error(previewPayload.message ?? "Unable to load preview data.");
       }
 
       const familiesFromApi = rolesPayload.families ?? [];
       const grantsFromApi = rolesPayload.roleGrants ?? [];
       setFamilies(familiesFromApi);
       setRoleGrants(grantsFromApi);
-      setPreview(previewPayload.preview ?? { active: false });
+
+      if (canUsePreview) {
+        const previewResponse = await fetch("/api/admin/preview", { cache: "no-store" });
+        const previewPayload = (await previewResponse.json()) as { preview?: PreviewState; message?: string };
+
+        if (!previewResponse.ok) {
+          throw new Error(previewPayload.message ?? "Unable to load preview data.");
+        }
+
+        setPreview(previewPayload.preview ?? { active: false });
+      } else {
+        setPreview({ active: false });
+      }
 
       if (familiesFromApi.length > 0) {
         setMemberPreviewFamilyId((current) => current || familiesFromApi[0].id);
@@ -151,7 +167,7 @@ export function AdminRolesManager() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canUsePreview]);
 
   useEffect(() => {
     void loadAll();
@@ -378,7 +394,7 @@ export function AdminRolesManager() {
           adultNames: draft.adult_names.map((value) => value.trim()).filter(Boolean),
           childrenCount: draft.children_count,
           childNames: draft.child_names.map((value) => value.trim()).filter(Boolean),
-          roles: draft.roles,
+          ...(canManageRoles ? { roles: draft.roles } : {}),
         }),
       });
 
@@ -400,69 +416,75 @@ export function AdminRolesManager() {
     <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <header>
         <h2 className="text-xl font-semibold text-slate-900">Family & Role Management</h2>
-        <p className="text-sm text-slate-700">Manage family profile details and roles from a single table.</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            disabled={mutating}
-            onClick={() => void bootstrapFamilies()}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 disabled:opacity-60"
-          >
-            Bootstrap families from auth users
-          </button>
-          {bootstrapMessage ? <span className="text-xs text-emerald-700">{bootstrapMessage}</span> : null}
-        </div>
+        <p className="text-sm text-slate-700">
+          Manage family profile details from a single table. Role assignment is restricted to super admins.
+        </p>
+        {canManageRoles ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={mutating}
+              onClick={() => void bootstrapFamilies()}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 disabled:opacity-60"
+            >
+              Bootstrap families from auth users
+            </button>
+            {bootstrapMessage ? <span className="text-xs text-emerald-700">{bootstrapMessage}</span> : null}
+          </div>
+        ) : null}
       </header>
 
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-        <h3 className="text-sm font-semibold text-slate-900">Preview Mode</h3>
-        <p className="mt-1 text-xs text-slate-600">
-          Super admins can inspect the site as logged out or as any family account.
-        </p>
-        <p className="mt-2 text-xs text-slate-700">
-          Current: {preview.active ? `${preview.mode} ${preview.targetEmail ? `(${preview.targetEmail})` : ""}` : "off"}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={mutating}
-            onClick={() => {
-              if (preview.active && preview.mode === "logged_out") {
-                void stopPreview();
-              } else {
-                void startPreviewAsLoggedOut();
-              }
-            }}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 disabled:opacity-60"
-          >
-            {preview.active && preview.mode === "logged_out" ? "Stop previewing as logged out" : "Preview as logged out"}
-          </button>
-          <button
-            type="button"
-            disabled={mutating || families.length === 0}
-            onClick={() => {
-              if (preview.active && preview.mode === "family") {
-                void stopPreview();
-              } else {
-                setMemberPreviewModalOpen(true);
-                setMemberPreviewSearch("");
-                setMemberPreviewFamilyId((current) => current || (families[0]?.id ?? ""));
-              }
-            }}
-            className={`rounded-md px-3 py-1 text-sm disabled:opacity-60 ${
-              preview.active && preview.mode === "family"
-                ? "bg-slate-900 text-white hover:bg-slate-800"
-                : "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            {preview.active && preview.mode === "family"
-              ? `Stop previewing as ${previewFamilyName}`
-              : "Preview as member"}
-          </button>
+      {canUsePreview ? (
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+          <h3 className="text-sm font-semibold text-slate-900">Preview Mode</h3>
+          <p className="mt-1 text-xs text-slate-600">
+            Super admins can inspect the site as logged out or as any family account.
+          </p>
+          <p className="mt-2 text-xs text-slate-700">
+            Current: {preview.active ? `${preview.mode} ${preview.targetEmail ? `(${preview.targetEmail})` : ""}` : "off"}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={mutating}
+              onClick={() => {
+                if (preview.active && preview.mode === "logged_out") {
+                  void stopPreview();
+                } else {
+                  void startPreviewAsLoggedOut();
+                }
+              }}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 disabled:opacity-60"
+            >
+              {preview.active && preview.mode === "logged_out" ? "Stop previewing as logged out" : "Preview as logged out"}
+            </button>
+            <button
+              type="button"
+              disabled={mutating || families.length === 0}
+              onClick={() => {
+                if (preview.active && preview.mode === "family") {
+                  void stopPreview();
+                } else {
+                  setMemberPreviewModalOpen(true);
+                  setMemberPreviewSearch("");
+                  setMemberPreviewFamilyId((current) => current || (families[0]?.id ?? ""));
+                }
+              }}
+              className={`rounded-md px-3 py-1 text-sm disabled:opacity-60 ${
+                preview.active && preview.mode === "family"
+                  ? "bg-slate-900 text-white hover:bg-slate-800"
+                  : "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              {preview.active && preview.mode === "family"
+                ? `Stop previewing as ${previewFamilyName}`
+                : "Preview as member"}
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      {memberPreviewModalOpen ? (
+      {canUsePreview && memberPreviewModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
           <div className="w-full max-w-2xl rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Preview as member</h3>
@@ -638,18 +660,22 @@ export function AdminRolesManager() {
                       </label>
                     </td>
                     <td className="px-3 py-2">
-                      <div className="space-y-1">
-                        {allRoles.map((role) => (
-                          <label key={`${family.id}-${role}`} className="flex items-center gap-2 text-xs text-slate-700">
-                            <input
-                              type="checkbox"
-                              checked={draft.roles.includes(role)}
-                              onChange={() => toggleRole(family.id, role)}
-                            />
-                            {role}
-                          </label>
-                        ))}
-                      </div>
+                      {canManageRoles ? (
+                        <div className="space-y-1">
+                          {allRoles.map((role) => (
+                            <label key={`${family.id}-${role}`} className="flex items-center gap-2 text-xs text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={draft.roles.includes(role)}
+                                onChange={() => toggleRole(family.id, role)}
+                              />
+                              {role}
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-700">{draft.roles.length > 0 ? draft.roles.join(", ") : "member"}</p>
+                      )}
                     </td>
                     <td className="px-3 py-2">
                       <button

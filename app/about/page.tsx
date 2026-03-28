@@ -1,6 +1,6 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 
@@ -13,7 +13,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "about-bn" : "about";
-  const [user, cmsIntro] = await Promise.all([getCurrentUser(), getCmsPageContent(cmsSlug)]);
+  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
   const aboutIntroDefaultHtml = isBn
     ? "<p>দুর্গা বাড়ি - Center for Spiritual and Cultural Excellence একটি কমিউনিটি উদ্যোগ, যেখানে মা দুর্গাকে কেন্দ্র করে ভক্তি, সংস্কৃতি ও সমাজ একসূত্রে মিলবে।</p>"
     : "<p>Durga Bari - Center for Spiritual and Cultural Excellence is a community initiative to establish a sacred space dedicated to Maa Durga, where devotion, culture, and community come together as one.</p>";
@@ -36,7 +36,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
             slug={cmsSlug}
             initialTitle={isBn ? "আমরা কারা" : "Who We Are"}
             initialHtml={cmsIntro?.content_html || aboutIntroDefaultHtml}
-            isAdmin={Boolean(user?.isAdmin)}
+            isAdmin={canManageCms}
           />
 
           <p className="mt-2">

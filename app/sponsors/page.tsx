@@ -1,6 +1,6 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { ActiveDonorsSection, type ActiveDonor } from "@/components/active-donors-section";
 import { dataProvider } from "@/lib/data";
@@ -246,10 +246,10 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
   const cmsSlug = lang === "bn" ? "sponsors-bn" : "sponsors";
   const query = params.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
-  const [families, activeDonors, user, cmsIntro] = await Promise.all([
+  const [families, activeDonors, canManageCms, cmsIntro] = await Promise.all([
     dataProvider.getAllFamilies({ query }),
     getActiveDonors(),
-    getCurrentUser(),
+    canCurrentUserManageCms(),
     getCmsPageContent(cmsSlug),
   ]);
   const sponsorIntroDefaultHtml = isBn
@@ -307,7 +307,7 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
             slug={cmsSlug}
             initialTitle={isBn ? "স্পন্সর স্তর" : "Sponsor Tiers"}
             initialHtml={cmsIntro?.content_html || sponsorIntroDefaultHtml}
-            isAdmin={Boolean(user?.isAdmin)}
+            isAdmin={canManageCms}
           />
           <p className="mt-2 border-l-4 border-[#9b1616] bg-[#fff4e7] px-3 py-2">
             <strong>{isBn ? "দ্রষ্টব্য:" : "Note:"}</strong>{" "}

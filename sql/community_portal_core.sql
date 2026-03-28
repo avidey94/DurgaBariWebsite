@@ -28,7 +28,7 @@ create index if not exists families_auth_user_id_idx on public.families (auth_us
 create table if not exists public.family_roles (
   id uuid primary key default gen_random_uuid(),
   family_id uuid not null references public.families (id) on delete cascade,
-  role text not null check (role in ('super_admin', 'treasurer', 'event_manager', 'member')),
+  role text not null check (role in ('super_admin', 'treasurer', 'event_manager', 'site_content_manager', 'membership_manager', 'member')),
   granted_by_family_id uuid null references public.families (id) on delete set null,
   granted_at timestamptz not null default now(),
   unique (family_id, role)

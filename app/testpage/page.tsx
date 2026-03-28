@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { AdminVisibilityToggle } from "@/components/cms/AdminVisibilityToggle";
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { parsePageVisibility } from "@/lib/cms/page-visibility";
 
@@ -11,13 +11,13 @@ export default async function TestPage() {
   const contentSlug = "testpage";
   const settingsSlug = "testpage-settings";
 
-  const [user, cmsContent, cmsSettings] = await Promise.all([
-    getCurrentUser(),
+  const [canManageCms, cmsContent, cmsSettings] = await Promise.all([
+    canCurrentUserManageCms(),
     getCmsPageContent(contentSlug),
     getCmsPageContent(settingsSlug),
   ]);
 
-  const isAdmin = Boolean(user?.isAdmin);
+  const isAdmin = canManageCms;
   const isPublic = parsePageVisibility(cmsSettings?.content_html, false);
 
   if (!isPublic && !isAdmin) {

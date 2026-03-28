@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
-import { getCurrentUser } from "@/lib/auth/session";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
@@ -95,8 +95,8 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "donate-bn" : "donate";
   const waysToGiveSlug = `${cmsSlug}-ways-to-give`;
-  const [user, cmsIntro, cmsWaysToGive] = await Promise.all([
-    getCurrentUser(),
+  const [canManageCms, cmsIntro, cmsWaysToGive] = await Promise.all([
+    canCurrentUserManageCms(),
     getCmsPageContent(cmsSlug),
     getCmsPageContent(waysToGiveSlug),
   ]);
@@ -123,7 +123,7 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
             slug={cmsSlug}
             initialTitle={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}
             initialHtml={cmsIntro?.content_html || donateIntroDefaultHtml}
-            isAdmin={Boolean(user?.isAdmin)}
+            isAdmin={canManageCms}
           />
           <p className="mt-2 border-l-4 border-[var(--db-brand)] bg-[#edf3ea] px-3 py-2">
             <strong>{isBn ? "এখনই অঙ্গীকার করতে চান?" : "Ready to pledge now?"}</strong>{" "}
@@ -139,7 +139,7 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
           <CmsEditableList
             slug={waysToGiveSlug}
             initialItems={waysToGiveItems}
-            isAdmin={Boolean(user?.isAdmin)}
+            isAdmin={canManageCms}
             emptyItemLabel={isBn ? "দানের উপায়" : "Way to give"}
           />
 

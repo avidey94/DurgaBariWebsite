@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
+import { buildAuthCallbackUrl } from "@/lib/auth/site-url";
 import { env } from "@/lib/env";
 
 interface LoginPayload {
@@ -8,8 +9,6 @@ interface LoginPayload {
   password?: string;
   mode?: "magic-link" | "password" | "signup";
 }
-
-const getSafeOrigin = (request: NextRequest) => request.nextUrl.origin;
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as LoginPayload;
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${getSafeOrigin(request)}/auth/callback?next=/portal`,
+        emailRedirectTo: buildAuthCallbackUrl("/portal"),
       },
     });
 
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
       email,
       password: body.password,
       options: {
-        emailRedirectTo: `${getSafeOrigin(request)}/auth/callback?next=/portal`,
+        emailRedirectTo: buildAuthCallbackUrl("/portal"),
       },
     });
 

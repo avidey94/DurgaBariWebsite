@@ -101,6 +101,31 @@ git grep -n -E "sb_publishable_|sb_secret_|sk_live_|BEGIN PRIVATE KEY|STRIPE_SEC
 - Supabase redirect URLs set correctly
 - least-privilege keys only (publishable key on client; secret keys server-side)
 
+## Auth Redirect Configuration
+
+The app uses a centralized auth redirect helper (`lib/auth/site-url.ts`) for all Supabase email auth redirects.
+
+Resolution order for site URL:
+
+1. `NEXT_PUBLIC_SITE_URL`
+2. `NEXT_PUBLIC_VERCEL_URL` or `VERCEL_URL`
+3. fallback `http://localhost:3000` (with a production warning)
+
+Auth links are generated to:
+
+- `/auth/callback?next=/portal` (canonical completion route)
+- `/auth/confirm` is supported as a compatibility alias that forwards to `/auth/callback`
+
+### Vercel env recommendation
+
+- Production scope:
+  - `NEXT_PUBLIC_SITE_URL=https://durga-bari-website.vercel.app`
+- Preview scope:
+  - Do not set `NEXT_PUBLIC_SITE_URL` (or set to the preview URL intentionally)
+  - rely on `VERCEL_URL` / `NEXT_PUBLIC_VERCEL_URL`
+- Development scope:
+  - `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
+
 ## Architecture
 
 ### Auth and RBAC

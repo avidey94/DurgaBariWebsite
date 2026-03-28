@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
+import { normalizeNextPath } from "@/lib/auth/site-url";
 
-const safeNextPath = (nextParam: string | null) => {
-  if (!nextParam || !nextParam.startsWith("/")) {
-    return "/portal";
+const toOtpType = (value: string | null): EmailOtpType | null => {
+  if (
+    value === "signup" ||
+    value === "invite" ||
+    value === "magiclink" ||
+    value === "recovery" ||
+    value === "email_change" ||
+    value === "email"
+  ) {
+    return value;
   }
-
-  return nextParam;
+  return null;
 };
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
+  const tokenHash = request.nextUrl.searchParams.get("token_hash");
+  const otpType = toOtpType(request.nextUrl.searchParams.get("type"));
+  const nextPath = normalizeNextPath(request.nextUrl.searchParams.get("next"));
 
-  if (!code) {
-    return NextResponse.redirect(new URL("/login?error=missing_code", request.url));
+  if (!code && !tokenHash) {
+    return NextResponse.redirect(new URL("/login?error=missing_auth_token", request.url));
   }
 
   const authClient = createRouteHandlerSupabaseClient(request);
@@ -25,7 +35,20 @@ export async function GET(request: NextRequest) {
   }
 
   const { supabase, getResponse, setResponse } = authClient;
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  let error: Error | null = null;
+
+  if (code) {
+    const result = await supabase.auth.exchangeCodeForSession(code);
+    error = result.error;
+  } else if (tokenHash && otpType) {
+    const result = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType,
+    });
+    error = result.error;
+  } else {
+    return NextResponse.redirect(new URL("/login?error=invalid_auth_payload", request.url));
+  }
 
   if (error) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url));

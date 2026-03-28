@@ -6,7 +6,6 @@ import { PortalOnboardingForm } from "@/components/portal-onboarding-form";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   getCurrentFamilyPortalContext,
-  getFamilyFoundingPledgeProgress,
   listFamilyDonations,
 } from "@/lib/portal/server";
 import type { DonationLedgerEntry, FamilyRole } from "@/lib/portal/types";
@@ -191,17 +190,13 @@ export default async function PortalPage() {
     );
   }
 
-  const [pledgeProgress, allDonations] = await Promise.all([
-    getFamilyFoundingPledgeProgress(context.family.id),
-    listFamilyDonations(context.family.id, 5000),
-  ]);
+  const allDonations = await listFamilyDonations(context.family.id, 5000);
 
   const totalDonationsCents = allDonations.reduce((sum, donation) => sum + donation.amountCents, 0);
   const donorTier = getDonorTier(totalDonationsCents);
-  const isFoundingFamily = context.family.foundingFamilyStatus !== "not_founding";
   const activeRoleLabels: string[] = context.roles.map((role) => roleLabel(role));
 
-  if (isFoundingFamily) {
+  if (context.family.foundingFamilyStatus !== "not_founding") {
     activeRoleLabels.unshift("Founding Family");
   }
 
@@ -210,12 +205,6 @@ export default async function PortalPage() {
   }
 
   const nowMonth = normalizeToUtcMonth(new Date());
-  const foundingMonths = buildMonthRange(startOfUtcMonth(2026, 0), startOfUtcMonth(2028, 11));
-  const foundingRows = buildMonthlyRows(foundingMonths, allDonations, {
-    expectedCentsPerMonth: 10000,
-    donationType: "founding_pledge",
-  });
-
   const activeDonorMonths = buildMonthRange(normalizeToUtcMonth(context.family.createdAt), nowMonth);
   const activeDonorRows = buildMonthlyRows(activeDonorMonths, allDonations);
 
@@ -263,15 +252,6 @@ export default async function PortalPage() {
         </div>
       </header>
 
-      {isFoundingFamily ? (
-        <MonthlyContributionTable
-          title="Founding Family Monthly Pledge"
-          subtitle="January 2026 to December 2028 at $100/month toward the $3,600 commitment."
-          rows={foundingRows}
-          showExpected
-        />
-      ) : null}
-
       {donorTier ? (
         <MonthlyContributionTable
           title="Active Donor Monthly Contributions"
@@ -280,31 +260,6 @@ export default async function PortalPage() {
           showExpected={false}
         />
       ) : null}
-
-      {pledgeProgress ? (
-        <section className="rounded-lg border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">Founding Pledge Snapshot</h2>
-          <div className="mt-3 grid gap-4 md:grid-cols-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Total donated</p>
-              <p className="text-lg font-semibold text-slate-900">{formatCurrency(pledgeProgress.totalDonatedCents)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Target by now</p>
-              <p className="text-lg font-semibold text-slate-900">{formatCurrency(pledgeProgress.targetDonatedByNowCents)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Remaining</p>
-              <p className="text-lg font-semibold text-slate-900">{formatCurrency(pledgeProgress.remainingBalanceCents)}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
-              <p className="text-lg font-semibold capitalize text-slate-900">{pledgeProgress.progressStatus.replace("_", " ")}</p>
-            </div>
-          </div>
-        </section>
-      ) : null}
-
 
       <div className="flex flex-wrap gap-3">
         <Link

@@ -10,6 +10,7 @@ import type { PortalUser, PreviewState } from "@/lib/types";
 interface SiteHeaderProps {
   user: PortalUser | null;
   preview: PreviewState | null;
+  showAdminLink: boolean;
 }
 
 const copy = {
@@ -73,7 +74,7 @@ const copy = {
   },
 } as const;
 
-export function SiteHeader({ user, preview }: SiteHeaderProps) {
+export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
   const pathname = usePathname();
   const [language, setLanguage] = useState<Language>("en");
   const [queryString, setQueryString] = useState("");
@@ -287,7 +288,7 @@ export function SiteHeader({ user, preview }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v3.5.4
+                v3.5.3
               </p>
             </div>
           </Link>
@@ -475,7 +476,7 @@ export function SiteHeader({ user, preview }: SiteHeaderProps) {
               {item.label}
             </Link>
           ))}
-          {user?.role === "admin" && (
+          {showAdminLink && (
             <Link
               href={withLang("/admin", language)}
               onClick={() => setMenuOpen(false)}
@@ -526,7 +527,7 @@ export function SiteHeader({ user, preview }: SiteHeaderProps) {
               </Link>
             </li>
           ))}
-          {user?.role === "admin" ? (
+          {showAdminLink ? (
             <li>
               <Link
                 href={withLang("/admin", language)}

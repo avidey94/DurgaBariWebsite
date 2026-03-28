@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { formatUsPhoneNumber } from "@/lib/phone";
 import type { FamilyRole } from "@/lib/portal/types";
 
 interface FamilyRow {
@@ -51,9 +52,9 @@ interface FamilyDraft {
   primary_email: string;
   phone_number: string;
   adults_count: number;
-  adult_names: string;
+  adult_names: string[];
   children_count: number;
-  child_names: string;
+  child_names: string[];
   roles: FamilyRole[];
 }
 
@@ -65,13 +66,20 @@ const foundingStatuses: FamilyRow["founding_family_status"][] = [
   "founding_paused",
 ];
 
-const joinNames = (names: string[] | null | undefined) => (names ?? []).join(", ");
+const resizeNames = (names: string[], targetCount: number, placeholderPrefix: string) => {
+  const safeTarget = Number.isFinite(targetCount) ? Math.max(0, Math.floor(targetCount)) : 0;
+  const next = [...names];
 
-const parseNames = (value: string) =>
-  value
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean);
+  if (safeTarget < next.length) {
+    return next.slice(0, safeTarget);
+  }
+
+  while (next.length < safeTarget) {
+    next.push(`${placeholderPrefix} ${next.length + 1}`);
+  }
+
+  return next;
+};
 
 export function AdminRolesManager() {
   const [families, setFamilies] = useState<FamilyRow[]>([]);
@@ -104,9 +112,9 @@ export function AdminRolesManager() {
       primary_email: family.primary_email,
       phone_number: family.phone_number ?? "",
       adults_count: family.adults_count,
-      adult_names: joinNames(family.adult_names),
+      adult_names: resizeNames(family.adult_names ?? [], family.adults_count, "Adult"),
       children_count: family.children_count,
-      child_names: joinNames(family.child_names),
+      child_names: resizeNames(family.child_names ?? [], family.children_count, "Child"),
       roles: Array.from(rolesByFamilyId.get(family.id) ?? new Set<FamilyRole>()),
     }),
     [rolesByFamilyId],
@@ -208,6 +216,26 @@ export function AdminRolesManager() {
         },
       };
     });
+  };
+
+  const updateAdultsCount = (familyId: string, nextCountValue: string) => {
+    const parsed = Number(nextCountValue);
+    const nextCount = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+    const draft = drafts[familyId];
+    if (!draft) return;
+
+    updateDraft(familyId, "adults_count", nextCount);
+    updateDraft(familyId, "adult_names", resizeNames(draft.adult_names, nextCount, "Adult"));
+  };
+
+  const updateChildrenCount = (familyId: string, nextCountValue: string) => {
+    const parsed = Number(nextCountValue);
+    const nextCount = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+    const draft = drafts[familyId];
+    if (!draft) return;
+
+    updateDraft(familyId, "children_count", nextCount);
+    updateDraft(familyId, "child_names", resizeNames(draft.child_names, nextCount, "Child"));
   };
 
   const bootstrapFamilies = async () => {
@@ -354,9 +382,9 @@ export function AdminRolesManager() {
           primaryEmail: draft.primary_email,
           phoneNumber: draft.phone_number || null,
           adultsCount: draft.adults_count,
-          adultNames: parseNames(draft.adult_names),
+          adultNames: draft.adult_names.map((value) => value.trim()).filter(Boolean),
           childrenCount: draft.children_count,
-          childNames: parseNames(draft.child_names),
+          childNames: draft.child_names.map((value) => value.trim()).filter(Boolean),
           roles: draft.roles,
         }),
       });
@@ -507,9 +535,9 @@ export function AdminRolesManager() {
                     <td className="px-3 py-2">
                       <input
                         value={draft.phone_number}
-                        onChange={(event) => updateDraft(family.id, "phone_number", event.target.value)}
+                        onChange={(event) => updateDraft(family.id, "phone_number", formatUsPhoneNumber(event.target.value))}
                         className="w-44 rounded-md border border-slate-300 px-2 py-1"
-                        placeholder="+1 555 123 4567"
+                        placeholder="925-555-1234"
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -517,36 +545,62 @@ export function AdminRolesManager() {
                         type="number"
                         min={0}
                         value={draft.adults_count}
-                        onChange={(event) => updateDraft(family.id, "adults_count", Number(event.target.value))}
+                        onChange={(event) => updateAdultsCount(family.id, event.target.value)}
                         className="w-20 rounded-md border border-slate-300 px-2 py-1"
                       />
                     </td>
                     <td className="px-3 py-2">
-                      <textarea
-                        value={draft.adult_names}
-                        onChange={(event) => updateDraft(family.id, "adult_names", event.target.value)}
-                        className="w-64 rounded-md border border-slate-300 px-2 py-1"
-                        rows={2}
-                        placeholder="Name 1, Name 2"
-                      />
+                      <div className="w-64 space-y-2">
+                        {draft.adult_names.map((name, index) => (
+                          <input
+                            key={`${family.id}-adult-${index + 1}`}
+                            value={name}
+                            onChange={(event) =>
+                              updateDraft(
+                                family.id,
+                                "adult_names",
+                                draft.adult_names.map((entry, entryIndex) =>
+                                  entryIndex === index ? event.target.value : entry,
+                                ),
+                              )
+                            }
+                            className="w-full rounded-md border border-slate-300 px-2 py-1"
+                            placeholder={`Adult ${index + 1} name`}
+                          />
+                        ))}
+                        {draft.adult_names.length === 0 ? <p className="text-xs text-slate-500">No adults listed.</p> : null}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <input
                         type="number"
                         min={0}
                         value={draft.children_count}
-                        onChange={(event) => updateDraft(family.id, "children_count", Number(event.target.value))}
+                        onChange={(event) => updateChildrenCount(family.id, event.target.value)}
                         className="w-20 rounded-md border border-slate-300 px-2 py-1"
                       />
                     </td>
                     <td className="px-3 py-2">
-                      <textarea
-                        value={draft.child_names}
-                        onChange={(event) => updateDraft(family.id, "child_names", event.target.value)}
-                        className="w-64 rounded-md border border-slate-300 px-2 py-1"
-                        rows={2}
-                        placeholder="Child 1, Child 2"
-                      />
+                      <div className="w-64 space-y-2">
+                        {draft.child_names.map((name, index) => (
+                          <input
+                            key={`${family.id}-child-${index + 1}`}
+                            value={name}
+                            onChange={(event) =>
+                              updateDraft(
+                                family.id,
+                                "child_names",
+                                draft.child_names.map((entry, entryIndex) =>
+                                  entryIndex === index ? event.target.value : entry,
+                                ),
+                              )
+                            }
+                            className="w-full rounded-md border border-slate-300 px-2 py-1"
+                            placeholder={`Child ${index + 1} name`}
+                          />
+                        ))}
+                        {draft.child_names.length === 0 ? <p className="text-xs text-slate-500">No children listed.</p> : null}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <div className="space-y-1">

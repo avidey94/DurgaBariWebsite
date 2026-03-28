@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { normalizeUsPhoneNumber } from "@/lib/phone";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
 import type { FamilyRole } from "@/lib/portal/types";
@@ -181,7 +182,7 @@ export async function PATCH(request: Request) {
 
   const familyDisplayName = (body.familyDisplayName ?? "").trim();
   const primaryEmail = (body.primaryEmail ?? "").trim().toLowerCase();
-  const phoneNumber = body.phoneNumber?.trim() || null;
+  const phoneNumberInput = body.phoneNumber?.trim() || null;
   const adultsCount = Math.floor(Number(body.adultsCount ?? 0));
   const childrenCount = Math.floor(Number(body.childrenCount ?? 0));
   const adultNames = (body.adultNames ?? []).map((value) => value.trim()).filter(Boolean);
@@ -200,6 +201,23 @@ export async function PATCH(request: Request) {
 
   if (!Number.isFinite(adultsCount) || adultsCount < 0 || !Number.isFinite(childrenCount) || childrenCount < 0) {
     return NextResponse.json({ message: "adultsCount and childrenCount must be non-negative numbers." }, { status: 400 });
+  }
+
+  let phoneNumber: string | null = null;
+  if (phoneNumberInput) {
+    const normalizedPhone = normalizeUsPhoneNumber(phoneNumberInput);
+    if (!normalizedPhone) {
+      return NextResponse.json({ message: "phoneNumber must be a valid US number." }, { status: 400 });
+    }
+    phoneNumber = normalizedPhone;
+  }
+
+  if (adultNames.length !== adultsCount) {
+    return NextResponse.json({ message: "Provide one adult name per adult count." }, { status: 400 });
+  }
+
+  if (childNames.length !== childrenCount) {
+    return NextResponse.json({ message: "Provide one child name per child count." }, { status: 400 });
   }
 
   if (roles.length === 0) {

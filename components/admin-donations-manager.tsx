@@ -57,6 +57,21 @@ interface ApiPayload {
 const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amountCents / 100);
 
+const centsToDollarInput = (amountCents: number) => {
+  const fixed = (amountCents / 100).toFixed(2);
+  return fixed.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+};
+
+const dollarsToCents = (value: string): number | null => {
+  const normalized = value.replace(/[$,\s]/g, "");
+  if (!normalized) return null;
+
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount) || amount < 0) return null;
+
+  return Math.round(amount * 100);
+};
+
 const formatDateTimeInput = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -74,6 +89,21 @@ const formatAuditTimestamp = (value: string) =>
     dateStyle: "medium",
     timeStyle: "medium",
   }).format(new Date(value));
+
+const formatAuditValue = (field: string, value: unknown) => {
+  if (field === "amount_cents") {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      return formatCurrency(numeric);
+    }
+  }
+
+  if (value === null || value === undefined) {
+    return "null";
+  }
+
+  return String(value);
+};
 
 const FOUNDING_MONTH_START_YEAR = 2026;
 const FOUNDING_MONTH_END_YEAR = 2028;
@@ -123,7 +153,7 @@ export function AdminDonationsManager() {
   const [newProjectId, setNewProjectId] = useState("");
   const [newFoundingMonth, setNewFoundingMonth] = useState("2026-01");
   const [newIsAnonymous, setNewIsAnonymous] = useState(false);
-  const [newAmountCents, setNewAmountCents] = useState("10000");
+  const [newAmountDollars, setNewAmountDollars] = useState("100.00");
   const [newOccurredAt, setNewOccurredAt] = useState(() => formatDateTimeInput(new Date().toISOString()));
   const [newNotes, setNewNotes] = useState("");
   const [creating, setCreating] = useState(false);
@@ -295,6 +325,11 @@ export function AdminDonationsManager() {
     setError(null);
 
     try {
+      const parsedAmountCents = dollarsToCents(newAmountDollars);
+      if (parsedAmountCents === null) {
+        throw new Error("Amount must be a valid dollar amount (e.g. 200 or 200.58).");
+      }
+
       const response = await fetch("/api/admin/donations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -303,7 +338,7 @@ export function AdminDonationsManager() {
           donationType: newType,
           projectId: newType === "project" ? newProjectId : null,
           foundingMonth: newType === "founding_pledge" ? newFoundingMonth : null,
-          amountCents: Number(newAmountCents),
+          amountCents: parsedAmountCents,
           occurredAt: toIsoFromLocal(newOccurredAt),
           notes: newNotes,
           paymentChannel: "manual",
@@ -322,7 +357,7 @@ export function AdminDonationsManager() {
         await loadDonations();
       }
       setNewIsAnonymous(false);
-      setNewAmountCents("10000");
+      setNewAmountDollars("100.00");
       setNewNotes("");
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "Unable to create donation.");
@@ -429,12 +464,13 @@ export function AdminDonationsManager() {
           Anonymous
         </label>
         <input
-          value={newAmountCents}
-          onChange={(event) => setNewAmountCents(event.target.value)}
+          value={newAmountDollars}
+          onChange={(event) => setNewAmountDollars(event.target.value)}
           type="number"
           min={0}
+          step="0.01"
           className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          placeholder="Amount cents"
+          placeholder="Amount ($)"
         />
         <input
           value={newOccurredAt}
@@ -541,8 +577,16 @@ export function AdminDonationsManager() {
                     <input
                       type="number"
                       min={0}
-                      value={row.amount_cents}
-                      onChange={(event) => updateDraft(row.id, "amount_cents", Number(event.target.value))}
+                      step="0.01"
+                      value={centsToDollarInput(row.amount_cents)}
+                      onChange={(event) => {
+                        const cents = dollarsToCents(event.target.value);
+                        if (cents !== null) {
+                          updateDraft(row.id, "amount_cents", cents);
+                        } else if (event.target.value === "") {
+                          updateDraft(row.id, "amount_cents", 0);
+                        }
+                      }}
                       className="w-32 rounded-md border border-slate-300 px-2 py-1"
                     />
                     <p className="mt-1 text-xs text-slate-500">{formatCurrency(row.amount_cents)}</p>
@@ -580,7 +624,7 @@ export function AdminDonationsManager() {
                               <ul className="mt-1 space-y-1 text-slate-700">
                                 {Object.entries(audit.changes ?? {}).map(([field, change]) => (
                                   <li key={`${audit.id}-${field}`}>
-                                    {field}: {String(change.from ?? "null")} → {String(change.to ?? "null")}
+                                    {field}: {formatAuditValue(field, change.from)} → {formatAuditValue(field, change.to)}
                                   </li>
                                 ))}
                               </ul>

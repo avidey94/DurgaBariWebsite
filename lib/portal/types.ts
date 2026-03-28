@@ -6,6 +6,9 @@ export type FamilyRole =
   | "membership_manager"
   | "member";
 
+export type ActiveDonorStatus = "none" | "bronze" | "silver" | "gold";
+export type RequestedActiveDonorStatus = Exclude<ActiveDonorStatus, "none">;
+
 export type FoundingFamilyStatus =
   | "not_founding"
   | "founding_active"
@@ -43,6 +46,9 @@ export interface FamilyAccount {
   childNames: string[];
   foundingFamilyStatus: FoundingFamilyStatus;
   pledgeStatus: PledgeStatus;
+  activeDonorStatus: ActiveDonorStatus;
+  requestedActiveDonorStatus: RequestedActiveDonorStatus | null;
+  requestedActiveDonorAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

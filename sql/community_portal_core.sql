@@ -15,6 +15,13 @@ create table if not exists public.families (
     check (founding_family_status in ('not_founding', 'founding_active', 'founding_completed', 'founding_paused')),
   pledge_status text not null default 'none'
     check (pledge_status in ('none', 'active', 'completed', 'paused', 'cancelled')),
+  active_donor_status text not null default 'none'
+    check (active_donor_status in ('none', 'bronze', 'silver', 'gold')),
+  requested_active_donor_status text null
+    check (requested_active_donor_status in ('bronze', 'silver', 'gold')),
+  requested_active_donor_at timestamptz null,
+  active_donor_status_set_by_family_id uuid null references public.families (id) on delete set null,
+  active_donor_status_set_at timestamptz null,
   source text not null default 'supabase'
     check (source in ('supabase', 'google_sheet', 'import')),
   legacy_sheet_row_id text null,

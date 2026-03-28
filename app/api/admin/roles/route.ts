@@ -4,7 +4,7 @@ import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { normalizeUsPhoneNumber } from "@/lib/phone";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
-import type { FamilyRole } from "@/lib/portal/types";
+import type { ActiveDonorStatus, FamilyRole } from "@/lib/portal/types";
 
 const ALLOWED_ROLES: FamilyRole[] = [
   "super_admin",
@@ -30,6 +30,7 @@ interface FamilyProfileUpdateBody {
   childrenCount?: number;
   childNames?: string[];
   roles?: FamilyRole[];
+  activeDonorStatus?: ActiveDonorStatus;
 }
 
 export async function GET() {
@@ -53,7 +54,7 @@ export async function GET() {
     supabase
       .from("families")
       .select(
-        "id, family_display_name, primary_email, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, created_at, updated_at",
+        "id, family_display_name, primary_email, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, active_donor_status, requested_active_donor_status, requested_active_donor_at, created_at, updated_at",
       )
       .order("family_display_name", { ascending: true }),
     supabase
@@ -198,6 +199,8 @@ export async function PATCH(request: Request) {
   const roles = includeRoles
     ? Array.from(new Set(body.roles ?? [])).filter((role): role is FamilyRole => ALLOWED_ROLES.includes(role))
     : [];
+  const includeActiveDonorStatus = typeof body.activeDonorStatus === "string";
+  const activeDonorStatus = body.activeDonorStatus;
 
   if (!familyDisplayName || !primaryEmail) {
     return NextResponse.json({ message: "familyDisplayName and primaryEmail are required." }, { status: 400 });
@@ -209,6 +212,10 @@ export async function PATCH(request: Request) {
 
   if (!Number.isFinite(adultsCount) || adultsCount < 0 || !Number.isFinite(childrenCount) || childrenCount < 0) {
     return NextResponse.json({ message: "adultsCount and childrenCount must be non-negative numbers." }, { status: 400 });
+  }
+
+  if (includeActiveDonorStatus && !["none", "bronze", "silver", "gold"].includes(activeDonorStatus as string)) {
+    return NextResponse.json({ message: "activeDonorStatus must be none, bronze, silver, or gold." }, { status: 400 });
   }
 
   let phoneNumber: string | null = null;
@@ -246,6 +253,15 @@ export async function PATCH(request: Request) {
       adult_names: adultNames,
       children_count: childrenCount,
       child_names: childNames,
+      ...(includeActiveDonorStatus
+        ? {
+            active_donor_status: activeDonorStatus,
+            active_donor_status_set_by_family_id: access.familyId,
+            active_donor_status_set_at: new Date().toISOString(),
+            requested_active_donor_status: null,
+            requested_active_donor_at: null,
+          }
+        : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", familyId);

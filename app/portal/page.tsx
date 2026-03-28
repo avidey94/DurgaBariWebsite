@@ -270,11 +270,19 @@ export default async function PortalPage() {
         >
           View donation history
         </Link>
+        {context.family.foundingFamilyStatus !== "not_founding" ? (
+          <Link
+            href="/portal/foundingfamily"
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+          >
+            Founding family donation tracker
+          </Link>
+        ) : null}
         <Link
           href="/portal/pledge"
           className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
         >
-          View pledge details
+          Become an active donor
         </Link>
         <Link
           href="/portal/expense"
@@ -282,14 +290,6 @@ export default async function PortalPage() {
         >
           Expenses
         </Link>
-        {context.family.foundingFamilyStatus !== "not_founding" ? (
-          <Link
-            href="/portal/foundingfamily"
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
-          >
-            Founding family tracker
-          </Link>
-        ) : null}
       </div>
 
       <PortalEventsPanel />

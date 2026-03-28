@@ -1,6 +1,7 @@
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser } from "@/lib/auth/session";
 import type {
+  ActiveDonorStatus,
   DonationLedgerEntry,
   FamilyAccount,
   FamilyDashboardSummary,
@@ -24,6 +25,9 @@ interface FamilyRow {
   child_names: string[] | null;
   founding_family_status: FamilyAccount["foundingFamilyStatus"];
   pledge_status: FamilyAccount["pledgeStatus"];
+  active_donor_status: ActiveDonorStatus;
+  requested_active_donor_status: Exclude<ActiveDonorStatus, "none"> | null;
+  requested_active_donor_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -156,6 +160,9 @@ const toFamilyAccount = (row: FamilyRow): FamilyAccount => ({
   childNames: row.child_names ?? [],
   foundingFamilyStatus: row.founding_family_status,
   pledgeStatus: row.pledge_status,
+  activeDonorStatus: row.active_donor_status ?? "none",
+  requestedActiveDonorStatus: row.requested_active_donor_status ?? null,
+  requestedActiveDonorAt: row.requested_active_donor_at ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -236,7 +243,7 @@ export const getCurrentFamilyPortalContext = async (
   const { data: family, error: familyError } = await supabase
     .from("families")
     .select(
-      "id, auth_user_id, family_display_name, primary_email, profile_completed, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, created_at, updated_at",
+      "id, auth_user_id, family_display_name, primary_email, profile_completed, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, active_donor_status, requested_active_donor_status, requested_active_donor_at, created_at, updated_at",
     )
     .eq("auth_user_id", user.id)
     .maybeSingle();

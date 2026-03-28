@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { formatUsPhoneNumber } from "@/lib/phone";
-import type { FamilyRole } from "@/lib/portal/types";
+import type { ActiveDonorStatus, FamilyRole, RequestedActiveDonorStatus } from "@/lib/portal/types";
 
 interface FamilyRow {
   id: string;
@@ -16,6 +16,9 @@ interface FamilyRow {
   child_names: string[];
   founding_family_status: "not_founding" | "founding_active" | "founding_completed" | "founding_paused";
   pledge_status: string;
+  active_donor_status: ActiveDonorStatus;
+  requested_active_donor_status: RequestedActiveDonorStatus | null;
+  requested_active_donor_at: string | null;
 }
 
 interface RoleGrant {
@@ -56,6 +59,7 @@ interface FamilyDraft {
   children_count: number;
   child_names: string[];
   is_founding_family: boolean;
+  active_donor_status: ActiveDonorStatus;
   roles: FamilyRole[];
 }
 
@@ -72,6 +76,7 @@ const allRoles: FamilyRole[] = [
   "membership_manager",
   "member",
 ];
+const activeDonorStatuses: ActiveDonorStatus[] = ["none", "bronze", "silver", "gold"];
 
 const resizeNames = (names: string[], targetCount: number, placeholderPrefix: string) => {
   const safeTarget = Number.isFinite(targetCount) ? Math.max(0, Math.floor(targetCount)) : 0;
@@ -123,6 +128,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
       children_count: family.children_count,
       child_names: resizeNames(family.child_names ?? [], family.children_count, "Child"),
       is_founding_family: family.founding_family_status !== "not_founding",
+      active_donor_status: family.active_donor_status ?? "none",
       roles: Array.from(rolesByFamilyId.get(family.id) ?? new Set<FamilyRole>()),
     }),
     [rolesByFamilyId],
@@ -394,6 +400,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
           adultNames: draft.adult_names.map((value) => value.trim()).filter(Boolean),
           childrenCount: draft.children_count,
           childNames: draft.child_names.map((value) => value.trim()).filter(Boolean),
+          activeDonorStatus: draft.active_donor_status,
           ...(canManageRoles ? { roles: draft.roles } : {}),
         }),
       });
@@ -556,6 +563,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
                 <th className="px-3 py-2 font-semibold"># Children</th>
                 <th className="px-3 py-2 font-semibold">Child Names</th>
                 <th className="px-3 py-2 font-semibold">Founding Family</th>
+                <th className="px-3 py-2 font-semibold">Active Donor Status</th>
                 <th className="px-3 py-2 font-semibold">Roles</th>
                 <th className="px-3 py-2 font-semibold">Actions</th>
               </tr>
@@ -563,6 +571,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
             <tbody>
               {families.map((family) => {
                 const draft = drafts[family.id] ?? buildFamilyDraft(family);
+                const requestedTier = family.requested_active_donor_status;
                 return (
                   <tr key={family.id} className="border-t border-slate-100 align-top">
                     <td className="px-3 py-2">
@@ -658,6 +667,45 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
                         />
                         Founding
                       </label>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="space-y-2">
+                        <select
+                          value={draft.active_donor_status}
+                          onChange={(event) =>
+                            updateDraft(family.id, "active_donor_status", event.target.value as ActiveDonorStatus)
+                          }
+                          className="w-40 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        >
+                          {activeDonorStatuses.map((status) => (
+                            <option key={`${family.id}-active-donor-${status}`} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+
+                        {requestedTier ? (
+                          <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+                            <p>
+                              Requested: <strong>{requestedTier}</strong>
+                            </p>
+                            {family.requested_active_donor_at ? (
+                              <p className="mt-1 text-amber-800">
+                                {new Date(family.requested_active_donor_at).toLocaleString("en-US")}
+                              </p>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => updateDraft(family.id, "active_donor_status", requestedTier)}
+                              className="mt-2 rounded-md border border-amber-400 bg-white px-2 py-1 text-xs font-medium hover:bg-amber-100"
+                            >
+                              Apply requested tier
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500">No pending request</p>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       {canManageRoles ? (

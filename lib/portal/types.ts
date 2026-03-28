@@ -21,7 +21,13 @@ export type ProjectStatus = "planned" | "active" | "funded" | "completed" | "arc
 
 export type DonorVisibility = "public" | "members" | "hidden";
 
-export type DonationType = "founding_pledge" | "project" | "general";
+export type DonationType =
+  | "founding_pledge"
+  | "project"
+  | "general"
+  | "active_donor_bronze"
+  | "active_donor_silver"
+  | "active_donor_gold";
 
 export type DonationPaymentChannel =
   | "manual"

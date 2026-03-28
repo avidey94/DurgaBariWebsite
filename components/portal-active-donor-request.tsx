@@ -8,6 +8,7 @@ interface PortalActiveDonorRequestProps {
   currentStatus: ActiveDonorStatus;
   requestedStatus: RequestedActiveDonorStatus | null;
   requestedAt: string | null;
+  allowedStatuses: RequestedActiveDonorStatus[];
 }
 
 const tierLabels: Record<RequestedActiveDonorStatus, string> = {
@@ -20,8 +21,13 @@ export function PortalActiveDonorRequest({
   currentStatus,
   requestedStatus,
   requestedAt,
+  allowedStatuses,
 }: PortalActiveDonorRequestProps) {
-  const [selectedStatus, setSelectedStatus] = useState<RequestedActiveDonorStatus>(requestedStatus ?? "bronze");
+  const [selectedStatus, setSelectedStatus] = useState<RequestedActiveDonorStatus>(
+    requestedStatus && allowedStatuses.includes(requestedStatus)
+      ? requestedStatus
+      : (allowedStatuses[0] ?? "bronze"),
+  );
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,9 +60,13 @@ export function PortalActiveDonorRequest({
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">Request active donor status</h2>
+      <h2 className="text-xl font-semibold text-slate-900">
+        {currentStatus === "none" ? "Request active donor status" : "Request active donor tier upgrade"}
+      </h2>
       <p className="mt-2 text-sm text-slate-600">
-        Select your intended membership tier and submit it for membership manager or super admin approval.
+        {currentStatus === "none"
+          ? "Select your intended membership tier and submit it for membership manager or super admin approval."
+          : "You cannot request your current tier again. Select a higher tier and submit for admin approval."}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -71,8 +81,13 @@ export function PortalActiveDonorRequest({
         ) : null}
       </div>
 
-      <fieldset className="mt-4 grid gap-2 sm:grid-cols-3">
-        {(["bronze", "silver", "gold"] as const).map((status) => (
+      {allowedStatuses.length === 0 ? (
+        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          You are currently at the highest tier. No further upgrade requests are available.
+        </p>
+      ) : (
+        <fieldset className="mt-4 grid gap-2 sm:grid-cols-3">
+          {allowedStatuses.map((status) => (
           <label key={status} className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
             <input
               type="radio"
@@ -82,13 +97,14 @@ export function PortalActiveDonorRequest({
             />
             {tierLabels[status]}
           </label>
-        ))}
-      </fieldset>
+          ))}
+        </fieldset>
+      )}
 
       <div className="mt-4">
         <button
           type="button"
-          disabled={submitting}
+          disabled={submitting || allowedStatuses.length === 0}
           onClick={() => void submitRequest()}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
         >

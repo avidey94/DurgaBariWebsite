@@ -7,6 +7,13 @@ interface ActiveDonorRequestBody {
   requestedStatus?: "bronze" | "silver" | "gold";
 }
 
+const rankByStatus = {
+  none: 0,
+  bronze: 1,
+  silver: 2,
+  gold: 3,
+} as const;
+
 export async function POST(request: Request) {
   const user = await getCurrentUser();
 
@@ -29,7 +36,7 @@ export async function POST(request: Request) {
 
   const { data: family, error: familyError } = await supabase
     .from("families")
-    .select("id, profile_completed")
+    .select("id, profile_completed, active_donor_status, requested_active_donor_status")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
@@ -39,6 +46,24 @@ export async function POST(request: Request) {
 
   if (!family.profile_completed) {
     return NextResponse.json({ message: "Complete onboarding first before requesting active donor status." }, { status: 409 });
+  }
+
+  const currentStatus = (family.active_donor_status ?? "none") as "none" | "bronze" | "silver" | "gold";
+  const currentRank = rankByStatus[currentStatus];
+  const requestedRank = rankByStatus[requestedStatus];
+
+  if (requestedRank <= currentRank) {
+    return NextResponse.json(
+      { message: `You are already ${currentStatus}. Please request a higher tier.` },
+      { status: 409 },
+    );
+  }
+
+  if (family.requested_active_donor_status === requestedStatus) {
+    return NextResponse.json(
+      { message: `A ${requestedStatus} request is already pending review.` },
+      { status: 409 },
+    );
   }
 
   const { error: updateError } = await supabase

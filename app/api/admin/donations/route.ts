@@ -10,7 +10,20 @@ import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
 import type { DonationType } from "@/lib/portal/types";
 
-const ALLOWED_DONATION_TYPES: DonationType[] = ["founding_pledge", "project", "general"];
+const ALLOWED_DONATION_TYPES: DonationType[] = [
+  "founding_pledge",
+  "project",
+  "general",
+  "active_donor_bronze",
+  "active_donor_silver",
+  "active_donor_gold",
+];
+const ACTIVE_DONOR_DONATION_TYPES: DonationType[] = [
+  "active_donor_bronze",
+  "active_donor_silver",
+  "active_donor_gold",
+];
+const isActiveDonorType = (value: DonationType) => ACTIVE_DONOR_DONATION_TYPES.includes(value);
 
 export async function GET(request: Request) {
   const access = await getAdminAccessContext();
@@ -164,8 +177,17 @@ export async function POST(request: Request) {
   }
 
   if (donationType !== "founding_pledge" && foundingMonth) {
+    if (!isActiveDonorType(donationType)) {
+      return NextResponse.json(
+        { message: "foundingMonth is only valid for founding pledge or active donor donations." },
+        { status: 400 },
+      );
+    }
+  }
+
+  if (isActiveDonorType(donationType) && (!foundingMonth || !isValidFoundingMonth(foundingMonth))) {
     return NextResponse.json(
-      { message: "foundingMonth is only valid for founding pledges." },
+      { message: "foundingMonth is required for active donor donations and must be between 2026-01 and 2028-12." },
       { status: 400 },
     );
   }
@@ -192,7 +214,16 @@ export async function POST(request: Request) {
       is_anonymous: isAnonymous,
       external_reference: body.externalReference?.trim() || null,
       recorded_by_family_id: access.familyId,
-      metadata: foundingMonth ? { founding_month: foundingMonth } : {},
+      metadata:
+        donationType === "founding_pledge"
+          ? foundingMonth
+            ? { founding_month: foundingMonth }
+            : {}
+          : isActiveDonorType(donationType)
+            ? foundingMonth
+              ? { active_donor_month: foundingMonth }
+              : {}
+            : {},
     })
     .select(
       "id, family_id, donation_type, project_id, amount_cents, occurred_at, recorded_at, recorded_by_family_id, payment_channel, external_reference, is_anonymous, visibility, notes, metadata, created_at, updated_at",

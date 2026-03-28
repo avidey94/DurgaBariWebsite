@@ -108,7 +108,7 @@ create index if not exists pledges_program_code_idx on public.pledges (program_c
 create table if not exists public.donations (
   id uuid primary key default gen_random_uuid(),
   family_id uuid not null references public.families (id) on delete restrict,
-  donation_type text not null check (donation_type in ('founding_pledge', 'project', 'general')),
+  donation_type text not null check (donation_type in ('founding_pledge', 'project', 'general', 'active_donor_bronze', 'active_donor_silver', 'active_donor_gold')),
   project_id uuid null references public.projects (id) on delete set null,
   amount_cents bigint not null check (amount_cents >= 0),
   occurred_at timestamptz not null,

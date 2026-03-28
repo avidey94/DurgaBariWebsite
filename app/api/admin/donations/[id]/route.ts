@@ -22,7 +22,20 @@ interface UpdateDonationBody {
   externalReference?: string | null;
 }
 
-const ALLOWED_DONATION_TYPES: DonationType[] = ["founding_pledge", "project", "general"];
+const ALLOWED_DONATION_TYPES: DonationType[] = [
+  "founding_pledge",
+  "project",
+  "general",
+  "active_donor_bronze",
+  "active_donor_silver",
+  "active_donor_gold",
+];
+const ACTIVE_DONOR_DONATION_TYPES: DonationType[] = [
+  "active_donor_bronze",
+  "active_donor_silver",
+  "active_donor_gold",
+];
+const isActiveDonorType = (value: DonationType) => ACTIVE_DONOR_DONATION_TYPES.includes(value);
 const isValidFoundingMonth = (value: string) =>
   /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && value >= "2026-01" && value <= "2028-12";
 
@@ -151,7 +164,10 @@ export async function PATCH(
       : {};
   const existingFoundingMonth =
     typeof existingMetadata.founding_month === "string" ? existingMetadata.founding_month : null;
+  const existingActiveDonorMonth =
+    typeof existingMetadata.active_donor_month === "string" ? existingMetadata.active_donor_month : null;
   const effectiveFoundingMonth = requestedFoundingMonth === undefined ? existingFoundingMonth : requestedFoundingMonth;
+  const effectiveActiveDonorMonth = requestedFoundingMonth === undefined ? existingActiveDonorMonth : requestedFoundingMonth;
 
   if (effectiveDonationType === "founding_pledge") {
     if (!effectiveFoundingMonth || !isValidFoundingMonth(effectiveFoundingMonth)) {
@@ -164,11 +180,31 @@ export async function PATCH(
     updates.metadata = {
       ...existingMetadata,
       founding_month: effectiveFoundingMonth,
+      active_donor_month: null,
     };
-  } else if (requestedFoundingMonth !== undefined || updates.donation_type !== undefined || existingFoundingMonth) {
-    const metadataWithoutFoundingMonth = { ...existingMetadata };
-    delete metadataWithoutFoundingMonth.founding_month;
-    updates.metadata = metadataWithoutFoundingMonth;
+  } else if (isActiveDonorType(effectiveDonationType)) {
+    if (!effectiveActiveDonorMonth || !isValidFoundingMonth(effectiveActiveDonorMonth)) {
+      return NextResponse.json(
+        { message: "foundingMonth is required for active donor donations and must be between 2026-01 and 2028-12." },
+        { status: 400 },
+      );
+    }
+
+    updates.metadata = {
+      ...existingMetadata,
+      active_donor_month: effectiveActiveDonorMonth,
+      founding_month: null,
+    };
+  } else if (
+    requestedFoundingMonth !== undefined ||
+    updates.donation_type !== undefined ||
+    existingFoundingMonth ||
+    existingActiveDonorMonth
+  ) {
+    const metadataWithoutSubtypeMonths = { ...existingMetadata };
+    delete metadataWithoutSubtypeMonths.founding_month;
+    delete metadataWithoutSubtypeMonths.active_donor_month;
+    updates.metadata = metadataWithoutSubtypeMonths;
   }
 
   const { data, error } = await supabase

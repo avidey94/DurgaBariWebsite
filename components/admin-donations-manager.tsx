@@ -127,9 +127,20 @@ const buildFoundingMonthOptions = () => {
 };
 
 const isValidFoundingMonth = (value: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && value >= "2026-01" && value <= "2028-12";
+const isActiveDonorType = (value: DonationType) =>
+  value === "active_donor_bronze" || value === "active_donor_silver" || value === "active_donor_gold";
 
 const getFoundingMonthFromMetadata = (metadata: Record<string, unknown> | null | undefined) => {
   const raw = metadata?.founding_month;
+  if (typeof raw === "string" && isValidFoundingMonth(raw)) {
+    return raw;
+  }
+
+  return null;
+};
+
+const getActiveDonorMonthFromMetadata = (metadata: Record<string, unknown> | null | undefined) => {
+  const raw = metadata?.active_donor_month;
   if (typeof raw === "string" && isValidFoundingMonth(raw)) {
     return raw;
   }
@@ -224,14 +235,25 @@ export function AdminDonationsManager() {
         existingRow?.metadata ??
         {};
 
+      const donationType = (current[id]?.donation_type as DonationType | undefined) ?? existingRow?.donation_type;
+      const metadata =
+        donationType === "founding_pledge"
+          ? {
+              ...baseMetadata,
+              founding_month: month,
+              active_donor_month: undefined,
+            }
+          : {
+              ...baseMetadata,
+              active_donor_month: month,
+              founding_month: undefined,
+            };
+
       return {
         ...current,
         [id]: {
           ...current[id],
-          metadata: {
-            ...baseMetadata,
-            founding_month: month,
-          },
+          metadata,
         },
       };
     });
@@ -253,6 +275,9 @@ export function AdminDonationsManager() {
       const effectiveFoundingMonth =
         getFoundingMonthFromMetadata((draft.metadata as Record<string, unknown> | undefined) ?? null) ??
         getFoundingMonthFromMetadata(existingRow?.metadata);
+      const effectiveActiveDonorMonth =
+        getActiveDonorMonthFromMetadata((draft.metadata as Record<string, unknown> | undefined) ?? null) ??
+        getActiveDonorMonthFromMetadata(existingRow?.metadata);
       const effectiveIsAnonymous = (draft.is_anonymous ?? existingRow?.is_anonymous) ?? false;
 
       if (effectiveDonationType) {
@@ -264,6 +289,10 @@ export function AdminDonationsManager() {
         } else if (effectiveDonationType === "founding_pledge") {
           requestBody.projectId = null;
           requestBody.foundingMonth = effectiveFoundingMonth ?? "2026-01";
+          requestBody.isAnonymous = false;
+        } else if (isActiveDonorType(effectiveDonationType)) {
+          requestBody.projectId = null;
+          requestBody.foundingMonth = effectiveActiveDonorMonth ?? "2026-01";
           requestBody.isAnonymous = false;
         } else {
           requestBody.projectId = null;
@@ -337,7 +366,7 @@ export function AdminDonationsManager() {
           familyId: newFamilyId,
           donationType: newType,
           projectId: newType === "project" ? newProjectId : null,
-          foundingMonth: newType === "founding_pledge" ? newFoundingMonth : null,
+          foundingMonth: newType === "founding_pledge" || isActiveDonorType(newType) ? newFoundingMonth : null,
           amountCents: parsedAmountCents,
           occurredAt: toIsoFromLocal(newOccurredAt),
           notes: newNotes,
@@ -390,6 +419,9 @@ export function AdminDonationsManager() {
           >
             <option value="all">All</option>
             <option value="founding_pledge">Founding pledge</option>
+            <option value="active_donor_bronze">Active donor - bronze</option>
+            <option value="active_donor_silver">Active donor - silver</option>
+            <option value="active_donor_gold">Active donor - gold</option>
             <option value="project">Project</option>
             <option value="general">General</option>
           </select>
@@ -414,6 +446,9 @@ export function AdminDonationsManager() {
           className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
         >
           <option value="founding_pledge">Founding pledge</option>
+          <option value="active_donor_bronze">Active donor - bronze</option>
+          <option value="active_donor_silver">Active donor - silver</option>
+          <option value="active_donor_gold">Active donor - gold</option>
           <option value="project">Project</option>
           <option value="general">General</option>
         </select>
@@ -430,7 +465,7 @@ export function AdminDonationsManager() {
               </option>
             ))}
           </select>
-        ) : newType === "founding_pledge" ? (
+        ) : newType === "founding_pledge" || isActiveDonorType(newType) ? (
           <select
             value={newFoundingMonth}
             onChange={(event) => setNewFoundingMonth(event.target.value)}
@@ -519,6 +554,9 @@ export function AdminDonationsManager() {
                       className="rounded-md border border-slate-300 bg-white px-2 py-1"
                     >
                       <option value="founding_pledge">Founding pledge</option>
+                      <option value="active_donor_bronze">Active donor - bronze</option>
+                      <option value="active_donor_silver">Active donor - silver</option>
+                      <option value="active_donor_gold">Active donor - gold</option>
                       <option value="project">Project</option>
                       <option value="general">General</option>
                     </select>
@@ -537,9 +575,13 @@ export function AdminDonationsManager() {
                           </option>
                         ))}
                       </select>
-                    ) : row.donation_type === "founding_pledge" ? (
+                    ) : row.donation_type === "founding_pledge" || isActiveDonorType(row.donation_type) ? (
                       <select
-                        value={getFoundingMonthFromMetadata(row.metadata) ?? "2026-01"}
+                        value={
+                          row.donation_type === "founding_pledge"
+                            ? (getFoundingMonthFromMetadata(row.metadata) ?? "2026-01")
+                            : (getActiveDonorMonthFromMetadata(row.metadata) ?? "2026-01")
+                        }
                         onChange={(event) => updateDraftFoundingMonth(row.id, event.target.value)}
                         className="rounded-md border border-slate-300 bg-white px-2 py-1"
                       >

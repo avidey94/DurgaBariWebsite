@@ -2,12 +2,25 @@
 
 import { useState } from "react";
 
+import { formatUsPhoneNumber } from "@/lib/phone";
+
 interface PortalOnboardingFormProps {
   email: string;
   initialName?: string;
   initialAdultsCount?: number;
   initialChildrenCount?: number;
 }
+
+const resizeNames = (current: string[], targetCount: number) => {
+  const next = [...current];
+  if (targetCount < next.length) {
+    return next.slice(0, targetCount);
+  }
+  while (next.length < targetCount) {
+    next.push("");
+  }
+  return next;
+};
 
 export function PortalOnboardingForm({
   email,
@@ -19,6 +32,10 @@ export function PortalOnboardingForm({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [adultsCount, setAdultsCount] = useState(String(initialAdultsCount));
   const [childrenCount, setChildrenCount] = useState(String(initialChildrenCount));
+  const [adultNames, setAdultNames] = useState<string[]>(
+    resizeNames(initialName ? [initialName] : [], initialAdultsCount),
+  );
+  const [childNames, setChildNames] = useState<string[]>(resizeNames([], initialChildrenCount));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +53,8 @@ export function PortalOnboardingForm({
           phoneNumber,
           adultsCount: Number(adultsCount),
           childrenCount: Number(childrenCount),
+          adultNames,
+          childNames,
         }),
       });
 
@@ -78,8 +97,9 @@ export function PortalOnboardingForm({
           Phone #
           <input
             value={phoneNumber}
-            onChange={(event) => setPhoneNumber(event.target.value)}
+            onChange={(event) => setPhoneNumber(formatUsPhoneNumber(event.target.value))}
             className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+            placeholder="925-555-1234"
             required
           />
         </label>
@@ -90,7 +110,14 @@ export function PortalOnboardingForm({
             type="number"
             min={1}
             value={adultsCount}
-            onChange={(event) => setAdultsCount(event.target.value)}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setAdultsCount(nextValue);
+              const parsed = Number(nextValue);
+              if (Number.isFinite(parsed) && parsed >= 1) {
+                setAdultNames((current) => resizeNames(current, Math.floor(parsed)));
+              }
+            }}
             className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
             required
           />
@@ -102,11 +129,62 @@ export function PortalOnboardingForm({
             type="number"
             min={0}
             value={childrenCount}
-            onChange={(event) => setChildrenCount(event.target.value)}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setChildrenCount(nextValue);
+              const parsed = Number(nextValue);
+              if (Number.isFinite(parsed) && parsed >= 0) {
+                setChildNames((current) => resizeNames(current, Math.floor(parsed)));
+              }
+            }}
             className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
             required
           />
         </label>
+
+        <div className="sm:col-span-2">
+          <p className="text-sm font-semibold text-slate-800">Adult names</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {adultNames.map((name, index) => (
+              <input
+                key={`adult-${index + 1}`}
+                value={name}
+                onChange={(event) =>
+                  setAdultNames((current) =>
+                    current.map((entry, currentIndex) => (currentIndex === index ? event.target.value : entry)),
+                  )
+                }
+                placeholder={`Adult ${index + 1} name`}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                required
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="sm:col-span-2">
+          <p className="text-sm font-semibold text-slate-800">Children names</p>
+          {childNames.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-600">No children added.</p>
+          ) : (
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {childNames.map((name, index) => (
+                <input
+                  key={`child-${index + 1}`}
+                  value={name}
+                  onChange={(event) =>
+                    setChildNames((current) =>
+                      current.map((entry, currentIndex) => (currentIndex === index ? event.target.value : entry)),
+                    )
+                  }
+                  placeholder={`Child ${index + 1} name`}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  required
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="sm:col-span-2">
           <button

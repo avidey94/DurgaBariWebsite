@@ -30,17 +30,47 @@ export const ensureFamilyForAuthUser = async (input: EnsureFamilyForAuthUserInpu
   }
 
   const email = input.email.trim().toLowerCase();
-  const { data: existingFamily, error: existingError } = await supabase
+  const { data: existingByAuthId, error: existingByAuthIdError } = await supabase
     .from("families")
-    .select("id")
+    .select("id, auth_user_id")
     .eq("auth_user_id", input.authUserId)
     .maybeSingle();
 
-  if (existingError) {
-    return { familyId: null, error: new Error(existingError.message) };
+  if (existingByAuthIdError) {
+    return { familyId: null, error: new Error(existingByAuthIdError.message) };
   }
 
-  let familyId = (existingFamily?.id as string | undefined) ?? null;
+  let familyId = (existingByAuthId?.id as string | undefined) ?? null;
+
+  if (!familyId) {
+    const { data: existingByEmail, error: existingByEmailError } = await supabase
+      .from("families")
+      .select("id, auth_user_id")
+      .eq("primary_email", email)
+      .maybeSingle();
+
+    if (existingByEmailError) {
+      return { familyId: null, error: new Error(existingByEmailError.message) };
+    }
+
+    if (existingByEmail?.id) {
+      familyId = existingByEmail.id as string;
+
+      if (existingByEmail.auth_user_id !== input.authUserId) {
+        const { error: relinkError } = await supabase
+          .from("families")
+          .update({
+            auth_user_id: input.authUserId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", familyId);
+
+        if (relinkError) {
+          return { familyId: null, error: new Error(relinkError.message) };
+        }
+      }
+    }
+  }
 
   if (!familyId) {
     const insertResult = await supabase
@@ -69,8 +99,8 @@ export const ensureFamilyForAuthUser = async (input: EnsureFamilyForAuthUserInpu
 
       const retryFamily = await supabase
         .from("families")
-        .select("id")
-        .eq("auth_user_id", input.authUserId)
+        .select("id, auth_user_id")
+        .eq("primary_email", email)
         .maybeSingle();
 
       if (retryFamily.error || !retryFamily.data?.id) {
@@ -78,6 +108,20 @@ export const ensureFamilyForAuthUser = async (input: EnsureFamilyForAuthUserInpu
       }
 
       familyId = retryFamily.data.id as string;
+
+      if (retryFamily.data.auth_user_id !== input.authUserId) {
+        const { error: relinkError } = await supabase
+          .from("families")
+          .update({
+            auth_user_id: input.authUserId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", familyId);
+
+        if (relinkError) {
+          return { familyId: null, error: new Error(relinkError.message) };
+        }
+      }
     } else {
       familyId = insertResult.data.id as string;
     }

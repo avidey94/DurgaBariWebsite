@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser } from "@/lib/auth/session";
+import { normalizeUsPhoneNumber } from "@/lib/phone";
 import { ensureFamilyForAuthUser } from "@/lib/portal/family-onboarding";
 
 interface OnboardingBody {
@@ -9,6 +10,8 @@ interface OnboardingBody {
   phoneNumber?: string;
   adultsCount?: number;
   childrenCount?: number;
+  adultNames?: string[];
+  childNames?: string[];
 }
 
 export async function POST(request: Request) {
@@ -35,16 +38,27 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as OnboardingBody;
   const familyDisplayName = (body.familyDisplayName ?? "").trim();
-  const phoneNumber = (body.phoneNumber ?? "").trim();
+  const phoneNumberInput = (body.phoneNumber ?? "").trim();
   const adultsCount = Math.floor(Number(body.adultsCount ?? 0));
   const childrenCount = Math.floor(Number(body.childrenCount ?? 0));
+  const adultNames = (body.adultNames ?? []).map((name) => name.trim()).filter(Boolean);
+  const childNames = (body.childNames ?? []).map((name) => name.trim()).filter(Boolean);
 
   if (!familyDisplayName) {
     return NextResponse.json({ message: "Name is required." }, { status: 400 });
   }
 
-  if (!phoneNumber) {
+  if (!phoneNumberInput) {
     return NextResponse.json({ message: "Phone number is required." }, { status: 400 });
+  }
+
+  const phoneNumber = normalizeUsPhoneNumber(phoneNumberInput);
+
+  if (!phoneNumber) {
+    return NextResponse.json(
+      { message: "Phone number must be a valid US number (10 digits, optional country code)." },
+      { status: 400 },
+    );
   }
 
   if (!Number.isFinite(adultsCount) || adultsCount < 1) {
@@ -53,6 +67,14 @@ export async function POST(request: Request) {
 
   if (!Number.isFinite(childrenCount) || childrenCount < 0) {
     return NextResponse.json({ message: "Children must be 0 or more." }, { status: 400 });
+  }
+
+  if (adultNames.length !== adultsCount) {
+    return NextResponse.json({ message: "Please provide a name for each adult." }, { status: 400 });
+  }
+
+  if (childNames.length !== childrenCount) {
+    return NextResponse.json({ message: "Please provide a name for each child." }, { status: 400 });
   }
 
   const { data: family, error: familyError } = await supabase
@@ -79,9 +101,9 @@ export async function POST(request: Request) {
       primary_email: user.email.toLowerCase(),
       phone_number: phoneNumber,
       adults_count: adultsCount,
-      adult_names: adultsCount > 0 ? [familyDisplayName] : [],
+      adult_names: adultNames,
       children_count: childrenCount,
-      child_names: [],
+      child_names: childNames,
       profile_completed: true,
       updated_at: new Date().toISOString(),
     })

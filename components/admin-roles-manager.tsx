@@ -55,16 +55,11 @@ interface FamilyDraft {
   adult_names: string[];
   children_count: number;
   child_names: string[];
+  is_founding_family: boolean;
   roles: FamilyRole[];
 }
 
 const allRoles: FamilyRole[] = ["super_admin", "treasurer", "event_manager", "member"];
-const foundingStatuses: FamilyRow["founding_family_status"][] = [
-  "not_founding",
-  "founding_active",
-  "founding_completed",
-  "founding_paused",
-];
 
 const resizeNames = (names: string[], targetCount: number, placeholderPrefix: string) => {
   const safeTarget = Number.isFinite(targetCount) ? Math.max(0, Math.floor(targetCount)) : 0;
@@ -88,9 +83,9 @@ export function AdminRolesManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedFamilyId, setSelectedFamilyId] = useState("");
-  const [selectedFoundingStatus, setSelectedFoundingStatus] =
-    useState<FamilyRow["founding_family_status"]>("not_founding");
+  const [memberPreviewModalOpen, setMemberPreviewModalOpen] = useState(false);
+  const [memberPreviewSearch, setMemberPreviewSearch] = useState("");
+  const [memberPreviewFamilyId, setMemberPreviewFamilyId] = useState("");
   const [mutating, setMutating] = useState(false);
   const [bootstrapMessage, setBootstrapMessage] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, FamilyDraft>>({});
@@ -115,6 +110,7 @@ export function AdminRolesManager() {
       adult_names: resizeNames(family.adult_names ?? [], family.adults_count, "Adult"),
       children_count: family.children_count,
       child_names: resizeNames(family.child_names ?? [], family.children_count, "Child"),
+      is_founding_family: family.founding_family_status !== "not_founding",
       roles: Array.from(rolesByFamilyId.get(family.id) ?? new Set<FamilyRole>()),
     }),
     [rolesByFamilyId],
@@ -148,7 +144,7 @@ export function AdminRolesManager() {
       setPreview(previewPayload.preview ?? { active: false });
 
       if (familiesFromApi.length > 0) {
-        setSelectedFamilyId((current) => current || familiesFromApi[0].id);
+        setMemberPreviewFamilyId((current) => current || familiesFromApi[0].id);
       }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load role data.");
@@ -160,13 +156,6 @@ export function AdminRolesManager() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
-
-  useEffect(() => {
-    const selectedFamily = families.find((family) => family.id === selectedFamilyId);
-    if (selectedFamily) {
-      setSelectedFoundingStatus(selectedFamily.founding_family_status);
-    }
-  }, [families, selectedFamilyId]);
 
   useEffect(() => {
     if (families.length === 0) {
@@ -262,33 +251,17 @@ export function AdminRolesManager() {
     }
   };
 
-  const setFoundingStatus = async () => {
-    if (!selectedFamilyId) {
-      setError("Select a family first.");
-      return;
-    }
+  const saveFoundingStatus = async (familyId: string, isFoundingFamily: boolean) => {
+    const response = await fetch(`/api/admin/families/${familyId}/founding-status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: isFoundingFamily ? "founding_active" : "not_founding" }),
+    });
 
-    setMutating(true);
-    setError(null);
+    const payload = (await response.json()) as { message?: string };
 
-    try {
-      const response = await fetch(`/api/admin/families/${selectedFamilyId}/founding-status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: selectedFoundingStatus }),
-      });
-
-      const payload = (await response.json()) as { message?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Unable to update founding status.");
-      }
-
-      await loadAll();
-    } catch (statusError) {
-      setError(statusError instanceof Error ? statusError.message : "Unable to update founding status.");
-    } finally {
-      setMutating(false);
+    if (!response.ok) {
+      throw new Error(payload.message ?? "Unable to update founding status.");
     }
   };
 
@@ -315,8 +288,8 @@ export function AdminRolesManager() {
     }
   };
 
-  const startPreviewAsFamily = async () => {
-    if (!selectedFamilyId) {
+  const startPreviewAsFamily = async (familyId: string) => {
+    if (!familyId) {
       setError("Select a family to preview.");
       return;
     }
@@ -328,7 +301,7 @@ export function AdminRolesManager() {
       const response = await fetch("/api/admin/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "family", familyId: selectedFamilyId }),
+        body: JSON.stringify({ mode: "family", familyId }),
       });
       const payload = (await response.json()) as { message?: string };
 
@@ -363,6 +336,26 @@ export function AdminRolesManager() {
     }
   };
 
+  const previewFamilyName = useMemo(() => {
+    if (!preview.targetFamilyId) {
+      return preview.targetEmail ?? "";
+    }
+
+    const matched = families.find((family) => family.id === preview.targetFamilyId);
+    return matched?.family_display_name ?? preview.targetEmail ?? "member";
+  }, [families, preview.targetEmail, preview.targetFamilyId]);
+
+  const filteredPreviewFamilies = useMemo(() => {
+    const query = memberPreviewSearch.trim().toLowerCase();
+    if (!query) {
+      return families;
+    }
+
+    return families.filter((family) =>
+      `${family.family_display_name} ${family.primary_email}`.toLowerCase().includes(query),
+    );
+  }, [families, memberPreviewSearch]);
+
   const saveFamily = async (familyId: string) => {
     const draft = drafts[familyId];
     if (!draft) {
@@ -394,6 +387,7 @@ export function AdminRolesManager() {
         throw new Error(payload.message ?? "Unable to save family profile.");
       }
 
+      await saveFoundingStatus(familyId, draft.is_founding_family);
       await loadAll();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save family profile.");
@@ -432,67 +426,97 @@ export function AdminRolesManager() {
           <button
             type="button"
             disabled={mutating}
-            onClick={() => void startPreviewAsLoggedOut()}
+            onClick={() => {
+              if (preview.active && preview.mode === "logged_out") {
+                void stopPreview();
+              } else {
+                void startPreviewAsLoggedOut();
+              }
+            }}
             className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 disabled:opacity-60"
           >
-            Preview as logged out
+            {preview.active && preview.mode === "logged_out" ? "Stop previewing as logged out" : "Preview as logged out"}
           </button>
           <button
             type="button"
             disabled={mutating || families.length === 0}
-            onClick={() => void startPreviewAsFamily()}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 disabled:opacity-60"
+            onClick={() => {
+              if (preview.active && preview.mode === "family") {
+                void stopPreview();
+              } else {
+                setMemberPreviewModalOpen(true);
+                setMemberPreviewSearch("");
+                setMemberPreviewFamilyId((current) => current || (families[0]?.id ?? ""));
+              }
+            }}
+            className={`rounded-md px-3 py-1 text-sm disabled:opacity-60 ${
+              preview.active && preview.mode === "family"
+                ? "bg-slate-900 text-white hover:bg-slate-800"
+                : "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
+            }`}
           >
-            Preview selected family
-          </button>
-          <button
-            type="button"
-            disabled={mutating}
-            onClick={() => void stopPreview()}
-            className="rounded-md bg-slate-900 px-3 py-1 text-sm text-white hover:bg-slate-800 disabled:opacity-60"
-          >
-            Stop preview
+            {preview.active && preview.mode === "family"
+              ? `Stop previewing as ${previewFamilyName}`
+              : "Preview as member"}
           </button>
         </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-4">
-        <select
-          value={selectedFamilyId}
-          onChange={(event) => setSelectedFamilyId(event.target.value)}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          disabled={families.length === 0}
-        >
-          {families.length === 0 ? <option value="">No families found</option> : null}
-          {families.map((family) => (
-            <option key={family.id} value={family.id}>
-              {family.family_display_name} ({family.primary_email})
-            </option>
-          ))}
-        </select>
+      {memberPreviewModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+          <div className="w-full max-w-2xl rounded-lg border border-slate-200 bg-white p-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Preview as member</h3>
+            <p className="mt-1 text-sm text-slate-600">Search and select a family account to preview.</p>
 
-        <select
-          value={selectedFoundingStatus}
-          onChange={(event) => setSelectedFoundingStatus(event.target.value as FamilyRow["founding_family_status"])}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          disabled={families.length === 0}
-        >
-          {foundingStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status.replace("_", " ")}
-            </option>
-          ))}
-        </select>
+            <input
+              value={memberPreviewSearch}
+              onChange={(event) => setMemberPreviewSearch(event.target.value)}
+              placeholder="Search by name or email"
+              className="mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
 
-        <button
-          type="button"
-          disabled={mutating || families.length === 0}
-          onClick={() => void setFoundingStatus()}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-60"
-        >
-          Set founding status
-        </button>
-      </div>
+            <div className="mt-3 max-h-72 space-y-1 overflow-y-auto rounded-md border border-slate-200 p-2">
+              {filteredPreviewFamilies.length === 0 ? (
+                <p className="px-2 py-3 text-sm text-slate-600">No matching family found.</p>
+              ) : (
+                filteredPreviewFamilies.map((family) => (
+                  <label
+                    key={family.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-slate-50"
+                  >
+                    <input
+                      type="radio"
+                      name="member-preview-family"
+                      checked={memberPreviewFamilyId === family.id}
+                      onChange={() => setMemberPreviewFamilyId(family.id)}
+                    />
+                    <span className="font-medium text-slate-900">{family.family_display_name}</span>
+                    <span className="text-slate-600">({family.primary_email})</span>
+                  </label>
+                ))
+              )}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setMemberPreviewModalOpen(false)}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={mutating || !memberPreviewFamilyId}
+                onClick={() => void startPreviewAsFamily(memberPreviewFamilyId)}
+                className="rounded-md bg-slate-900 px-3 py-1.5 text-sm text-white hover:bg-slate-800 disabled:opacity-60"
+              >
+                Start preview
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
       {loading ? <p className="text-sm text-slate-600">Loading family data...</p> : null}
@@ -509,6 +533,7 @@ export function AdminRolesManager() {
                 <th className="px-3 py-2 font-semibold">Adult Names</th>
                 <th className="px-3 py-2 font-semibold"># Children</th>
                 <th className="px-3 py-2 font-semibold">Child Names</th>
+                <th className="px-3 py-2 font-semibold">Founding Family</th>
                 <th className="px-3 py-2 font-semibold">Roles</th>
                 <th className="px-3 py-2 font-semibold">Actions</th>
               </tr>
@@ -601,6 +626,16 @@ export function AdminRolesManager() {
                         ))}
                         {draft.child_names.length === 0 ? <p className="text-xs text-slate-500">No children listed.</p> : null}
                       </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={draft.is_founding_family}
+                          onChange={(event) => updateDraft(family.id, "is_founding_family", event.target.checked)}
+                        />
+                        Founding
+                      </label>
                     </td>
                     <td className="px-3 py-2">
                       <div className="space-y-1">

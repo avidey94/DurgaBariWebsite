@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { PortalExpenseSubmission } from "@/components/portal-expense-submission";
 import { PortalEventsPanel } from "@/components/portal-events-panel";
 import { PortalOnboardingForm } from "@/components/portal-onboarding-form";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -306,7 +305,6 @@ export default async function PortalPage() {
         </section>
       ) : null}
 
-      <PortalExpenseSubmission />
 
       <div className="flex flex-wrap gap-3">
         <Link
@@ -320,6 +318,12 @@ export default async function PortalPage() {
           className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
         >
           View pledge details
+        </Link>
+        <Link
+          href="/portal/expense"
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+        >
+          Expenses
         </Link>
       </div>
 

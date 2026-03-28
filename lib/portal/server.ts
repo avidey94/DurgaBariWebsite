@@ -16,6 +16,7 @@ interface FamilyRow {
   auth_user_id: string;
   family_display_name: string;
   primary_email: string;
+  profile_completed: boolean;
   phone_number: string | null;
   adults_count: number;
   adult_names: string[] | null;
@@ -147,6 +148,7 @@ const toFamilyAccount = (row: FamilyRow): FamilyAccount => ({
   authUserId: row.auth_user_id,
   familyDisplayName: row.family_display_name,
   primaryEmail: row.primary_email,
+  profileCompleted: row.profile_completed,
   phoneNumber: row.phone_number,
   adultsCount: row.adults_count,
   adultNames: row.adult_names ?? [],
@@ -234,7 +236,7 @@ export const getCurrentFamilyPortalContext = async (
   const { data: family, error: familyError } = await supabase
     .from("families")
     .select(
-      "id, auth_user_id, family_display_name, primary_email, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, created_at, updated_at",
+      "id, auth_user_id, family_display_name, primary_email, profile_completed, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, created_at, updated_at",
     )
     .eq("auth_user_id", user.id)
     .maybeSingle();

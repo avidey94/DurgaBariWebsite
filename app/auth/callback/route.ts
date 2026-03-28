@@ -3,6 +3,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
 import { normalizeNextPath } from "@/lib/auth/site-url";
+import { ensureFamilyForAuthUser } from "@/lib/portal/family-onboarding";
 
 const toOtpType = (value: string | null): EmailOtpType | null => {
   if (
@@ -52,6 +53,21 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url));
+  }
+
+  const { data: userData } = await supabase.auth.getUser();
+  const authUserId = userData.user?.id;
+  const authEmail = userData.user?.email;
+
+  if (authUserId && authEmail) {
+    const ensured = await ensureFamilyForAuthUser({
+      authUserId,
+      email: authEmail,
+    });
+
+    if (ensured.error) {
+      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(ensured.error.message)}`, request.url));
+    }
   }
 
   const redirectResponse = NextResponse.redirect(new URL(nextPath, request.url));

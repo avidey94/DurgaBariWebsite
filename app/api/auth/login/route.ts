@@ -54,10 +54,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: error.message }, { status: 400 });
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { message: "Magic link sent. Check your inbox and click the link to continue." },
       { status: 200 },
     );
+    setResponse(response);
+
+    return getResponse();
   }
 
   if (body.mode === "signup") {
@@ -87,10 +90,13 @@ export async function POST(request: NextRequest) {
       return getResponse();
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { message: "Account created. Check your email to confirm and finish sign in." },
       { status: 200 },
     );
+    setResponse(response);
+
+    return getResponse();
   }
 
   if (body.mode === "password") {

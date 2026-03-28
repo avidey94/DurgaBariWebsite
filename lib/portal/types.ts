@@ -29,6 +29,7 @@ export interface FamilyAccount {
   authUserId: string;
   familyDisplayName: string;
   primaryEmail: string;
+  profileCompleted: boolean;
   phoneNumber: string | null;
   adultsCount: number;
   adultNames: string[];

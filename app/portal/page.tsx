@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { PortalExpenseSubmission } from "@/components/portal-expense-submission";
 import { PortalEventsPanel } from "@/components/portal-events-panel";
+import { PortalOnboardingForm } from "@/components/portal-onboarding-form";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   getCurrentFamilyPortalContext,
@@ -172,11 +173,21 @@ export default async function PortalPage() {
 
   if (!context) {
     return (
-      <section className="mx-auto max-w-6xl space-y-4 px-6 py-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your Portal</h1>
-        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Family profile was not found for <strong>{user.email}</strong>.
-        </p>
+      <section className="mx-auto max-w-6xl px-6 py-8">
+        <PortalOnboardingForm email={user.email} />
+      </section>
+    );
+  }
+
+  if (!context.family.profileCompleted) {
+    return (
+      <section className="mx-auto max-w-6xl px-6 py-8">
+        <PortalOnboardingForm
+          email={user.email}
+          initialName={context.family.familyDisplayName}
+          initialAdultsCount={context.family.adultsCount}
+          initialChildrenCount={context.family.childrenCount}
+        />
       </section>
     );
   }

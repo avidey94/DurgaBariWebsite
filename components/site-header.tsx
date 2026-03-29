@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { resolveLanguage, type Language, withLang } from "@/lib/i18n";
@@ -81,6 +81,7 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const durgaCenterMenuRef = useRef<HTMLDetailsElement | null>(null);
 
   useEffect(() => {
     // Next.js requires useSearchParams to be wrapped in Suspense; keep this
@@ -288,7 +289,7 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v4.0
+                v4.1
               </p>
             </div>
           </Link>
@@ -446,7 +447,15 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
         className="border-b-[2px] border-[var(--db-border)] bg-[var(--db-muted)] px-3 py-2"
       >
         <div className="mx-auto flex max-w-[1240px] flex-col gap-2 lg:flex-row lg:items-center lg:gap-2">
-          <details className="relative border-[2px] border-[var(--db-border)] bg-white">
+          <details
+            ref={durgaCenterMenuRef}
+            className="relative border-[2px] border-[var(--db-border)] bg-white"
+            onMouseLeave={() => {
+              if (durgaCenterMenuRef.current) {
+                durgaCenterMenuRef.current.open = false;
+              }
+            }}
+          >
             <summary className="list-none cursor-pointer px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]">
               ▸ {text.durgaCenter}
             </summary>
@@ -456,7 +465,12 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
                   <li key={item.label}>
                     <Link
                       href={withLang(item.href, language)}
-                      onClick={() => setMenuOpen(false)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (durgaCenterMenuRef.current) {
+                          durgaCenterMenuRef.current.open = false;
+                        }
+                      }}
                       className="block border border-transparent px-2 py-1.5 text-sm font-medium text-[#111] hover:border-[var(--db-border-soft)] hover:bg-[var(--db-muted)]"
                     >
                       • {item.label}

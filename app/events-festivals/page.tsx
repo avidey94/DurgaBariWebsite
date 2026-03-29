@@ -1,97 +1,322 @@
-import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
-import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { canCurrentUserManageCms } from "@/lib/cms/access";
-import { getCmsPageContent } from "@/lib/cms/page-content";
-import { resolveLanguage } from "@/lib/i18n";
+import Link from "next/link";
 
-const festivalSections = {
-  en: [
-    "Major Hindu Festivals - Durga Puja, Kali Puja, Saraswati Puja, Diwali, Holi, and more.",
-    "Special Observances - Monthly pujas, sacred rituals, spiritual discourses, and collective prayers.",
-    "Cultural Celebrations - Music, dance, language, and traditions that reflect our Bengali and broader Hindu heritage.",
-    "Community Events - Family gatherings, youth activities, educational workshops, and social service programs.",
-  ],
-  bn: [
-    "প্রধান হিন্দু উৎসব - দুর্গাপূজা, কালীপূজা, সরস্বতী পূজা, দীপাবলি, হোলি এবং আরও অনেক কিছু।",
-    "বিশেষ আচার - মাসিক পূজা, পবিত্র আচার, আধ্যাত্মিক আলোচনা ও সম্মিলিত প্রার্থনা।",
-    "সাংস্কৃতিক উদযাপন - সঙ্গীত, নৃত্য, ভাষা ও ঐতিহ্য, যা আমাদের বাঙালি ও বৃহত্তর হিন্দু উত্তরাধিকারের প্রতিফলন।",
-    "কমিউনিটি অনুষ্ঠান - পারিবারিক মিলন, তরুণ কার্যক্রম, শিক্ষামূলক কর্মশালা ও সামাজিক সেবামূলক প্রোগ্রাম।",
-  ],
-} as const;
+import { ContentHero, ContentPageFrame } from "@/components/content-page";
+import { computeVisibilityForUser, listCalendarEvents } from "@/lib/events/server";
+
+const eventTypeLabel: Record<string, string> = {
+  darshan: "Darshan",
+  ritual: "Ritual",
+  festival: "Festival",
+  community: "Community",
+  volunteer: "Volunteer",
+  special: "Special",
+};
+
+const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+const dayFormatter = new Intl.DateTimeFormat("en-US", { day: "2-digit" });
+const dateLineFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 interface EventsFestivalsPageProps {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{
+    eventType?: string;
+    q?: string;
+    view?: "list" | "day";
+    monthOffset?: string;
+    day?: string;
+  }>;
 }
+
+const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
+const endOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+
+const dayKey = (value: string) => new Date(value).toISOString().slice(0, 10);
+
+const formatTimeRange = (startIso: string, endIso: string | null, allDay: boolean) => {
+  if (allDay) return "All day";
+  const start = new Date(startIso);
+  if (!endIso) return `${dateLineFormatter.format(start)}`;
+  const end = new Date(endIso);
+  return `${dateLineFormatter.format(start)} - ${end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+};
 
 export default async function EventsFestivalsPage({ searchParams }: EventsFestivalsPageProps) {
   const params = await searchParams;
-  const lang = resolveLanguage(params.lang);
-  const isBn = lang === "bn";
-  const cmsSlug = lang === "bn" ? "events-festivals-bn" : "events-festivals";
-  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
-  const eventsIntroDefaultHtml = isBn
-    ? "<p>দুর্গা বাড়ি একদিন এমন প্রাণবন্ত কেন্দ্র হবে যেখানে আমরা সবাই এক পরিবার হিসেবে আমাদের ঐতিহ্য উদযাপন করব, দেবদেবীর আরাধনা করব এবং সংস্কৃতির আনন্দ ভাগ করে নেব।</p>"
-    : "<p>Durga Bari will one day be a vibrant center where we come together as one family to celebrate our traditions, honor our deities, and rejoice in our cultural heritage.</p>";
+  const selectedType = (params.eventType ?? "").trim().toLowerCase();
+  const query = (params.q ?? "").trim().toLowerCase();
+  const view = params.view === "day" ? "day" : "list";
+  const monthOffset = Number.parseInt(params.monthOffset ?? "0", 10) || 0;
+
+  const now = new Date();
+  const anchorMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  const from = startOfMonth(new Date(anchorMonth.getFullYear(), anchorMonth.getMonth(), 1));
+  const to = endOfMonth(new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() + 4, 1));
+  const visibility = await computeVisibilityForUser();
+
+  const allOccurrences = await listCalendarEvents({
+    includeDraft: false,
+    includePrivate: visibility.includePrivate,
+    includeMembers: visibility.includeMembers,
+    fromIso: from.toISOString(),
+    toIso: to.toISOString(),
+  });
+
+  const occurrences = allOccurrences
+    .filter((entry) => {
+      if (entry.event.visibility === "private" && !visibility.includePrivate) return false;
+      if (entry.event.visibility === "members" && !visibility.includeMembers) return false;
+      if (selectedType && entry.event.event_type !== selectedType) return false;
+      if (!query) return true;
+
+      const haystack = [
+        entry.event.title,
+        entry.event.short_summary ?? "",
+        entry.event.full_description ?? "",
+        entry.event.location ?? "",
+        eventTypeLabel[entry.event.event_type] ?? entry.event.event_type,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    })
+    .sort((a, b) => new Date(a.occurrenceStart).getTime() - new Date(b.occurrenceStart).getTime());
+
+  const availableTypes = Array.from(new Set(allOccurrences.map((entry) => entry.event.event_type))).sort();
+
+  const groupedByMonth = occurrences.reduce<Map<string, typeof occurrences>>((map, entry) => {
+    const monthKey = monthFormatter.format(new Date(entry.occurrenceStart));
+    map.set(monthKey, [...(map.get(monthKey) ?? []), entry]);
+    return map;
+  }, new Map());
+
+  const dayParam = params.day && /^\d{4}-\d{2}-\d{2}$/.test(params.day) ? params.day : null;
+  const selectedDay = dayParam ?? dayKey(occurrences[0]?.occurrenceStart ?? now.toISOString());
+  const dayOccurrences = occurrences.filter((entry) => dayKey(entry.occurrenceStart) === selectedDay);
+
+  const urlFor = (overrides: Record<string, string | number | null>) => {
+    const search = new URLSearchParams();
+
+    const next: Record<string, string | number | null> = {
+      eventType: selectedType || null,
+      q: query || null,
+      view,
+      monthOffset,
+      day: dayParam,
+      ...overrides,
+    };
+
+    Object.entries(next).forEach(([key, value]) => {
+      if (value === null || value === "") return;
+      search.set(key, String(value));
+    });
+
+    return `/events-festivals?${search.toString()}`;
+  };
+
+  const monthEntries = Array.from(groupedByMonth.entries());
 
   return (
     <ContentPageFrame>
       <ContentHero
-        title={isBn ? "ইভেন্ট ও উৎসব" : "Events & Festivals"}
-        subtitle={isBn ? "ভক্তি, উদযাপন ও কমিউনিটির মিলন" : "Devotion, Celebration, and Community Togetherness"}
-        kicker={isBn ? "মৌসুমি ক্যালেন্ডার" : "Seasonal Calendar"}
+        title="Events & Festivals"
+        subtitle="Temple calendar, recurring rituals, and special celebrations"
+        kicker="Community Calendar"
       />
 
-      <div className="mt-4 space-y-4">
-        <ContentModule title={isBn ? "উদযাপন নিয়ে আমাদের ভাবনা" : "Our Vision for Celebrations"}>
-          <CmsEditableBlock
-            slug={cmsSlug}
-            initialTitle={isBn ? "উদযাপন নিয়ে আমাদের ভাবনা" : "Our Vision for Celebrations"}
-            initialHtml={cmsIntro?.content_html || eventsIntroDefaultHtml}
-            isAdmin={canManageCms}
-          />
-
-          <p className="mt-2">
-            {isBn
-              ? "এই প্রারম্ভিক পর্যায়ে আমরা মন্দির প্রতিষ্ঠার কাজ করছি এবং ভক্তি ও কমিউনিটি মিলনের জন্য পবিত্র স্থান তৈরির ভিত্তি গড়ছি। দুর্গা বাড়ি নির্মিত হলে, এই পাতায় আপনি দেখবেন:"
-              : "At this early stage, we are establishing the temple and laying the foundation for a sacred space of devotion and community gathering. Once Durga Bari is built, this page will share details of:"}
-          </p>
-
-          <div className="mt-3 border-[2px] border-[#3d6148] bg-[#dde9de] p-3">
-            <ul className="space-y-2">
-              {festivalSections[lang].map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="text-[#9b1616]">▸</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+      <div className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+        <form className="grid gap-2 border border-slate-200 bg-slate-50 p-3 md:grid-cols-[1fr_auto_auto_auto_auto]" method="get">
+          <input type="hidden" name="monthOffset" value={String(monthOffset)} />
+          <input type="hidden" name="view" value={view} />
+          <div className="md:col-span-1">
+            <label htmlFor="events-q" className="sr-only">
+              Search for events
+            </label>
+            <input
+              id="events-q"
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Search for events"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            />
           </div>
-        </ContentModule>
+          <select
+            name="eventType"
+            defaultValue={selectedType}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+          >
+            <option value="">All types</option>
+            {availableTypes.map((type) => (
+              <option key={type} value={type}>
+                {eventTypeLabel[type] ?? type}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded-md border border-[#6b2a00] bg-[#f3b53a] px-4 py-2 text-sm font-semibold text-[#132a1f] hover:bg-[#f1c15d]"
+          >
+            Find Events
+          </button>
+          <Link
+            href={urlFor({ view: "list", day: null })}
+            className={`rounded-md px-3 py-2 text-sm font-semibold ${
+              view === "list"
+                ? "border border-[#6b2a00] bg-[#f3b53a] text-[#132a1f]"
+                : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+            }`}
+          >
+            List
+          </Link>
+          <Link
+            href={urlFor({ view: "day", day: selectedDay })}
+            className={`rounded-md px-3 py-2 text-sm font-semibold ${
+              view === "day"
+                ? "border border-[#6b2a00] bg-[#f3b53a] text-[#132a1f]"
+                : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+            }`}
+          >
+            Day
+          </Link>
+        </form>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <ContentPlaceholder
-            label={isBn ? "উৎসব মঞ্চ" : "Festival Stage"}
-            sublabel={isBn ? "ভবিষ্যৎ পূজা ও সাংস্কৃতিক পরিবেশনার স্থান" : "Future puja and cultural performance area"}
-          />
-          <ContentPlaceholder
-            label={isBn ? "কমিউনিটি হল" : "Community Hall"}
-            sublabel={isBn ? "সম্মিলিত প্রার্থনা ও উদযাপনের স্থান" : "Shared prayer and celebration space"}
-          />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Link href={urlFor({ monthOffset: monthOffset - 1, day: null })} className="rounded border border-slate-300 px-2 py-1 text-sm">
+              Prev
+            </Link>
+            <Link href={urlFor({ monthOffset: monthOffset + 1, day: null })} className="rounded border border-slate-300 px-2 py-1 text-sm">
+              Next
+            </Link>
+            <Link href={urlFor({ monthOffset: 0, day: dayKey(now.toISOString()) })} className="rounded border border-slate-300 px-3 py-1 text-sm">
+              Today
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <span className="font-semibold">{view === "day" ? "Day view" : "Upcoming"}</span>
+            <span>•</span>
+            <span>{monthFormatter.format(anchorMonth)}</span>
+          </div>
+
+          <Link
+            href="/api/calendar/feed"
+            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
+          >
+            Subscribe to Calendar
+          </Link>
         </div>
 
-        <ContentModule title={isBn ? "সংযুক্ত থাকুন" : "Stay Connected"} tone="red">
-          <p>
-            {isBn
-              ? "ততদিন পর্যন্ত, এই স্বপ্ন বাস্তবায়নে আমাদের সঙ্গে হাতে হাত রেখে চলার আমন্ত্রণ রইল। আপনার সহায়তায় দুর্গা বাড়ি একদিন ভক্তি, আনন্দ ও মিলনের উৎসবে ভরে উঠবে।"
-              : "Until then, we warmly invite you to join hands in helping us realize this dream. With your support, Durga Bari will become the place where these festivals are celebrated with devotion, joy, and togetherness."}
-          </p>
-          <div className="mt-3 border-l-4 border-[var(--db-brand)] bg-[#edf3ea] px-3 py-2">
-            <strong>{isBn ? "সংযুক্ত থাকুন:" : "Stay connected:"}</strong>{" "}
-            {isBn
-              ? "আপডেট পেতে এবং আমাদের প্রতিষ্ঠাতা পরিবারের অংশ হতে অনুগ্রহ করে যোগাযোগ করুন।"
-              : "Please contact us to receive updates and to be part of our founding family."}
-          </div>
-        </ContentModule>
+        {view === "day" ? (
+          <section className="space-y-3">
+            <h3 className="border-b border-slate-200 pb-2 text-lg font-semibold text-slate-900">
+              {new Date(`${selectedDay}T12:00:00`).toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </h3>
+            {dayOccurrences.length === 0 ? (
+              <p className="text-sm text-slate-600">No events for this day.</p>
+            ) : (
+              <div className="space-y-4">
+                {dayOccurrences.map((entry) => (
+                  <article key={entry.occurrenceKey} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">
+                      {eventTypeLabel[entry.event.event_type] ?? entry.event.event_type}
+                    </p>
+                    <h4 className="mt-1 text-lg font-semibold text-slate-900">{entry.event.title}</h4>
+                    <p className="mt-1 text-sm text-slate-700">
+                      {formatTimeRange(entry.occurrenceStart, entry.occurrenceEnd, entry.event.all_day)}
+                    </p>
+                    {entry.event.short_summary ? <p className="mt-2 text-sm text-slate-700">{entry.event.short_summary}</p> : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={`/events-festivals/${entry.event.slug}?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`}
+                        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                      >
+                        View details
+                      </Link>
+                      <a
+                        href={`/api/calendar/events/${entry.event.slug ?? entry.event.id}/ics?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`}
+                        className="rounded-md border border-[#6b2a00] bg-[#f3b53a] px-3 py-1.5 text-xs font-semibold text-[#132a1f] hover:bg-[#f1c15d]"
+                      >
+                        Add to Calendar
+                      </a>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        ) : monthEntries.length === 0 ? (
+          <section className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-600">
+            No events found for the selected filters.
+          </section>
+        ) : (
+          <section className="space-y-8">
+            {monthEntries.map(([monthLabel, entries]) => (
+              <div key={monthLabel} className="space-y-3">
+                <h3 className="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-900">{monthLabel}</h3>
+                <div className="space-y-6">
+                  {entries.map((entry) => (
+                    <article key={entry.occurrenceKey} className="grid gap-4 border-b border-slate-200 pb-6 md:grid-cols-[120px_1fr]">
+                      <div className="text-slate-700">
+                        <p className="text-xs uppercase tracking-wide">{weekdayFormatter.format(new Date(entry.occurrenceStart))}</p>
+                        <p className="text-4xl font-semibold leading-none text-slate-900">
+                          {dayFormatter.format(new Date(entry.occurrenceStart))}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-slate-700">
+                          {formatTimeRange(entry.occurrenceStart, entry.occurrenceEnd, entry.event.all_day)}
+                        </p>
+                        <h4 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{entry.event.title}</h4>
+                        {entry.event.short_summary ? <p className="mt-2 max-w-3xl text-base text-slate-700">{entry.event.short_summary}</p> : null}
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-700">
+                            {eventTypeLabel[entry.event.event_type] ?? entry.event.event_type}
+                          </span>
+                          {entry.event.recurrence ? (
+                            <span className="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-700">Recurring schedule</span>
+                          ) : null}
+                          {entry.event.visibility === "members" ? (
+                            <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-700">Members only</span>
+                          ) : null}
+                          {entry.event.location ? <span className="text-slate-600">{entry.event.location}</span> : null}
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Link
+                            href={`/events-festivals/${entry.event.slug}?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`}
+                            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                          >
+                            View details
+                          </Link>
+                          <a
+                            href={`/api/calendar/events/${entry.event.slug ?? entry.event.id}/ics?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`}
+                            className="rounded-md border border-[#6b2a00] bg-[#f3b53a] px-3 py-1.5 text-xs font-semibold text-[#132a1f] hover:bg-[#f1c15d]"
+                          >
+                            Add to Calendar
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
       </div>
     </ContentPageFrame>
   );

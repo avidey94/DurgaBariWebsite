@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { PREVIEW_COOKIE_NAME, getActivePreviewState } from "@/lib/auth/session";
+import { isProduction } from "@/lib/env";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 
 interface PreviewBody {
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
         path: "/",
         httpOnly: true,
         sameSite: "lax",
+        secure: isProduction,
         maxAge: 60 * 60 * 8,
       },
     );
@@ -102,6 +104,7 @@ export async function POST(request: Request) {
         path: "/",
         httpOnly: true,
         sameSite: "lax",
+        secure: isProduction,
         maxAge: 60 * 60 * 8,
       },
     );

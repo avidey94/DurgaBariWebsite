@@ -1,4 +1,4 @@
-import { env } from "@/lib/env";
+import { env, isDevLoginEnabled } from "@/lib/env";
 import { createServerSupabaseClient, createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { dataProvider } from "@/lib/data";
 import type { PortalUser, PreviewState, Role } from "@/lib/types";
@@ -63,7 +63,7 @@ const parsePreviewCookie = async (): Promise<PreviewCookiePayload | null> => {
 };
 
 const resolveBaseUser = async (): Promise<PortalUser | null> => {
-  if (env.devLoginEmail) {
+  if (isDevLoginEnabled) {
     const sheetIsAdmin = await resolveSheetAdminStatus(env.devLoginEmail);
     const isAdmin = sheetIsAdmin ?? env.adminEmails.includes(env.devLoginEmail);
 

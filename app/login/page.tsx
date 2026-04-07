@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/login-form";
-import { env, isSupabaseConfigured } from "@/lib/env";
+import { isDevLoginEnabled, isSupabaseConfigured } from "@/lib/env";
 import { resolveLanguage } from "@/lib/i18n";
 
 interface LoginPageProps {
@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <LoginForm
         language={lang}
         supabaseConfigured={isSupabaseConfigured}
-        devBypassEnabled={Boolean(env.devLoginEmail)}
+        devBypassEnabled={isDevLoginEnabled}
         initialError={error}
       />
     </section>

@@ -25,6 +25,10 @@ export const env = {
   youtubeLiveEmbedUrl: process.env.NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL ?? "",
 };
 
+export const isProduction = env.nodeEnv === "production";
+export const isDevLoginEnabled =
+  !isProduction && Boolean(env.devLoginEmail);
+
 export const isSupabaseConfigured =
   Boolean(env.supabaseUrl) && Boolean(env.supabaseAnonKey);
 

@@ -28,7 +28,7 @@ cp .env.example .env.local
 
 - `DATA_PROVIDER=google-sheets`
 - `GOOGLE_SHEETS_SPREADSHEET_ID=...`
-- `DEV_LOGIN_EMAIL=` (empty when testing real Supabase auth)
+- `DEV_LOGIN_EMAIL=` (leave empty unless you explicitly want a local-only bypass)
 
 4. Run the app:
 
@@ -74,6 +74,7 @@ npm run format:check
 1. Keep all secrets in runtime env only:
 
 - `.env.local` must stay untracked
+- `.env.example` is safe to commit; keep it placeholder-only
 - never commit real values for Supabase/Stripe/Google service keys
 
 2. Verify ignored env files:
@@ -100,6 +101,7 @@ git grep -n -E "sb_publishable_|sb_secret_|sk_live_|BEGIN PRIVATE KEY|STRIPE_SEC
 - `DEV_LOGIN_EMAIL=` (empty)
 - Supabase redirect URLs set correctly
 - least-privilege keys only (publishable key on client; secret keys server-side)
+- `SUPABASE_SERVICE_ROLE_KEY` only on trusted server runtime, never client-side
 
 ## Auth Redirect Configuration
 
@@ -130,8 +132,7 @@ Auth links are generated to:
 
 ### Auth and RBAC
 
-- Local bypass: `DEV_LOGIN_EMAIL` (if set, auth is bypassed in server checks)
-- Session cookie fallback: `durgabari_portal_email`
+- Local bypass: `DEV_LOGIN_EMAIL` (only honored outside production)
 - Admin role rule: user is admin if `email ∈ ADMIN_EMAILS` (comma-separated env var)
 
 ### Data Providers

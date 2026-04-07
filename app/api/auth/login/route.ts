@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
 import { buildAuthCallbackUrl } from "@/lib/auth/site-url";
-import { env } from "@/lib/env";
+import { isDevLoginEnabled } from "@/lib/env";
 
 interface LoginPayload {
   email?: string;
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Email is required." }, { status: 400 });
   }
 
-  if (env.devLoginEmail) {
+  if (isDevLoginEnabled) {
     return NextResponse.json(
       {
         message:

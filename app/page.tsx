@@ -12,6 +12,6 @@ export default async function Home({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const cookieStore = await cookies();
-  const isRevampTheme = cookieStore.get("db_theme")?.value === "revamp";
+  const isRevampTheme = cookieStore.get("db_theme")?.value !== "classic-green";
   return isRevampTheme ? <HomePageRevamp lang={lang} /> : <HomePageClassic lang={lang} />;
 }

@@ -176,34 +176,38 @@ export async function HomePageRevamp({ lang }: { lang: Language }) {
             </div>
           </section>
 
-          <aside className="rounded-[28px] bg-[linear-gradient(180deg,#a84d35_0%,#7f3423_100%)] p-6 text-white shadow-[0_18px_38px_rgba(98,39,26,0.22)] md:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/72">Calendar</p>
-            <h2 className="mt-3 font-serif text-4xl font-bold leading-tight">{text.upcoming}</h2>
-            <p className="mt-3 text-[1rem] leading-8 text-white/88">{text.upcomingBody}</p>
+          <aside className="rounded-[28px] bg-[#fff7ef] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_14px_30px_rgba(78,35,28,0.09)] md:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#b65a42]">Calendar</p>
+            <h2 className="mt-2 font-serif text-[clamp(2.2rem,3.5vw,3.7rem)] font-bold leading-[1.02] text-[#2d2470]">
+              {text.upcoming}
+            </h2>
+            <p className="mt-3 text-[1.02rem] leading-8 text-[#495264] md:text-[1.08rem]">{text.upcomingBody}</p>
 
             <div className="mt-6 space-y-4">
               {upcomingEvents.length === 0 ? (
-                <div className="rounded-2xl border border-white/15 bg-white/8 p-5 text-sm text-white/85">{text.noEvents}</div>
+                <div className="rounded-2xl border border-[#ecd6c4] bg-white p-5 text-sm text-[#495264] shadow-[0_10px_22px_rgba(79,43,34,0.07)]">
+                  {text.noEvents}
+                </div>
               ) : (
                 upcomingEvents.map((entry) => (
                   <article
                     key={entry.occurrenceKey}
-                    className="rounded-2xl border border-white/15 bg-white/8 p-5 backdrop-blur-[2px]"
+                    className="rounded-2xl border border-[#ecd6c4] bg-white p-5 shadow-[0_10px_22px_rgba(79,43,34,0.07)]"
                   >
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#ffd9b7]">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b65a42]">
                       {eventDateLabel(entry.occurrenceStart, lang)}
                     </p>
-                    <h3 className="mt-2 text-2xl font-semibold leading-tight text-white">{entry.event.title}</h3>
+                    <h3 className="mt-2 text-2xl font-semibold leading-tight text-[#1e2437]">{entry.event.title}</h3>
                     {entry.event.short_summary ? (
-                      <p className="mt-3 text-[0.98rem] leading-8 text-white/86">{entry.event.short_summary}</p>
+                      <p className="mt-3 text-[0.98rem] leading-8 text-[#495264]">{entry.event.short_summary}</p>
                     ) : null}
                     <div className="mt-4 flex items-center justify-between gap-3">
-                      <span className="text-xs uppercase tracking-[0.18em] text-white/62">
+                      <span className="text-xs uppercase tracking-[0.18em] text-[#8a6f63]">
                         {entry.event.event_type}
                       </span>
                       <Link
                         href={`/events-festivals/${entry.event.slug}?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`}
-                        className="rounded-full border border-white/25 bg-white/12 px-3 py-1.5 text-xs font-semibold text-white no-underline hover:bg-white/18"
+                        className="rounded-full border border-[#d69e7b] bg-[#fff7f2] px-3 py-1.5 text-xs font-semibold text-[#8e3b22] no-underline hover:bg-[#fbe8dd]"
                       >
                         {text.eventCta}
                       </Link>

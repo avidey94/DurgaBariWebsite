@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { resolveLanguage, withLang } from "@/lib/i18n";
 import type { PortalUser, PreviewState } from "@/lib/types";
@@ -31,15 +31,12 @@ const copy = {
     memberPortal: "Member Portal",
     siteTitle: "Durgabari Bay Area",
     siteTagline: "Community • Culture • Devotion",
-    searchLabel: "Search Durgabari site",
-    searchPlaceholder: "Search notices, events, forms",
-    searchButton: "Go",
     durgaCenter: "The Durga Center",
     menu: "Menu",
     admin: "Admin",
     languageLabel: "বাংলা",
     themeClassic: "Classic",
-    themeRevamp: "New Theme",
+    themeRevamp: "Modern",
     account: "Account",
     guest: "Guest",
     signedInAs: "Signed in as",
@@ -62,15 +59,12 @@ const copy = {
     memberPortal: "সদস্য পোর্টাল",
     siteTitle: "দুর্গাবাড়ি বে এরিয়া",
     siteTagline: "কমিউনিটি • সংস্কৃতি • ভক্তি",
-    searchLabel: "দুর্গাবাড়ি সাইটে খুঁজুন",
-    searchPlaceholder: "নোটিশ, ইভেন্ট, ফর্ম খুঁজুন",
-    searchButton: "যান",
     durgaCenter: "দ্য দুর্গা সেন্টার",
     menu: "মেনু",
     admin: "অ্যাডমিন",
     languageLabel: "English",
     themeClassic: "ক্লাসিক",
-    themeRevamp: "নতুন থিম",
+    themeRevamp: "মডার্ন",
     account: "অ্যাকাউন্ট",
     guest: "অতিথি",
     signedInAs: "লগইন করা আছে",
@@ -81,41 +75,13 @@ const copy = {
 
 export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteHeaderProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [theme, setTheme] = useState<"classic-green" | "revamp">(initialTheme);
   const durgaCenterMenuRef = useRef<HTMLDetailsElement | null>(null);
-  const queryString = useSyncExternalStore(
-    (onStoreChange) => {
-      if (typeof window === "undefined") {
-        return () => undefined;
-      }
-
-      const notify = () => onStoreChange();
-      const originalPushState = window.history.pushState;
-      const originalReplaceState = window.history.replaceState;
-
-      window.history.pushState = function pushState(...args) {
-        originalPushState.apply(this, args);
-        notify();
-      };
-
-      window.history.replaceState = function replaceState(...args) {
-        originalReplaceState.apply(this, args);
-        notify();
-      };
-
-      window.addEventListener("popstate", notify);
-      return () => {
-        window.history.pushState = originalPushState;
-        window.history.replaceState = originalReplaceState;
-        window.removeEventListener("popstate", notify);
-      };
-    },
-    () => (typeof window === "undefined" ? "" : window.location.search.slice(1)),
-    () => ""
-  );
+  const queryString = searchParams.toString();
   const language = useMemo(() => {
     const params = new URLSearchParams(queryString);
     return resolveLanguage(params.get("lang") ?? undefined);
@@ -328,10 +294,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
         </div>
         ) : null}
 
-        <div className="mx-auto max-w-[1240px] space-y-3">
-          <div className="hidden lg:block">
-          </div>
-
+        <div className="mx-auto max-w-[1240px] space-y-3 lg:flex lg:items-end lg:justify-between lg:gap-6 lg:space-y-0">
           <Link href={withLang("/", language)} className="flex min-w-0 items-center gap-3 text-left">
             <div className="grid h-12 w-12 place-items-center border-[2px] border-[#5e2600] bg-[#f6c55a] text-[26px] text-[var(--db-danger)] shadow-[0_2px_0_#4a1c00] sm:h-16 sm:w-16 sm:border-[3px] sm:text-[32px]">
               ॐ
@@ -344,56 +307,13 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v5.1
+                v5.2
               </p>
             </div>
           </Link>
 
-          {!isDesktop ? (
-          <form role="search">
-            <label htmlFor="site-search" className="mb-1 block text-sm font-bold text-[var(--db-text)]">
-              {text.searchLabel}
-            </label>
-            <div className="flex w-full max-w-[430px] border-[2px] border-[var(--db-border)] bg-white md:w-[430px]">
-              <input
-                id="site-search"
-                type="search"
-                placeholder={text.searchPlaceholder}
-                className="w-full border-0 px-3 py-2 text-sm text-[#111] outline-none"
-              />
-              <button
-                type="submit"
-                className="border-l-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white hover:bg-[var(--db-brand-2)]"
-              >
-                {text.searchButton}
-              </button>
-            </div>
-          </form>
-          ) : null}
-
           {isDesktop ? (
-          <div className="mx-auto flex w-full max-w-[1120px] items-end justify-between gap-4">
-            <form role="search" className="w-full max-w-[520px]">
-              <label htmlFor="site-search-desktop" className="mb-1 block text-sm font-bold text-[var(--db-text)]">
-                {text.searchLabel}
-              </label>
-              <div className="flex w-full border-[2px] border-[var(--db-border)] bg-white">
-                <input
-                  id="site-search-desktop"
-                  type="search"
-                  placeholder={text.searchPlaceholder}
-                  className="w-full border-0 px-3 py-2 text-sm text-[#111] outline-none"
-                />
-                <button
-                  type="submit"
-                  className="border-l-[2px] border-[var(--db-border)] bg-[var(--db-brand)] px-3 py-2 text-xs font-bold uppercase text-white hover:bg-[var(--db-brand-2)]"
-                >
-                  {text.searchButton}
-                </button>
-              </div>
-            </form>
-
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2 lg:flex-shrink-0">
             <Link
               href={toggleLanguageHref}
               onClick={() => {
@@ -498,7 +418,6 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
                 </svg>
               </Link>
             )}
-            </div>
           </div>
           ) : null}
         </div>

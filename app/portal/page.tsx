@@ -129,14 +129,14 @@ interface MonthlyContributionTableProps {
 
 function MonthlyContributionTable({ title, subtitle, rows, showExpected }: MonthlyContributionTableProps) {
   return (
-    <section className="space-y-3 rounded-lg border border-slate-200 bg-white p-6">
+    <section className="db-card space-y-4 p-6">
       <header>
-        <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-        <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+        <h2 className="text-2xl font-semibold text-[var(--db-text)]">{title}</h2>
+        <p className="mt-1 text-sm text-[var(--db-text-soft)]">{subtitle}</p>
       </header>
-      <div className="overflow-x-auto rounded-md border border-slate-200">
+      <div className="db-table">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-700">
+          <thead className="text-left">
             <tr>
               <th className="px-3 py-2 font-semibold">Month</th>
               {showExpected ? <th className="px-3 py-2 font-semibold">Expected</th> : null}
@@ -146,13 +146,13 @@ function MonthlyContributionTable({ title, subtitle, rows, showExpected }: Month
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.monthKey} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-slate-800">{row.monthLabel}</td>
+              <tr key={row.monthKey}>
+                <td className="text-[var(--db-text)]">{row.monthLabel}</td>
                 {showExpected ? (
-                  <td className="px-3 py-2 text-slate-700">{formatCurrency(row.expectedCents ?? 0)}</td>
+                  <td className="text-[var(--db-text-soft)]">{formatCurrency(row.expectedCents ?? 0)}</td>
                 ) : null}
-                <td className="px-3 py-2 font-semibold text-slate-900">{formatCurrency(row.paidCents)}</td>
-                <td className="px-3 py-2 text-slate-700">{contributionStatus(row)}</td>
+                <td className="font-semibold text-[var(--db-text)]">{formatCurrency(row.paidCents)}</td>
+                <td className="text-[var(--db-text-soft)]">{contributionStatus(row)}</td>
               </tr>
             ))}
           </tbody>
@@ -172,16 +172,16 @@ export default async function PortalPage() {
   const context = await getCurrentFamilyPortalContext();
 
   if (!context) {
-    return (
-      <section className="mx-auto max-w-6xl px-6 py-8">
+      return (
+      <section className="db-shell max-w-6xl">
         <PortalOnboardingForm email={user.email} />
       </section>
     );
   }
 
   if (!context.family.profileCompleted) {
-    return (
-      <section className="mx-auto max-w-6xl px-6 py-8">
+      return (
+      <section className="db-shell max-w-6xl">
         <PortalOnboardingForm
           email={user.email}
           initialName={context.family.familyDisplayName}
@@ -217,45 +217,46 @@ export default async function PortalPage() {
   const activeDonorRows = buildMonthlyRows(activeDonorMonths, allDonations);
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your Portal</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <section className="db-shell max-w-6xl space-y-6">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Member Dashboard</p>
+        <h1 className="db-title mt-3">Your Portal</h1>
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">
           Signed in as: <strong>{user.email}</strong>
         </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Family Name</p>
-            <p className="text-lg font-semibold text-slate-900">{context.family.familyDisplayName}</p>
+            <p className="db-kicker text-[0.68rem]">Family Name</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">{context.family.familyDisplayName}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
-            <p className="text-sm font-semibold text-slate-900">{context.family.primaryEmail}</p>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="db-kicker text-[0.68rem]">Email</p>
+            <p className="text-sm font-semibold text-[var(--db-text)]">{context.family.primaryEmail}</p>
+            <p className="mt-1 text-xs text-[var(--db-text-soft)]">
               Phone: {context.family.phoneNumber?.trim() ? context.family.phoneNumber : "Not provided"}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Adults</p>
-            <p className="text-lg font-semibold text-slate-900">{context.family.adultsCount}</p>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="db-kicker text-[0.68rem]">Adults</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">{context.family.adultsCount}</p>
+            <p className="mt-1 text-xs text-[var(--db-text-soft)]">
               {context.family.adultNames.length > 0 ? context.family.adultNames.join(", ") : "No adult names listed"}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Children</p>
-            <p className="text-lg font-semibold text-slate-900">{context.family.childrenCount}</p>
-            <p className="mt-1 text-xs text-slate-600">
+            <p className="db-kicker text-[0.68rem]">Children</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">{context.family.childrenCount}</p>
+            <p className="mt-1 text-xs text-[var(--db-text-soft)]">
               {context.family.childNames.length > 0 ? context.family.childNames.join(", ") : "No child names listed"}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Roles</p>
-            <p className="text-sm font-semibold text-slate-900">{activeRoleLabels.join(", ")}</p>
+            <p className="db-kicker text-[0.68rem]">Roles</p>
+            <p className="text-sm font-semibold text-[var(--db-text)]">{activeRoleLabels.join(", ")}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Total Donations Made</p>
-            <p className="text-lg font-semibold text-slate-900">{formatCurrency(totalDonationsCents)}</p>
+            <p className="db-kicker text-[0.68rem]">Total Donations Made</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">{formatCurrency(totalDonationsCents)}</p>
           </div>
         </div>
       </header>

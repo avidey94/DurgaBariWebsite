@@ -83,15 +83,16 @@ export default async function PortalFoundingFamilyPage() {
   const foundingMonths = buildFoundingMonthRange();
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Founding Family Tracker</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <section className="db-shell max-w-6xl space-y-6">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Founding Family</p>
+        <h1 className="db-title mt-3">Founding Family Tracker</h1>
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">
           Monthly tracker for Jan 2026 to Dec 2028 based on recorded founding-family donations.
         </p>
       </header>
 
-      <article className="rounded-lg border border-slate-200 bg-white p-6">
+      <article className="db-card p-6">
         {progress ? (
           <div className="mb-5 grid gap-4 md:grid-cols-4">
             <div>
@@ -127,7 +128,7 @@ export default async function PortalFoundingFamilyPage() {
             return (
               <article
                 key={monthKey}
-                className={`rounded-md border p-3 ${
+                className={`rounded-[var(--db-radius-sm)] border p-3 ${
                   paid ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-slate-50"
                 }`}
               >

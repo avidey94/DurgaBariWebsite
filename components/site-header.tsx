@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 
-import { resolveLanguage, type Language, withLang } from "@/lib/i18n";
+import { resolveLanguage, withLang } from "@/lib/i18n";
 import type { PortalUser, PreviewState } from "@/lib/types";
 
 interface SiteHeaderProps {
   user: PortalUser | null;
   preview: PreviewState | null;
   showAdminLink: boolean;
+  initialTheme: "classic-green" | "revamp";
 }
 
 const copy = {
@@ -37,6 +38,8 @@ const copy = {
     menu: "Menu",
     admin: "Admin",
     languageLabel: "বাংলা",
+    themeClassic: "Classic",
+    themeRevamp: "New Theme",
     account: "Account",
     guest: "Guest",
     signedInAs: "Signed in as",
@@ -66,6 +69,8 @@ const copy = {
     menu: "মেনু",
     admin: "অ্যাডমিন",
     languageLabel: "English",
+    themeClassic: "ক্লাসিক",
+    themeRevamp: "নতুন থিম",
     account: "অ্যাকাউন্ট",
     guest: "অতিথি",
     signedInAs: "লগইন করা আছে",
@@ -74,33 +79,68 @@ const copy = {
   },
 } as const;
 
-export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
+export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteHeaderProps) {
   const pathname = usePathname();
-  const [language, setLanguage] = useState<Language>("en");
-  const [queryString, setQueryString] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [theme, setTheme] = useState<"classic-green" | "revamp">(initialTheme);
   const durgaCenterMenuRef = useRef<HTMLDetailsElement | null>(null);
+  const queryString = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") {
+        return () => undefined;
+      }
+
+      const notify = () => onStoreChange();
+      const originalPushState = window.history.pushState;
+      const originalReplaceState = window.history.replaceState;
+
+      window.history.pushState = function pushState(...args) {
+        originalPushState.apply(this, args);
+        notify();
+      };
+
+      window.history.replaceState = function replaceState(...args) {
+        originalReplaceState.apply(this, args);
+        notify();
+      };
+
+      window.addEventListener("popstate", notify);
+      return () => {
+        window.history.pushState = originalPushState;
+        window.history.replaceState = originalReplaceState;
+        window.removeEventListener("popstate", notify);
+      };
+    },
+    () => (typeof window === "undefined" ? "" : window.location.search.slice(1)),
+    () => ""
+  );
+  const language = useMemo(() => {
+    const params = new URLSearchParams(queryString);
+    return resolveLanguage(params.get("lang") ?? undefined);
+  }, [queryString]);
 
   useEffect(() => {
-    // Next.js requires useSearchParams to be wrapped in Suspense; keep this
-    // query parsing client-side so 404/not-found stays prerender-safe.
-    const params = new URLSearchParams(window.location.search);
-    setLanguage(resolveLanguage(params.get("lang") ?? undefined));
-    setQueryString(params.toString());
-    setMenuOpen(false);
     setAccountOpen(false);
-  }, [pathname]);
+  }, [pathname, queryString]);
 
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
 
   useEffect(() => {
+    setTheme(initialTheme);
+  }, [initialTheme]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
     const updateViewport = () => {
-      setIsDesktop(mediaQuery.matches);
+      const nextIsDesktop = mediaQuery.matches;
+      setIsDesktop(nextIsDesktop);
+      if (nextIsDesktop) {
+        setMenuOpen(false);
+      }
     };
 
     updateViewport();
@@ -113,12 +153,6 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
     mediaQuery.addListener(updateViewport);
     return () => mediaQuery.removeListener(updateViewport);
   }, []);
-
-  useEffect(() => {
-    if (isDesktop) {
-      setMenuOpen(false);
-    }
-  }, [isDesktop]);
 
   const text = copy[language];
   const displayName = user?.email?.split("@")[0] ?? text.guest;
@@ -133,6 +167,18 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
     const query = params.toString();
     return `${pathname}${query ? `?${query}` : ""}`;
   }, [language, pathname, queryString]);
+
+  const isRevampTheme = theme === "revamp";
+
+  const toggleTheme = () => {
+    const nextTheme = isRevampTheme ? "classic-green" : "revamp";
+    document.cookie = `db_theme=${nextTheme === "revamp" ? "revamp" : "classic-green"}; path=/; max-age=31536000; samesite=lax`;
+    setTheme(nextTheme);
+    setMenuOpen(false);
+    setAccountOpen(false);
+    document.documentElement.dataset.theme = nextTheme;
+    window.location.href = `${pathname}${queryString ? `?${queryString}` : ""}`;
+  };
 
   const stopPreview = async () => {
     await fetch("/api/admin/preview", { method: "DELETE" });
@@ -180,12 +226,21 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
               <Link
                 href={toggleLanguageHref}
                 onClick={() => {
-                  setLanguage((current) => (current === "en" ? "bn" : "en"));
+                  setMenuOpen(false);
+                  setAccountOpen(false);
                 }}
                 className="inline-flex h-[38px] min-w-[86px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
               >
                 {text.languageLabel}
               </Link>
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="inline-flex h-[38px] min-w-[96px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[#111] hover:bg-[#f2f2f2]"
+              >
+                {isRevampTheme ? text.themeClassic : text.themeRevamp}
+              </button>
 
               {user ? (
                 <div className="relative">
@@ -342,12 +397,21 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
             <Link
               href={toggleLanguageHref}
               onClick={() => {
-                setLanguage((current) => (current === "en" ? "bn" : "en"));
+                setMenuOpen(false);
+                setAccountOpen(false);
               }}
               className="inline-flex h-[42px] min-w-[84px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold text-[#111] hover:bg-[#f2f2f2]"
             >
               {text.languageLabel}
             </Link>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex h-[42px] min-w-[98px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#111] hover:bg-[#f2f2f2]"
+            >
+              {isRevampTheme ? text.themeClassic : text.themeRevamp}
+            </button>
 
             {user ? (
               <div

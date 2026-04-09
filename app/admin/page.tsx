@@ -64,13 +64,14 @@ export default async function AdminPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Admin Console</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <section className="db-shell max-w-6xl space-y-6">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Administration</p>
+        <h1 className="db-title mt-3">Admin Console</h1>
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">
           Signed in as <strong>{access.userEmail}</strong>
         </p>
-        <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">Roles: {access.roles.join(", ")}</p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-[var(--db-text-soft)]">Roles: {access.roles.join(", ")}</p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -78,10 +79,10 @@ export default async function AdminPage() {
           <Link
             key={tile.href}
             href={tile.href}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow"
+            className="db-card p-5 no-underline transition hover:-translate-y-px"
           >
-            <h2 className="text-lg font-semibold text-slate-900">{tile.title}</h2>
-            <p className="mt-2 text-sm text-slate-700">{tile.description}</p>
+            <h2 className="text-lg font-semibold text-[var(--db-text)]">{tile.title}</h2>
+            <p className="mt-2 text-sm text-[var(--db-text-soft)]">{tile.description}</p>
           </Link>
         ))}
       </div>

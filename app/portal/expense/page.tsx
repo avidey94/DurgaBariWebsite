@@ -18,10 +18,11 @@ export default async function PortalExpensePage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Expenses</h1>
-        <p className="mt-2 text-sm text-slate-600">
+    <section className="db-shell max-w-6xl space-y-6">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Member Finance</p>
+        <h1 className="db-title mt-3">Expenses</h1>
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">
           Submit and track project-related expense requests.
         </p>
       </header>

@@ -32,16 +32,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const percent = Math.max(0, Math.min(100, details.funding?.percentFunded ?? 0));
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
+    <section className="db-shell space-y-6">
+      <header className="db-panel p-6 md:p-8">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{details.project.title}</h1>
-          <span className="rounded-full border border-slate-300 px-2 py-0.5 text-xs uppercase text-slate-600">
+          <h1 className="db-title">{details.project.title}</h1>
+          <span className="db-pill">
             {details.project.status}
           </span>
         </div>
         {details.project.coverImageUrl ? (
-          <div className="mt-4 overflow-hidden rounded-md border border-slate-200 bg-slate-100">
+          <div className="mt-5 overflow-hidden rounded-[var(--db-radius-md)] border border-[var(--db-border-soft)] bg-[var(--db-surface-soft)]">
             <img
               src={details.project.coverImageUrl}
               alt={details.project.title}
@@ -50,10 +50,10 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             />
           </div>
         ) : null}
-        <p className="mt-2 text-sm text-slate-700">{details.project.shortDescription}</p>
+        <p className="db-subtitle mt-4">{details.project.shortDescription}</p>
       </header>
 
-      <article className="rounded-lg border border-slate-200 bg-white p-6">
+      <article className="db-card p-6 md:p-8">
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500">Raised</p>
@@ -69,36 +69,36 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
           </div>
         </div>
 
-        <div className="mt-4 h-3 w-full rounded-full bg-slate-200">
+        <div className="mt-5 h-3 w-full rounded-full bg-[var(--db-surface-soft)]">
           <div className="h-3 rounded-full bg-emerald-600" style={{ width: `${percent}%` }} />
         </div>
 
-        <p className="mt-5 whitespace-pre-line text-sm text-slate-700">{details.project.fullDescription}</p>
+        <p className="db-prose mt-6 whitespace-pre-line text-sm">{details.project.fullDescription}</p>
 
         <div className="mt-6 flex gap-2">
           <button
             type="button"
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="db-button-primary text-sm"
           >
             Donate to project (placeholder)
           </button>
           <Link
             href="/projects"
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            className="db-button-secondary text-sm no-underline"
           >
             Back to projects
           </Link>
         </div>
       </article>
 
-      <article className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Project Updates</h2>
+      <article className="db-card p-6 md:p-8">
+        <h2 className="db-title text-[2rem]">Project Updates</h2>
         {details.updates.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">No updates have been published yet.</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {details.updates.map((update) => (
-              <li key={update.id} className="rounded-md border border-slate-200 p-3">
+              <li key={update.id} className="db-card-muted p-4">
                 <p className="text-sm font-semibold text-slate-900">{update.title}</p>
                 <p className="mt-1 text-xs text-slate-500">{update.publishedAt ? formatDate(update.publishedAt) : "Draft"}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{update.body}</p>
@@ -108,14 +108,14 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         )}
       </article>
 
-      <article className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Supporters</h2>
+      <article className="db-card p-6 md:p-8">
+        <h2 className="db-title text-[2rem]">Supporters</h2>
         {details.supporters.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">No public supporters yet.</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {details.supporters.map((supporter) => (
-              <li key={supporter.donationId} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 p-3">
+              <li key={supporter.donationId} className="db-card-muted flex items-center justify-between gap-3 p-4">
                 <span className="text-sm text-slate-800">{supporter.familyName}</span>
                 <span className="text-sm font-semibold text-slate-900">{formatCurrency(supporter.amountCents)}</span>
               </li>

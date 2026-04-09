@@ -72,9 +72,9 @@ export default async function PortalDonationsPage() {
 
   if (!context) {
     return (
-      <section className="mx-auto max-w-6xl space-y-4 px-6 py-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Donation History</h1>
-        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <section className="db-shell max-w-6xl space-y-4">
+        <h1 className="db-title">Donation History</h1>
+        <p className="db-card-muted p-4 text-sm text-amber-900">
           Family profile was not found for your account.
         </p>
       </section>
@@ -101,18 +101,19 @@ export default async function PortalDonationsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Donation History</h1>
-        <p className="mt-2 text-sm text-slate-600">All recorded payments for your family account.</p>
+    <section className="db-shell max-w-6xl space-y-6">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Member Ledger</p>
+        <h1 className="db-title mt-3">Donation History</h1>
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">All recorded payments for your family account.</p>
       </header>
 
       {donations.length === 0 ? (
-        <article className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-700">
+        <article className="db-card p-6 text-sm text-[var(--db-text-soft)]">
           No donations are recorded yet.
         </article>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <div className="db-table">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-700">
               <tr>
@@ -141,15 +142,12 @@ export default async function PortalDonationsPage() {
       )}
 
       <div className="flex gap-3">
-        <Link
-          href="/portal/pledge"
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
-        >
+        <Link href="/portal/pledge" className="db-button-secondary text-sm no-underline">
           View pledge progress
         </Link>
         <button
           type="button"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="db-button-primary text-sm"
         >
           Donate (placeholder)
         </button>

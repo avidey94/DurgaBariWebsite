@@ -10,7 +10,7 @@ export default async function PortalVolunteerPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section className="db-shell max-w-6xl">
       <PortalVolunteerCenter />
     </section>
   );

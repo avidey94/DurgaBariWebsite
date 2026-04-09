@@ -2,16 +2,11 @@ import type { ReactNode } from "react";
 
 type Tone = "green" | "red" | "gold";
 
-const toneStyles: Record<Tone, { backgroundImage: string; color: string }> = {
-  green: { backgroundImage: "linear-gradient(180deg,#2f6d45,#1f4f32)", color: "#ffffff" },
-  red: { backgroundImage: "linear-gradient(180deg,#c91d1d,#951515)", color: "#ffffff" },
-  gold: { backgroundImage: "linear-gradient(180deg,#ffe6b5,#f5cc75)", color: "#132a1f" },
-};
-
 export function ContentPageFrame({ children }: { children: ReactNode }) {
   return (
-    <section className="mx-auto max-w-[1120px] px-4 py-6 md:py-8">
-      <article className="border-[3px] border-[var(--db-border-strong)] bg-[var(--db-panel)] p-3 shadow-[inset_0_1px_0_#fff,0_2px_0_#173522] md:p-4">
+    <section className="db-shell content-page-frame">
+      <article className="db-panel content-page-panel relative overflow-hidden p-4 md:p-6">
+        <div className="content-page-glow pointer-events-none absolute inset-x-10 top-0 h-36 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.48),transparent_68%)] blur-3xl" />
         {children}
       </article>
     </section>
@@ -29,21 +24,22 @@ export function ContentHero({
 }) {
   return (
     <header
-      className="border-[2px] border-[var(--db-border)] p-4 sm:p-5"
-      style={toneStyles.gold}
+      className="content-hero relative overflow-hidden border p-6 sm:p-8"
     >
+      <div className="content-hero-glow-a pointer-events-none absolute -left-10 top-8 h-24 w-24 rounded-full bg-white/45 blur-2xl" />
+      <div className="content-hero-glow-b pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-[#f3b53a]/20 blur-3xl" />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-        <div className="grid h-12 w-12 shrink-0 place-items-center border-[2px] border-[#6b2a00] bg-[#f3b53a] text-[26px] text-[#8a1a1a] sm:h-14 sm:w-14 sm:text-[30px]">
+        <div className="content-hero-icon grid h-13 w-13 shrink-0 place-items-center rounded-[18px] border border-[#6b2a00] bg-[#f3b53a] text-[26px] text-[#8a1a1a] shadow-[0_8px_18px_rgba(82,39,10,0.16)] sm:h-16 sm:w-16 sm:text-[30px]">
           ॐ
         </div>
         <div className="min-w-0">
           {kicker ? (
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#5b3d16] sm:text-[11px] sm:tracking-[0.2em]">{kicker}</p>
+            <p className="content-hero-kicker text-[11px] font-bold uppercase tracking-[0.24em] text-[#8a3a25] sm:tracking-[0.28em]">{kicker}</p>
           ) : null}
-          <h1 className="mt-1 break-words font-serif text-[clamp(1.9rem,9.6vw,3.35rem)] font-bold leading-[1.03] text-[#132a1f]">
+          <h1 className="content-hero-title mt-2 break-words font-serif text-[clamp(2.1rem,6vw,4rem)] font-bold leading-[1.02] text-[#1e2437]">
             {title}
           </h1>
-          <p className="mt-2 text-[clamp(1rem,4.1vw,1.2rem)] font-semibold leading-snug text-[#223a2d]">{subtitle}</p>
+          <p className="content-hero-subtitle mt-3 max-w-3xl text-[clamp(1rem,2vw,1.2rem)] font-medium leading-8 text-[#564536]">{subtitle}</p>
         </div>
       </div>
     </header>
@@ -60,11 +56,17 @@ export function ContentModule({
   children: ReactNode;
 }) {
   return (
-    <section className="border-[2px] border-[var(--db-border)] bg-[#fffef9] shadow-[inset_0_1px_0_#fff,0_1px_0_#b8c5b6]">
-      <div className="border-b-[2px] border-[var(--db-border)] px-4 py-2" style={toneStyles[tone]}>
-        <h2 className="font-serif text-[26px] font-bold leading-tight sm:text-[30px]">{title}</h2>
+    <section className="content-module db-card overflow-hidden">
+      <div className="content-module-header relative border-b border-white/40 px-5 py-5" data-tone={tone}>
+        <div className="content-module-glow pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-white/35 blur-2xl" />
+        <p className="content-module-kicker db-kicker text-[0.72rem]">
+          Section
+        </p>
+        <h2 className="content-module-title mt-2 font-serif text-[28px] font-bold leading-tight sm:text-[34px]">
+          {title}
+        </h2>
       </div>
-      <div className="p-4 text-[17px] leading-8 text-[#1f2a22] md:p-5">{children}</div>
+      <div className="content-module-body db-prose p-5 md:p-6">{children}</div>
     </section>
   );
 }
@@ -77,8 +79,8 @@ export function ContentPlaceholder({
   sublabel: string;
 }) {
   return (
-    <div className="border-[2px] border-[#365741] bg-[linear-gradient(180deg,#f7f2df,#e3ecd8)] p-4">
-      <div className="grid h-44 place-items-center border-[2px] border-dashed border-[#4f725a] bg-white/80 text-center">
+    <div className="content-placeholder db-card-muted p-4">
+      <div className="content-placeholder-inner grid h-44 place-items-center rounded-[var(--db-radius-sm)] border border-dashed border-[var(--db-border-soft)] bg-white/80 text-center">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4a6552]">Media Placeholder</p>
           <p className="mt-1 font-serif text-3xl font-bold text-[#173724]">{label}</p>

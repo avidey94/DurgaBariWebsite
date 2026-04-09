@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
@@ -65,17 +66,6 @@ const donorTiers = {
   ],
 } as const;
 
-function Module({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="border-[2px] border-[var(--db-border)] bg-[#fffef9] shadow-[inset_0_1px_0_#fff,0_1px_0_#b8c5b6]">
-      <div className="border-b-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#c91d1d,#951515)] px-4 py-2">
-        <h2 className="font-serif text-[26px] font-bold leading-tight text-white sm:text-[30px]">{title}</h2>
-      </div>
-      <div className="p-4 text-[17px] leading-8 text-[#1f2a22] md:p-5">{children}</div>
-    </section>
-  );
-}
-
 interface OurJourneyPageProps {
   searchParams: Promise<{ lang?: string }>;
 }
@@ -97,45 +87,34 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
   const waysToGiveItems = parseCmsListContent(cmsWaysToGive?.content_html, [...waysToGive[lang]]);
 
   return (
-    <section className="mx-auto max-w-[1120px] px-4 py-6 md:py-8">
-      <article className="border-[3px] border-[var(--db-border-strong)] bg-[var(--db-panel)] p-3 shadow-[inset_0_1px_0_#fff,0_2px_0_#173522] md:p-4">
-        <header className="border-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#ffe6b5,#f5cc75)] p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center border-[2px] border-[#6b2a00] bg-[#f3b53a] text-[26px] text-[#8a1a1a] sm:h-14 sm:w-14 sm:text-[30px]">
-              ॐ
-            </div>
-            <div className="min-w-0">
-              <h1 className="break-words font-serif text-[clamp(1.9rem,9.6vw,3.35rem)] font-bold leading-[1.03] text-[#132a1f]">
-                {isBn
-                  ? "আমাদের পবিত্র যাত্রা: ভাবনা থেকে মন্দির"
-                  : "Our Sacred Journey: From Vision to Temple"}
-              </h1>
-              <p className="mt-2 text-[clamp(1rem,4.1vw,1.2rem)] font-semibold leading-snug text-[#223a2d]">
-                {isBn
-                  ? "দুর্গা বাড়ি গড়তে হাতে হাত মিলান - আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র"
-                  : "Join Hands to Build Durga Bari - Center for Spiritual and Cultural Excellence"}
-              </p>
-            </div>
-          </div>
-        </header>
+    <ContentPageFrame>
+      <ContentHero
+        title={isBn ? "আমাদের পবিত্র যাত্রা: ভাবনা থেকে মন্দির" : "Our Sacred Journey: From Vision to Temple"}
+        subtitle={
+          isBn
+            ? "দুর্গা বাড়ি গড়তে হাতে হাত মিলান - আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র"
+            : "Join Hands to Build Durga Bari - Center for Spiritual and Cultural Excellence"
+        }
+        kicker={isBn ? "দূরদর্শী পরিকল্পনা" : "Vision Roadmap"}
+      />
 
-        <div className="mt-4 space-y-4">
-          <Module title={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}>
+      <div className="mt-5 space-y-5">
+        <ContentModule title={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"} tone="red">
             <CmsEditableBlock
               slug={cmsSlug}
               initialTitle={isBn ? "পবিত্র লক্ষ্য" : "Sacred Mission"}
               initialHtml={cmsIntro?.content_html || journeyIntroDefaultHtml}
               isAdmin={canManageCms}
             />
-            <p className="mt-2 border-l-4 border-[var(--db-brand)] bg-[#edf3ea] px-3 py-2">
+            <p className="db-card-muted mt-4 border-l-4 border-[var(--db-brand)] px-4 py-3">
               <strong>{isBn ? "এখনই অঙ্গীকার করতে চান?" : "Ready to pledge now?"}</strong> Email <strong>info@thedurgacenter.org</strong> {isBn ? "অথবা যোগাযোগ ফর্ম ব্যবহার করুন:" : "or use the contact form:"}
               <Link href={withLang("/contact", lang)} className="ml-1 font-semibold underline">
                 {isBn ? "যোগাযোগ পৃষ্ঠা" : "Contact Page"}
               </Link>
             </p>
-          </Module>
+        </ContentModule>
 
-          <Module title={isBn ? "দান করার উপায়" : "Ways to Give"}>
+        <ContentModule title={isBn ? "দান করার উপায়" : "Ways to Give"} tone="gold">
             <CmsEditableList
               slug={waysToGiveSlug}
               initialItems={waysToGiveItems}
@@ -143,7 +122,7 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
               emptyItemLabel={isBn ? "দানের উপায়" : "Way to give"}
             />
 
-            <div className="mt-4 border-[2px] border-[#3d6148] bg-[#dde9de] p-3">
+            <div className="db-card-muted mt-4 p-4">
               <p>
                 <strong>{isBn ? "শুরু করতে:" : "To get started:"}</strong> Email <strong>info@thedurgacenter.org</strong> {isBn ? "অথবা যোগাযোগ ফর্ম ব্যবহার করুন।" : "or use the contact form."}
               </p>
@@ -156,19 +135,16 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
               <img
                 src="https://thedurgacenter.org/wp-content/uploads/2026/02/QR-Code-300x295.jpg"
                 alt={isBn ? "Durga Bari Zelle QR কোড" : "Durga Bari Zelle QR code"}
-                className="mt-3 border-[2px] border-[var(--db-border)] bg-white"
+                className="mt-4 rounded-[var(--db-radius-sm)] border border-[var(--db-border-soft)] bg-white p-2 shadow-[0_16px_30px_rgba(87,44,33,0.08)]"
                 width={300}
                 height={295}
               />
             </div>
-          </Module>
+        </ContentModule>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <section className="border-[2px] border-[var(--db-border)] bg-[#fffef9]">
-              <div className="border-b-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#1a6f44,#145535)] px-4 py-2">
-                <h3 className="text-3xl font-bold text-white">{isBn ? "চেক পেমেন্ট" : "Check Payments"}</h3>
-              </div>
-              <div className="space-y-2 p-4 text-[17px] leading-8">
+        <div className="grid gap-5 md:grid-cols-2">
+          <ContentModule title={isBn ? "চেক পেমেন্ট" : "Check Payments"} tone="green">
+              <div className="space-y-2">
                 <p>
                   {isBn ? "ব্যক্তিগত চেকের জন্য প্রাপক হিসেবে লিখুন:" : "For personal checks, make payable to:"}
                   <br />
@@ -184,13 +160,10 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
                   San Jose, CA 95173
                 </p>
               </div>
-            </section>
+          </ContentModule>
 
-            <section className="border-[2px] border-[var(--db-border)] bg-[#fffef9]">
-              <div className="border-b-[2px] border-[var(--db-border)] bg-[linear-gradient(180deg,#1a6f44,#145535)] px-4 py-2">
-                <h3 className="text-3xl font-bold text-white">{isBn ? "ট্যাক্স তথ্য" : "Tax Information"}</h3>
-              </div>
-              <div className="space-y-2 p-4 text-[17px] leading-8">
+          <ContentModule title={isBn ? "ট্যাক্স তথ্য" : "Tax Information"} tone="green">
+              <div className="space-y-2">
                 <p>
                   {isBn
                     ? "Durga Bari - Center for Spiritual and Cultural Excellence একটি 501(c)(3) ননপ্রফিট সংস্থা। অনুদান কর ছাড়যোগ্য।"
@@ -202,10 +175,10 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
                   Email: <strong>info@thedurgacenter.org</strong>
                 </p>
               </div>
-            </section>
-          </div>
+          </ContentModule>
+        </div>
 
-          <Module title={isBn ? "সদস্যপদ ও স্বীকৃতি (নন-ভোটিং দাতা বিভাগ)" : "Membership & Recognition (Non-Voting Donor Categories)"}>
+        <ContentModule title={isBn ? "সদস্যপদ ও স্বীকৃতি (নন-ভোটিং দাতা বিভাগ)" : "Membership & Recognition (Non-Voting Donor Categories)"} tone="red">
             <p>
               {isBn
                 ? "এই স্তরগুলো কেবল স্বীকৃতির জন্য; প্রশাসনিক ক্ষমতা উপবিধি অনুযায়ী বোর্ডের হাতে থাকবে।"
@@ -214,8 +187,8 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
 
             <div className="mt-3 space-y-3">
               {donorTiers[lang].map((tier) => (
-                <section key={tier.title} className="border-[2px] border-[var(--db-border-soft)] bg-white p-3">
-                  <h3 className="text-[30px] font-bold text-[#173724]">{tier.title}</h3>
+                <section key={tier.title} className="db-card-muted p-4">
+                  <h3 className="font-serif text-[30px] font-bold text-[var(--db-text)]">{tier.title}</h3>
                   <p className="mt-1">
                     <strong>{isBn ? "অবদান:" : "Contribution:"}</strong> {tier.contribution}
                   </p>
@@ -226,15 +199,15 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
               ))}
             </div>
 
-            <div className="mt-4 border-l-4 border-[var(--db-danger)] bg-[#fce9e9] px-3 py-2">
+            <div className="mt-4 rounded-[var(--db-radius-sm)] border-l-4 border-[var(--db-danger)] bg-[#fce9e9] px-4 py-3">
               <strong>{isBn ? "দ্রষ্টব্য:" : "Note:"}</strong>{" "}
               {isBn
                 ? "দাতা বিভাগগুলো নন-ভোটিং এবং স্বীকৃতির জন্য। ভোট ও তদারকি সংক্রান্ত অধিকার উপবিধিতে নির্ধারিত।"
                 : "Donor categories are non-voting and intended for recognition and gratitude. Voting and oversight privileges are defined separately in bylaws."}
             </div>
-          </Module>
+        </ContentModule>
 
-          <Module title={isBn ? "বিশেষ: প্রতিষ্ঠাতা পরিবার সার্কেল (প্রথম ২০০ পরিবার)" : "Special: Founding Family Circle (First 200 Families)"}>
+        <ContentModule title={isBn ? "বিশেষ: প্রতিষ্ঠাতা পরিবার সার্কেল (প্রথম ২০০ পরিবার)" : "Special: Founding Family Circle (First 200 Families)"} tone="gold">
             <p>
               <strong>$100/month for 36 months</strong> (or $3,600 total). {isBn ? "প্রথমে আসলে আগে সুযোগ - অফিসিয়াল প্রতিষ্ঠাতা পরিবার মর্যাদা।" : "First-come, first-served for official Founding Family status."}
             </p>
@@ -248,12 +221,11 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
               <li className="flex gap-2"><span className="text-[#9b1616]">•</span>{isBn ? "অতিরিক্ত অনুদানে Patron/Benefactor স্তরে উন্নীত হওয়া" : "Eligibility to upgrade to Patron/Benefactor tiers with added gifts"}</li>
             </ul>
 
-            <div className="mt-4 border-[2px] border-[var(--db-border)] bg-[#edf3ea] px-3 py-2">
+            <div className="db-card-muted mt-4 px-4 py-3">
               <strong>{isBn ? "আজই যোগ দিন:" : "Join today:"}</strong> Email <strong>info@thedurgacenter.org</strong> {isBn ? "অথবা যোগাযোগ ফর্ম ব্যবহার করুন।" : "or use the contact form."}
             </div>
-          </Module>
-        </div>
-      </article>
-    </section>
+        </ContentModule>
+      </div>
+    </ContentPageFrame>
   );
 }

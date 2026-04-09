@@ -156,9 +156,10 @@ export function PortalVolunteerCenter() {
 
   return (
     <section className="space-y-6">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Volunteer Action Center</h1>
-        <p className="mt-2 text-sm text-slate-600">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Member Service</p>
+        <h1 className="db-title mt-3">Volunteer Action Center</h1>
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">
           Pick event slots and select which family members will volunteer in each service window.
         </p>
       </header>
@@ -166,14 +167,14 @@ export function PortalVolunteerCenter() {
       {error ? <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
       {loading ? <p className="text-sm text-slate-600">Loading volunteer opportunities...</p> : null}
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-slate-900">Your upcoming commitments</h2>
+      <section className="db-card p-6">
+        <h2 className="text-2xl font-semibold text-[var(--db-text)]">Your upcoming commitments</h2>
         {commitments.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">No commitments yet. Pick a slot below.</p>
         ) : (
           <div className="mt-3 space-y-2">
             {commitments.map((commitment) => (
-              <article key={commitment.signup_id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <article key={commitment.signup_id} className="db-card-muted p-4">
                 <p className="text-sm font-semibold text-slate-900">
                   {commitment.participant_name} ({commitment.participant_type}) - {commitment.event_title}
                 </p>
@@ -184,7 +185,7 @@ export function PortalVolunteerCenter() {
                 <button
                   type="button"
                   onClick={() => void cancelSignup(commitment.slot_id, commitment.participant_name)}
-                  className="mt-2 rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-medium text-slate-800 hover:bg-slate-100"
+                  className="db-button-secondary mt-2 px-3 py-1.5 text-xs"
                 >
                   Cancel {commitment.participant_name}
                 </button>
@@ -199,7 +200,7 @@ export function PortalVolunteerCenter() {
         {events.length === 0 && !loading ? <p className="text-sm text-slate-600">No open opportunities right now.</p> : null}
 
         {events.map((event) => (
-          <article key={event.id} className="rounded-lg border border-slate-200 bg-white p-5">
+          <article key={event.id} className="db-card p-5">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-lg font-semibold text-slate-900">{event.title}</h3>
               {event.visibility === "members" ? (
@@ -223,7 +224,7 @@ export function PortalVolunteerCenter() {
                 const canSignup = !full && !closed && selectedMembers.length > 0;
 
                 return (
-                  <div key={slot.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <div key={slot.id} className="db-card-muted p-4">
                     <p className="font-medium text-slate-900">{slot.title}</p>
                     {slot.description ? <p className="mt-1 text-sm text-slate-700">{slot.description}</p> : null}
                     <p className="mt-1 text-xs text-slate-600">

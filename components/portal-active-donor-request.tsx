@@ -71,8 +71,8 @@ export function PortalActiveDonorRequest({
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-slate-900">
+    <section className="db-card p-6">
+      <h2 className="text-2xl font-semibold text-[var(--db-text)]">
         {currentStatus === "none" ? "Request active donor status" : "Request an active donor tier change"}
       </h2>
       <p className="mt-2 text-sm text-slate-600">
@@ -82,7 +82,7 @@ export function PortalActiveDonorRequest({
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <span className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs text-slate-700">
+        <span className="db-pill">
           Current status: <strong>{currentStatus}</strong>
         </span>
         {requestedStatus ? (
@@ -133,7 +133,7 @@ export function PortalActiveDonorRequest({
           type="button"
           disabled={submitting || allowedStatuses.length === 0}
           onClick={() => void submitRequest()}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+          className="db-button-primary text-sm disabled:opacity-60"
         >
           {submitting ? "Submitting..." : "Submit membership tier request"}
         </button>

@@ -26,18 +26,17 @@ export default async function ProjectsPage() {
   const projects = await listPublicProjectsWithContributors(100, context?.family.id ?? null);
 
   return (
-    <section className="mx-auto max-w-7xl space-y-8 px-6 py-10">
-      <header className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Open Campaigns</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight text-slate-900 md:text-5xl">Build The Next Temple Milestones</h1>
-        <div className="mt-4 h-1 w-24 rounded-full bg-emerald-600" />
-        <p className="mt-4 max-w-3xl text-base text-slate-700 md:text-lg">
+    <section className="db-shell space-y-8">
+      <header className="db-panel p-8 md:p-10">
+        <p className="db-kicker">Open Campaigns</p>
+        <h1 className="db-display mt-3 max-w-4xl">Build The Next Temple Milestones</h1>
+        <p className="db-subtitle mt-5 max-w-3xl">
           Kickstarter-style project funding for the whole community. Everyone can track goals, progress, and top contributors in real time.
         </p>
       </header>
 
       {projects.length === 0 ? (
-        <article className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-700 shadow-sm">
+        <article className="db-card p-6 text-sm text-[var(--db-text-soft)]">
           No public projects are available yet.
         </article>
       ) : (
@@ -51,10 +50,10 @@ export default async function ProjectsPage() {
               return (
                 <article
                   key={project.id}
-                  className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-px hover:shadow-md"
+                  className="db-card p-6 transition hover:-translate-y-px"
                 >
                   {project.coverImageUrl ? (
-                    <div className="mb-4 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                    <div className="mb-5 overflow-hidden rounded-[var(--db-radius-sm)] border border-[var(--db-border-soft)] bg-[var(--db-surface-soft)]">
                       <img
                         src={project.coverImageUrl}
                         alt={project.title}
@@ -65,8 +64,8 @@ export default async function ProjectsPage() {
                   ) : null}
                   <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{project.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">{project.shortDescription}</p>
+                    <h2 className="text-2xl font-semibold tracking-tight text-[var(--db-text)]">{project.title}</h2>
+                    <p className="mt-2 text-sm leading-7 text-[var(--db-text-soft)]">{project.shortDescription}</p>
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ${
@@ -77,7 +76,7 @@ export default async function ProjectsPage() {
                   </span>
                 </div>
 
-                <div className="mt-6 grid grid-cols-3 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
+                <div className="db-card-muted mt-6 grid grid-cols-3 gap-3 p-4 text-center">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Goal</p>
                     <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(project.fundingGoalCents)}</p>
@@ -105,8 +104,8 @@ export default async function ProjectsPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-900">Top contributors</p>
+                <div className="db-card-muted mt-5 p-4">
+                  <p className="text-sm font-semibold text-[var(--db-text)]">Top contributors</p>
                   {item.myAnonymousContributionCents > 0 ? (
                     <p className="mt-1 text-xs text-slate-600">
                       You contributed {formatCurrency(item.myAnonymousContributionCents)} anonymously out of{" "}
@@ -141,13 +140,13 @@ export default async function ProjectsPage() {
                 <div className="mt-5 flex gap-2">
                   <Link
                     href={`/projects/${project.slug}`}
-                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+                    className="db-button-secondary text-sm no-underline"
                   >
                     View Details
                   </Link>
                   <button
                     type="button"
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                    className="db-button-primary text-sm"
                   >
                     Back This Project
                   </button>

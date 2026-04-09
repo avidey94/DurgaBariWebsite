@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const error = params.error;
 
   return (
-    <section className="mx-auto max-w-xl space-y-6 px-6 py-8">
+    <section className="db-shell max-w-3xl">
       <LoginForm
         language={lang}
         supabaseConfigured={isSupabaseConfigured}

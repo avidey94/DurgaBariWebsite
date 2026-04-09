@@ -77,7 +77,7 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
   return (
     <div className="space-y-6">
       {devBypassEnabled && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+        <div className="db-card-muted p-4 text-sm text-emerald-900">
           {isBn
             ? "DEV_LOGIN_EMAIL সক্রিয় আছে। ডেভেলপমেন্টে অথেন্টিকেশন বাইপাস করা হচ্ছে।"
             : "DEV_LOGIN_EMAIL is enabled. Authentication is bypassed in development."}
@@ -90,15 +90,16 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
       )}
 
       {!supabaseConfigured && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <p className="db-card-muted p-4 text-sm text-amber-900">
           {isBn
             ? "Supabase এখনও কনফিগার করা হয়নি। লাইভ অথেন্টিকেশন চালু করতে NEXT_PUBLIC_SUPABASE_URL এবং NEXT_PUBLIC_SUPABASE_ANON_KEY যোগ করুন।"
             : "Supabase is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable live authentication."}
         </p>
       )}
 
-      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
+      <div className="db-panel space-y-4 p-6 md:p-8">
+        <p className="db-kicker">{isBn ? "সদস্য প্রবেশ" : "Member Access"}</p>
+        <h2 className="db-title">
           {mode === "signup"
             ? isBn
               ? "নতুন অ্যাকাউন্ট সাইন আপ"
@@ -107,7 +108,7 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
               ? "সাইন ইন"
               : "Sign In"}
         </h2>
-        <p className="text-sm text-slate-700">
+        <p className="text-sm leading-7 text-[var(--db-text-soft)]">
           {mode === "signup" ? (
             <>
               {isBn
@@ -144,26 +145,26 @@ export function LoginForm({ language, supabaseConfigured, devBypassEnabled, init
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="you@example.org"
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
+          className="db-input"
         />
         <input
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder={isBn ? "পাসওয়ার্ড" : "Password"}
-          className="w-full rounded-md border border-slate-300 px-3 py-2"
+          className="db-input"
         />
 
         <button
           type="button"
           onClick={() => void runAuth()}
-          className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="db-button-primary w-full text-sm"
         >
           {mode === "signup" ? (isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account") : isBn ? "সাইন ইন" : "Sign In"}
         </button>
       </div>
 
-      {status && <p className="text-sm text-slate-700">{status}</p>}
+      {status && <p className="text-sm text-[var(--db-text-soft)]">{status}</p>}
     </div>
   );
 }

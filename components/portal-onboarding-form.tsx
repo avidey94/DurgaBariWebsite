@@ -73,12 +73,13 @@ export function PortalOnboardingForm({
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6">
-      <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Welcome to Your Portal</h1>
-      <p className="mt-2 text-sm text-slate-600">
+    <section className="db-panel p-6 md:p-8">
+      <p className="db-kicker">Member Setup</p>
+      <h1 className="db-title mt-3">Welcome to Your Portal</h1>
+      <p className="mt-3 text-sm text-[var(--db-text-soft)]">
         Signed in as <strong>{email}</strong>
       </p>
-      <p className="mt-1 text-sm text-slate-700">
+      <p className="mt-1 text-sm text-[var(--db-text-soft)]">
         Complete your one-time profile setup. Future profile changes must be requested through an admin.
       </p>
 
@@ -88,7 +89,7 @@ export function PortalOnboardingForm({
           <input
             value={familyDisplayName}
             onChange={(event) => setFamilyDisplayName(event.target.value)}
-            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+            className="db-input mt-1 block"
             required
           />
         </label>
@@ -98,7 +99,7 @@ export function PortalOnboardingForm({
           <input
             value={phoneNumber}
             onChange={(event) => setPhoneNumber(formatUsPhoneNumber(event.target.value))}
-            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+            className="db-input mt-1 block"
             placeholder="925-555-1234"
             required
           />
@@ -118,7 +119,7 @@ export function PortalOnboardingForm({
                 setAdultNames((current) => resizeNames(current, Math.floor(parsed)));
               }
             }}
-            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+            className="db-input mt-1 block"
             required
           />
         </label>
@@ -137,7 +138,7 @@ export function PortalOnboardingForm({
                 setChildNames((current) => resizeNames(current, Math.floor(parsed)));
               }
             }}
-            className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+            className="db-input mt-1 block"
             required
           />
         </label>
@@ -155,7 +156,7 @@ export function PortalOnboardingForm({
                   )
                 }
                 placeholder={`Adult ${index + 1} name`}
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="db-input text-sm"
                 required
               />
             ))}
@@ -178,7 +179,7 @@ export function PortalOnboardingForm({
                     )
                   }
                   placeholder={`Child ${index + 1} name`}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="db-input text-sm"
                   required
                 />
               ))}
@@ -190,7 +191,7 @@ export function PortalOnboardingForm({
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+            className="db-button-primary text-sm disabled:opacity-60"
           >
             {submitting ? "Saving..." : "Complete setup"}
           </button>

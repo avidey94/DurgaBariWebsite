@@ -168,19 +168,19 @@ export function PortalExpenseSubmission() {
   const projectNameById = new Map(projects.map((project) => [project.id, project.title]));
 
   return (
-    <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6">
+    <section className="db-card space-y-5 p-6">
       <header>
-        <h2 className="text-xl font-semibold text-slate-900">Project Expense Submission</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <h2 className="text-2xl font-semibold text-[var(--db-text)]">Project Expense Submission</h2>
+        <p className="mt-1 text-sm text-[var(--db-text-soft)]">
           Submit project-related expenses. Treasurer or super admin will review and approve in the admin expense queue.
         </p>
       </header>
 
-      <form className="grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-6" onSubmit={submitExpense}>
+      <form className="db-card-muted grid gap-3 p-4 md:grid-cols-6" onSubmit={submitExpense}>
         <select
           value={projectId}
           onChange={(event) => setProjectId(event.target.value)}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm md:col-span-2"
+          className="db-select text-sm md:col-span-2"
           required
         >
           {projects.length === 0 ? <option value="">No active projects available</option> : null}
@@ -194,7 +194,7 @@ export function PortalExpenseSubmission() {
         <select
           value={expenseType}
           onChange={(event) => setExpenseType(event.target.value as (typeof expenseTypeOptions)[number]["value"])}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+          className="db-select text-sm"
         >
           {expenseTypeOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -206,7 +206,7 @@ export function PortalExpenseSubmission() {
         <select
           value={paymentMethod}
           onChange={(event) => setPaymentMethod(event.target.value as (typeof paymentMethodOptions)[number]["value"])}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+          className="db-select text-sm"
         >
           {paymentMethodOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -219,7 +219,7 @@ export function PortalExpenseSubmission() {
           value={vendorName}
           onChange={(event) => setVendorName(event.target.value)}
           placeholder="Vendor"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+          className="db-input text-sm"
           required
         />
 
@@ -229,7 +229,7 @@ export function PortalExpenseSubmission() {
           type="number"
           min={0}
           placeholder="Amount cents"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
+          className="db-input text-sm"
           required
         />
 
@@ -237,7 +237,7 @@ export function PortalExpenseSubmission() {
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           placeholder="Description"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm md:col-span-3"
+          className="db-input text-sm md:col-span-3"
           required
         />
 
@@ -245,7 +245,7 @@ export function PortalExpenseSubmission() {
           value={incurredAt}
           onChange={(event) => setIncurredAt(event.target.value)}
           type="datetime-local"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm md:col-span-1"
+          className="db-input text-sm md:col-span-1"
         />
 
         <input
@@ -253,7 +253,7 @@ export function PortalExpenseSubmission() {
           onChange={(event) => setReceiptUrl(event.target.value)}
           type="url"
           placeholder="Receipt URL"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm md:col-span-2"
+          className="db-input text-sm md:col-span-2"
         />
 
         <input

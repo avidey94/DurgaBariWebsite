@@ -103,9 +103,9 @@ export default async function PortalPledgePage() {
 
   if (!context) {
     return (
-      <section className="mx-auto max-w-6xl space-y-4 px-6 py-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Become an Active Donor</h1>
-        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <section className="db-shell max-w-6xl space-y-4">
+        <h1 className="db-title">Become an Active Donor</h1>
+        <p className="db-card-muted p-4 text-sm text-amber-900">
           Family profile was not found for your account.
         </p>
       </section>
@@ -130,12 +130,13 @@ export default async function PortalPledgePage() {
   const monthRange = buildMonthRange();
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+    <section className="db-shell max-w-6xl space-y-6">
+      <header className="db-panel p-6 md:p-8">
+        <p className="db-kicker">Active Donor</p>
+        <h1 className="db-title mt-3">
           {approvedTier ? "Active Donor Portal" : "Become an Active Donor"}
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-3 text-sm text-[var(--db-text-soft)]">
           {approvedTier
             ? "You are an approved active donor. Review the monthly tiers below, see your current level highlighted, and request a different tier whenever your support level changes."
             : "Choose the monthly tier that matches your intended support, donate using QR, then submit your request for admin approval."}
@@ -181,12 +182,12 @@ export default async function PortalPledgePage() {
         ))}
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6">
+      <section className="db-card p-6">
         <h2 className="text-xl font-semibold text-slate-900">Donate via QR code</h2>
         <p className="mt-2 text-sm text-slate-600">
           Scan this QR code to submit your monthly active donor contribution, then request the tier that matches your intended support below.
         </p>
-        <div className="mt-4 inline-block rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div className="db-card-muted mt-4 inline-block p-3">
           <Image
             src="https://thedurgacenter.org/wp-content/uploads/2026/02/QR-Code-768x755.jpg"
             alt="Durga Bari donation QR code"
@@ -199,7 +200,7 @@ export default async function PortalPledgePage() {
       </section>
 
       {approvedTier ? (
-        <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-6">
+        <section className="db-card space-y-4 p-6">
           <header>
             <h2 className="text-xl font-semibold text-slate-900">Active donor payment history</h2>
             <p className="mt-1 text-sm text-slate-600">
@@ -208,7 +209,7 @@ export default async function PortalPledgePage() {
             </p>
           </header>
 
-          <div className="overflow-x-auto rounded-md border border-slate-200">
+          <div className="db-table">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-700">
                 <tr>

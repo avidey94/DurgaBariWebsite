@@ -289,7 +289,7 @@ export function SiteHeader({ user, preview, showAdminLink }: SiteHeaderProps) {
                 {text.siteTagline}
               </p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--db-text-soft)]">
-                v4.1
+                v5.1
               </p>
             </div>
           </Link>

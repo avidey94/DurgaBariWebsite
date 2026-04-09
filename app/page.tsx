@@ -1,156 +1,242 @@
 import Link from "next/link";
 
-import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
-import { canCurrentUserManageCms } from "@/lib/cms/access";
-import { getCmsPageContent } from "@/lib/cms/page-content";
+import { getCurrentUser } from "@/lib/auth/session";
+import { listCalendarEvents } from "@/lib/events/server";
 import { env } from "@/lib/env";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 
-const upcomingEvents = {
-  en: [
-    { day: "15", month: "MAR 2026", title: "General Body Meeting" },
-    { day: "22", month: "MAY 2026", title: "Natyotsav & Cultural Evening" },
-    { day: "09", month: "SEP 2026", title: "Durga Puja Volunteer Kickoff" },
-  ],
-  bn: [
-    { day: "15", month: "মার্চ 2026", title: "সাধারণ সভা" },
-    { day: "22", month: "মে 2026", title: "নাট্যোৎসব ও সাংস্কৃতিক সন্ধ্যা" },
-    { day: "09", month: "সেপ্টেম্বর 2026", title: "দুর্গাপূজা স্বেচ্ছাসেবক উদ্বোধন" },
-  ],
-} as const;
+const JOURNEY_IMAGE_URL =
+  "https://thedurgacenter.org/wp-content/uploads/2025/09/Orange-and-Violet-Process-Flow-Timelines-Concept-Map.png";
+const LOCATION_LABEL = "2350 Paragon Dr, San Jose, CA 95131";
+const MAP_EMBED_URL =
+  "https://www.google.com/maps?q=2350%20Paragon%20Dr%2C%20San%20Jose%2C%20CA%2095131&z=15&output=embed";
+const MAP_LINK_URL = "https://maps.google.com/?q=2350+Paragon+Dr,+San+Jose,+CA+95131";
 
-const quickLinks = {
-  en: [
-    { title: "Temple", subtitle: "Hours, rituals, priest contact" },
-    { title: "Rental", subtitle: "Hall and event booking details" },
-    { title: "Publication", subtitle: "Community newsletters and notices" },
-  ],
-  bn: [
-    { title: "মন্দির", subtitle: "সময়সূচি, আচার, পুরোহিত যোগাযোগ" },
-    { title: "রেন্টাল", subtitle: "হল ও ইভেন্ট বুকিং তথ্য" },
-    { title: "প্রকাশনা", subtitle: "কমিউনিটি নিউজলেটার ও নোটিশ" },
-  ],
+const copy = {
+  en: {
+    heroTitle: "Together, let's build a home for Maa Durga and our community.",
+    heroBody:
+      "Durga Bari - Center for Spiritual and Cultural Excellence is a community initiative to create a sacred and cultural space where devotion and tradition come alive.",
+    locationLabel: "Location",
+    mapLink: "Open in Google Maps",
+    sacredJourney: "Our Sacred Journey",
+    sacredJourneyBody:
+      "From the foundation stage to a permanent temple, this timeline reflects the long-term effort to establish a sacred center for worship, culture, and community life.",
+    upcoming: "Upcoming Events",
+    upcomingBody: "The next three events from our public calendar.",
+    noEvents: "No upcoming public events are published yet.",
+    viewAllEvents: "View All Events",
+    liveStream: "Live Stream",
+    liveStreamBody: "Watch temple events and broadcasts live here.",
+    liveStreamPlaceholder: "Set NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL to enable the livestream player.",
+    portalKicker: "Members",
+    portalTitle: "Member Portal",
+    portalBody:
+      "Access donations, pledge management, volunteer signup, and family account updates from one place.",
+    portalPrimary: "Open Member Portal",
+    portalSecondary: "Member Login",
+    eventCta: "View Event",
+  },
+  bn: {
+    heroTitle: "আসুন, মা দুর্গা এবং আমাদের কমিউনিটির জন্য একটি স্থায়ী ঘর তৈরি করি।",
+    heroBody:
+      "দুর্গা বাড়ি - আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র হল এমন একটি কমিউনিটি উদ্যোগ যেখানে ভক্তি, ঐতিহ্য এবং সাংস্কৃতিক জীবন একসাথে বিকশিত হবে।",
+    locationLabel: "ঠিকানা",
+    mapLink: "গুগল ম্যাপে খুলুন",
+    sacredJourney: "আমাদের পবিত্র যাত্রা",
+    sacredJourneyBody:
+      "ভিত্তি নির্মাণ থেকে স্থায়ী মন্দির পর্যন্ত, এই সময়রেখা উপাসনা, সংস্কৃতি এবং কমিউনিটি জীবনের জন্য একটি পবিত্র কেন্দ্র গড়ে তোলার দীর্ঘমেয়াদি প্রচেষ্টা তুলে ধরে।",
+    upcoming: "আসন্ন ইভেন্ট",
+    upcomingBody: "আমাদের পাবলিক ক্যালেন্ডারের পরবর্তী তিনটি ইভেন্ট।",
+    noEvents: "এখনও কোনো আসন্ন পাবলিক ইভেন্ট প্রকাশিত হয়নি।",
+    viewAllEvents: "সব ইভেন্ট দেখুন",
+    liveStream: "লাইভ সম্প্রচার",
+    liveStreamBody: "মন্দির অনুষ্ঠান ও সম্প্রচারের লাইভ ভিডিও এখানে দেখুন।",
+    liveStreamPlaceholder: "লাইভ স্ট্রিম চালু করতে NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL সেট করুন।",
+    portalKicker: "সদস্য",
+    portalTitle: "সদস্য পোর্টাল",
+    portalBody:
+      "দান, pledge ব্যবস্থাপনা, স্বেচ্ছাসেবক নিবন্ধন এবং পরিবার প্রোফাইল আপডেটের জন্য এক জায়গায় প্রবেশ করুন।",
+    portalPrimary: "সদস্য পোর্টাল খুলুন",
+    portalSecondary: "সদস্য লগইন",
+    eventCta: "ইভেন্ট দেখুন",
+  },
 } as const;
 
 interface HomePageProps {
   searchParams: Promise<{ lang?: string }>;
 }
 
+const eventDateLabel = (iso: string, lang: "en" | "bn") =>
+  new Date(iso).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
 export default async function Home({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
-  const isBn = lang === "bn";
+  const text = copy[lang];
+  const user = await getCurrentUser();
   const youtubeLiveEmbedUrl = env.youtubeLiveEmbedUrl.trim();
-  const cmsSlug = lang === "bn" ? "home-bn" : "home";
-  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
-  const homeIntroDefaultHtml = isBn
-    ? "<p>উপাসনা, শিক্ষা, স্বেচ্ছাসেবা এবং স্বচ্ছ দানের তথ্য - সব এক প্ল্যাটফর্মে।</p>"
-    : "<p>Worship, education, volunteerism, and transparent donation records in one unified platform.</p>";
+  const now = new Date();
+  const upcomingEvents = (await listCalendarEvents({
+    includeDraft: false,
+    includePrivate: false,
+    includeMembers: false,
+    fromIso: now.toISOString(),
+    toIso: new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+  })).slice(0, 3);
 
   return (
-    <section className="pb-16">
-      <div className="grid min-h-[520px] grid-cols-1 bg-white lg:grid-cols-[280px_1fr_330px]">
-        <aside className="bg-[#c40505] px-6 py-8 text-white sm:px-10 sm:py-10">
-          <h2 className="text-3xl font-semibold uppercase leading-tight sm:text-4xl">
-            {isBn ? "মন্দির সময়সূচি ও যোগাযোগ" : "Temple Hours & Contact"}
-          </h2>
-          <div className="mt-8 space-y-5 text-xl leading-relaxed">
-            <p>
-              {isBn ? "সোমবার - শনিবার:" : "Monday - Saturday:"}
-              <br />
-              9:00 AM - 11:00 AM
-              <br />
-              5:00 PM - 7:00 PM
-            </p>
-            <p>
-              {isBn ? "রবিবার:" : "Sunday:"}
-              <br />
-              9:00 AM - 7:00 PM
-            </p>
-            <p>
-              {isBn ? "সন্ধ্যা আরতি:" : "Sandhya Arati:"} 6:30 PM
-              <br />
-              {isBn ? "যোগাযোগ:" : "Contact:"} (281) 589-7700
-              <br />
-              info@durgabari.org
-            </p>
-          </div>
-        </aside>
+    <section className="bg-[#f8e7de] pb-16">
+      <div className="mx-auto max-w-[1240px] px-6 py-10 md:px-10 md:py-16">
+        <div className="rounded-[28px] bg-[linear-gradient(180deg,#fff1ea_0%,#f8e7de_100%)] px-7 py-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_18px_40px_rgba(104,33,21,0.09)] md:px-12 md:py-14">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_360px] lg:items-start">
+            <div>
+              <p className="text-[0.98rem] font-bold uppercase tracking-[0.36em] text-[#c53f3f] md:text-[1.06rem]">
+                Durga Bari Bay Area
+              </p>
+              <h1 className="mt-4 max-w-4xl font-serif text-[clamp(1.95rem,4.45vw,3.45rem)] font-bold leading-[1.08] text-[#1e2437]">
+                {text.heroTitle}
+              </h1>
+              <p className="mt-6 max-w-4xl text-[clamp(1.05rem,1.8vw,1.45rem)] leading-9 text-[#6a707a]">
+                {text.heroBody}
+              </p>
 
-        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_20%_10%,#f59e0b_0%,#b91c1c_45%,#2a0000_100%)] p-6 text-white sm:p-10">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_45%)]" />
-          <div className="relative z-10 flex h-full flex-col justify-end">
-            <p className="text-sm uppercase tracking-[0.22em] text-amber-200">
-              {isBn ? "ভক্তি দিয়ে পরিবারকে সেবা" : "Serving families with devotion"}
-            </p>
-            <h1 className="mt-4 max-w-3xl break-words font-serif text-[clamp(2.2rem,13.5vw,3.75rem)] leading-[1.02]">
-              {isBn ? "দুর্গা বাড়ি কমিউনিটি ও সাংস্কৃতিক কেন্দ্র" : "Durga Bari Community and Cultural Center"}
-            </h1>
-            <div className="mt-5 max-w-2xl text-xl text-amber-50/95">
-              <CmsEditableBlock
-                slug={cmsSlug}
-                initialTitle={isBn ? "হোম ইন্ট্রো" : "Home Intro"}
-                initialHtml={cmsIntro?.content_html || homeIntroDefaultHtml}
-                isAdmin={canManageCms}
-              />
+              <div className="mt-8 flex flex-wrap items-center gap-3 rounded-2xl border border-[#f0c9bf] bg-white/78 px-5 py-4 text-base text-[#5e6672] shadow-[0_10px_22px_rgba(87,44,33,0.06)]">
+                <span className="text-xl text-[#e24b5a]">📍</span>
+                <span>
+                  <strong>{text.locationLabel}:</strong> {LOCATION_LABEL}
+                </span>
+              </div>
             </div>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link
-                href={withLang("/portal", lang)}
-                className="rounded-sm bg-white px-6 py-3 text-base font-semibold text-[#9f0505] hover:bg-amber-100"
-              >
-                {isBn ? "পেমেন্ট ও ডোনেশন পোর্টাল" : "Payments & Donation Portal"}
-              </Link>
-              <Link
-                href={withLang("/login", lang)}
-                className="rounded-sm border border-white px-6 py-3 text-base font-semibold text-white hover:bg-white/15"
-              >
-                {isBn ? "সদস্য লগইন" : "Member Login"}
-              </Link>
-            </div>
+
+            <aside className="rounded-[26px] border border-[#f1c5b6] bg-[linear-gradient(180deg,#fff8f3_0%,#fcefe6_100%)] p-6 shadow-[0_14px_30px_rgba(125,64,36,0.08)]">
+              <p className="text-[0.98rem] font-bold uppercase tracking-[0.36em] text-[#8f1243] md:text-[1.06rem]">
+                {text.portalKicker}
+              </p>
+              <p className="mt-4 text-base leading-7 text-[#616977]">{text.portalBody}</p>
+              <div className="mt-6">
+                {user ? (
+                  <Link
+                    href={withLang("/portal", lang)}
+                    className="block rounded-xl border border-[#6b2a00] bg-[#f3b53a] px-5 py-3 text-center text-base font-semibold text-[#132a1f] no-underline hover:bg-[#f1c15d]"
+                  >
+                    {text.portalPrimary}
+                  </Link>
+                ) : (
+                  <Link
+                    href={withLang("/login", lang)}
+                    className="block rounded-xl border border-[#6b2a00] bg-[#f3b53a] px-5 py-3 text-center text-base font-semibold text-[#132a1f] no-underline hover:bg-[#f1c15d]"
+                  >
+                    {text.portalSecondary}
+                  </Link>
+                )}
+              </div>
+            </aside>
+          </div>
+
+          <div className="mt-10 overflow-hidden rounded-[24px] border border-[#efc5b9] bg-white shadow-[0_14px_34px_rgba(103,51,35,0.08)]">
+            <iframe
+              title="Durga Bari Bay Area location map"
+              src={MAP_EMBED_URL}
+              className="h-[320px] w-full md:h-[380px]"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <div className="mt-3 text-right">
+            <a
+              href={MAP_LINK_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#d69e7b] bg-white px-4 py-2 text-sm font-semibold text-[#8e3b22] no-underline hover:bg-[#fff7f2]"
+            >
+              {text.mapLink}
+            </a>
           </div>
         </div>
-
-        <aside className="bg-[#ececec] px-6 py-8 sm:px-8">
-          <h2 className="text-3xl font-semibold uppercase text-[#222] sm:text-4xl">
-            {isBn ? "আসন্ন ইভেন্ট" : "Upcoming Events"}
-          </h2>
-          <div className="mt-6 space-y-4">
-            {upcomingEvents[lang].map((event) => (
-              <article key={`${event.day}-${event.title}`} className="flex overflow-hidden rounded-md bg-white">
-                <div className="flex w-24 flex-col items-center justify-center bg-[#c40505] py-3 text-white">
-                  <span className="text-5xl font-bold leading-none">{event.day}</span>
-                  <span className="mt-1 text-xs font-semibold tracking-wide">{event.month}</span>
-                </div>
-                <div className="flex items-center px-4 text-2xl font-medium leading-tight text-slate-700 sm:text-3xl">
-                  {event.title}
-                </div>
-              </article>
-            ))}
-          </div>
-          <button className="mt-7 rounded-md bg-[#c40505] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#a90303]">
-            {isBn ? "আরও দেখুন" : "View More"}
-          </button>
-        </aside>
       </div>
 
-      <section className="bg-[#f5f1e8] px-6 py-10 md:px-10">
-        <div className="mx-auto w-full max-w-6xl rounded-md border-[3px] border-[var(--db-border-strong)] bg-white p-4 shadow-[inset_0_1px_0_#fff,0_2px_0_#173522] md:p-5">
-          <h2 className="font-serif text-3xl font-bold leading-tight text-[#132a1f] md:text-4xl">
-            {isBn ? "লাইভ সম্প্রচার" : "Live Stream"}
-          </h2>
-          <p className="mt-2 text-base text-[#35513d] md:text-lg">
-            {isBn
-              ? "মন্দির অনুষ্ঠান ও সম্প্রচারের লাইভ ভিডিও এখানে দেখুন।"
-              : "Watch temple events and broadcasts live here."}
-          </p>
+      <div className="mx-auto max-w-[1240px] px-6 md:px-10">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_380px]">
+          <section className="rounded-[28px] bg-[#fff7ef] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_14px_30px_rgba(78,35,28,0.09)] md:p-8">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#cf4a32]">Temple Journey</p>
+                <h2 className="mt-2 font-serif text-[clamp(2.2rem,4vw,4.1rem)] font-bold leading-[1.02] text-[#2d2470]">
+                  {text.sacredJourney}
+                </h2>
+              </div>
+              <p className="max-w-xl text-sm leading-7 text-[#6b6472] md:text-base">{text.sacredJourneyBody}</p>
+            </div>
+
+            <div className="mt-6 overflow-hidden rounded-[22px] border border-[#ecd6c4] bg-white p-3 shadow-[0_10px_22px_rgba(79,43,34,0.07)] md:p-5">
+              <img
+                src={JOURNEY_IMAGE_URL}
+                alt="Our Sacred Journey timeline"
+                className="h-auto w-full rounded-[16px]"
+              />
+            </div>
+          </section>
+
+          <aside className="rounded-[28px] bg-[linear-gradient(180deg,#e31c47_0%,#c0133c_100%)] p-6 text-white shadow-[0_18px_38px_rgba(121,19,54,0.2)] md:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/70">Calendar</p>
+            <h2 className="mt-3 font-serif text-4xl font-bold leading-tight">{text.upcoming}</h2>
+            <p className="mt-3 text-sm leading-7 text-white/82">{text.upcomingBody}</p>
+
+            <div className="mt-6 space-y-4">
+              {upcomingEvents.length === 0 ? (
+                <div className="rounded-2xl border border-white/15 bg-white/8 p-5 text-sm text-white/85">{text.noEvents}</div>
+              ) : (
+                upcomingEvents.map((entry) => (
+                  <article key={entry.occurrenceKey} className="rounded-2xl border border-white/15 bg-white/8 p-5 backdrop-blur-[2px]">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#ffd9b7]">
+                      {eventDateLabel(entry.occurrenceStart, lang)}
+                    </p>
+                    <h3 className="mt-2 text-2xl font-semibold leading-tight text-white">{entry.event.title}</h3>
+                    {entry.event.short_summary ? (
+                      <p className="mt-3 text-sm leading-7 text-white/82">{entry.event.short_summary}</p>
+                    ) : null}
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xs uppercase tracking-[0.18em] text-white/62">
+                        {entry.event.event_type}
+                      </span>
+                      <Link
+                        href={`/events-festivals/${entry.event.slug}?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`}
+                        className="rounded-full border border-white/25 bg-white/12 px-3 py-1.5 text-xs font-semibold text-white no-underline hover:bg-white/18"
+                      >
+                        {text.eventCta}
+                      </Link>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+
+            <Link
+              href={withLang("/events-festivals", lang)}
+              className="mt-6 inline-flex rounded-xl border border-[#6b2a00] bg-[#f3b53a] px-5 py-3 text-sm font-semibold text-[#132a1f] no-underline hover:bg-[#f1c15d]"
+            >
+              {text.viewAllEvents}
+            </Link>
+          </aside>
+        </div>
+      </div>
+
+      <section className="mx-auto mt-8 max-w-[1240px] px-6 md:px-10">
+        <div className="rounded-[28px] border-[3px] border-[var(--db-border-strong)] bg-white p-5 shadow-[inset_0_1px_0_#fff,0_2px_0_#173522] md:p-6">
+          <h2 className="font-serif text-3xl font-bold leading-tight text-[#132a1f] md:text-4xl">{text.liveStream}</h2>
+          <p className="mt-2 text-base text-[#35513d] md:text-lg">{text.liveStreamBody}</p>
 
           {youtubeLiveEmbedUrl ? (
             <div className="mt-4 overflow-hidden rounded-md border-[2px] border-[var(--db-border)] bg-black">
               <div className="relative aspect-video w-full">
                 <iframe
                   src={youtubeLiveEmbedUrl}
-                  title={isBn ? "দুর্গাবাড়ি লাইভ স্ট্রিম" : "Durgabari live stream"}
+                  title={lang === "bn" ? "দুর্গাবাড়ি লাইভ স্ট্রিম" : "Durgabari live stream"}
                   className="absolute inset-0 h-full w-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
@@ -159,31 +245,11 @@ export default async function Home({ searchParams }: HomePageProps) {
             </div>
           ) : (
             <p className="mt-4 rounded-md border border-dashed border-[#3d6148] bg-[#eef4ec] px-3 py-2 text-sm text-[#35513d]">
-              {isBn
-                ? "লাইভ স্ট্রিম চালু করতে NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL সেট করুন।"
-                : "Set NEXT_PUBLIC_YOUTUBE_LIVE_EMBED_URL to enable the livestream player."}
+              {text.liveStreamPlaceholder}
             </p>
           )}
         </div>
       </section>
-
-      <div className="bg-[#efefef] px-6 py-16">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 md:grid-cols-3">
-          {quickLinks[lang].map((item) => (
-            <article key={item.title} className="text-center">
-              <div className="mx-auto grid h-56 w-56 place-items-center rounded-full bg-[#d80000] text-center text-white shadow-[0_18px_32px_rgba(0,0,0,0.14)]">
-                <div>
-                  <p className="text-4xl font-semibold">{item.title}</p>
-                </div>
-              </div>
-              <p className="mt-6 text-xl text-slate-600">{item.subtitle}</p>
-              <a href="#" className="mt-5 inline-block text-4xl text-[#1f1f1f] hover:text-[#c40505]">
-                {isBn ? "সব দেখুন" : "View All"}
-              </a>
-            </article>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }

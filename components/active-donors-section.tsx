@@ -23,19 +23,19 @@ const bandLabel = (band: Band, isBn: boolean) => {
   if (isBn) {
     if (band === "all") return "সব";
     if (band === "bronze") return "ব্রোঞ্জ ($100/mo)";
-    if (band === "silver") return "সিলভার ($500/mo)";
-    return "গোল্ড ($1000+/mo)";
+    if (band === "silver") return "সিলভার ($300/mo)";
+    return "গোল্ড ($500/mo)";
   }
 
   if (band === "all") return "All";
   if (band === "bronze") return "Bronze ($100/mo)";
-  if (band === "silver") return "Silver ($500/mo)";
-  return "Gold ($1000+/mo)";
+  if (band === "silver") return "Silver ($300/mo)";
+  return "Gold ($500/mo)";
 };
 
 const resolveBand = (monthlyCents: number): Exclude<Band, "all"> => {
-  if (monthlyCents >= 100_000) return "gold";
-  if (monthlyCents >= 50_000) return "silver";
+  if (monthlyCents >= 50_000) return "gold";
+  if (monthlyCents >= 30_000) return "silver";
   return "bronze";
 };
 

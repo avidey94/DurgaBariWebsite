@@ -479,7 +479,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
               }}
               className={`rounded-md px-3 py-1 text-sm disabled:opacity-60 ${
                 preview.active && preview.mode === "family"
-                  ? "bg-slate-900 text-white hover:bg-slate-800"
+                  ? "border border-[var(--db-selected-border)] bg-[var(--db-selected-bg)] text-[var(--db-selected-text)] shadow-[var(--db-selected-shadow)] hover:brightness-[0.99]"
                   : "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50"
               }`}
             >

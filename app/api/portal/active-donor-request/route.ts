@@ -7,13 +7,6 @@ interface ActiveDonorRequestBody {
   requestedStatus?: "bronze" | "silver" | "gold";
 }
 
-const rankByStatus = {
-  none: 0,
-  bronze: 1,
-  silver: 2,
-  gold: 3,
-} as const;
-
 export async function POST(request: Request) {
   const user = await getCurrentUser();
 
@@ -49,12 +42,9 @@ export async function POST(request: Request) {
   }
 
   const currentStatus = (family.active_donor_status ?? "none") as "none" | "bronze" | "silver" | "gold";
-  const currentRank = rankByStatus[currentStatus];
-  const requestedRank = rankByStatus[requestedStatus];
-
-  if (requestedRank <= currentRank) {
+  if (requestedStatus === currentStatus) {
     return NextResponse.json(
-      { message: `You are already ${currentStatus}. Please request a higher tier.` },
+      { message: `You are already ${currentStatus}. Select a different tier to request a change.` },
       { status: 409 },
     );
   }

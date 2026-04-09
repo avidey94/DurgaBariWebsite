@@ -81,19 +81,19 @@ export default async function EventDetailsPage({ params, searchParams }: EventDe
         <div className="flex flex-wrap gap-2">
           <a
             href={`/api/calendar/events/${event.slug ?? event.id}/ics?occurrenceStart=${encodeURIComponent(startsAt)}`}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="rounded-md border border-[#6b2a00] bg-[#f3b53a] px-4 py-2 text-sm font-semibold text-[#132a1f] no-underline hover:bg-[#f1c15d]"
           >
             Add to Calendar
           </a>
           <Link
             href="/api/calendar/feed"
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+            className="rounded-md border border-[#2c5f3d] bg-white px-4 py-2 text-sm font-medium text-[#1c4b2f] no-underline hover:bg-[#eef4ec]"
           >
             Subscribe to Calendar
           </Link>
           <Link
             href="/events-festivals"
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+            className="rounded-md border border-[#8a6caf] bg-white px-4 py-2 text-sm font-medium text-[#6a3ea1] no-underline hover:bg-[#f6f1fb]"
           >
             Back to events
           </Link>

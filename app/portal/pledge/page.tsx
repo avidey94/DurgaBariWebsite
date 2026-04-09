@@ -4,13 +4,15 @@ import { redirect } from "next/navigation";
 import { PortalActiveDonorRequest } from "@/components/portal-active-donor-request";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCurrentFamilyPortalContext, listFamilyDonations } from "@/lib/portal/server";
-import type { ActiveDonorStatus, DonationLedgerEntry, RequestedActiveDonorStatus } from "@/lib/portal/types";
+import type { DonationLedgerEntry, RequestedActiveDonorStatus } from "@/lib/portal/types";
 
 const tiers = [
   {
     id: "bronze",
     title: "Bronze Active Donor",
-    contribution: "Suggested: $500+ cumulative",
+    contribution: "$100 / month",
+    borderClass: "border-amber-400 bg-[linear-gradient(180deg,#fff9f3_0%,#fff4e5_100%)]",
+    badgeClass: "bg-amber-100 text-amber-900 border border-amber-300",
     perks: [
       "Recognition in the active donor roster on the sponsors page",
       "Quarterly donor updates and community milestone briefings",
@@ -20,7 +22,9 @@ const tiers = [
   {
     id: "silver",
     title: "Silver Active Donor",
-    contribution: "Suggested: $1,500+ cumulative",
+    contribution: "$300 / month",
+    borderClass: "border-slate-400 bg-[linear-gradient(180deg,#fbfcfd_0%,#eef2f6_100%)]",
+    badgeClass: "bg-slate-100 text-slate-900 border border-slate-300",
     perks: [
       "Everything in Bronze plus expanded recognition placement",
       "Invites to periodic donor appreciation sessions",
@@ -30,7 +34,9 @@ const tiers = [
   {
     id: "gold",
     title: "Gold Active Donor",
-    contribution: "Suggested: $3,000+ cumulative",
+    contribution: "$500 / month",
+    borderClass: "border-yellow-400 bg-[linear-gradient(180deg,#fffdf2_0%,#fff7cf_100%)]",
+    badgeClass: "bg-yellow-100 text-yellow-950 border border-yellow-300",
     perks: [
       "Everything in Silver plus top-tier active donor recognition",
       "Special acknowledgment for flagship community campaigns",
@@ -40,10 +46,6 @@ const tiers = [
 ] as const;
 
 const ACTIVE_DONOR_TYPES = ["active_donor_bronze", "active_donor_silver", "active_donor_gold"] as const;
-const TIER_ORDER: Array<ActiveDonorStatus> = ["none", "bronze", "silver", "gold"];
-
-const getTierRank = (status: ActiveDonorStatus) => TIER_ORDER.indexOf(status);
-
 const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -112,7 +114,7 @@ export default async function PortalPledgePage() {
 
   const approvedTier = context.family.activeDonorStatus !== "none" ? context.family.activeDonorStatus : null;
   const allowedStatuses = (["bronze", "silver", "gold"] as const).filter(
-    (status) => getTierRank(status) > getTierRank(context.family.activeDonorStatus),
+    (status) => status !== context.family.activeDonorStatus,
   ) as RequestedActiveDonorStatus[];
   const donations = await listFamilyDonations(context.family.id, 5000);
   const activeDonorDonations = donations.filter((donation) =>
@@ -135,8 +137,8 @@ export default async function PortalPledgePage() {
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           {approvedTier
-            ? "You are an approved active donor. Review all tiers, your current level highlight, and continue supporting via QR."
-            : "Learn about Bronze, Silver, and Gold active donor tiers. Choose your intended tier, donate using QR, then submit your request for admin approval."}
+            ? "You are an approved active donor. Review the monthly tiers below, see your current level highlighted, and request a different tier whenever your support level changes."
+            : "Choose the monthly tier that matches your intended support, donate using QR, then submit your request for admin approval."}
         </p>
       </header>
 
@@ -147,16 +149,26 @@ export default async function PortalPledgePage() {
             className={`rounded-lg border bg-white p-5 ${
               approvedTier === tier.id
                 ? "border-2 border-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.22)]"
-                : "border-slate-200"
+                : tier.borderClass
             }`}
           >
-            <h2 className="text-lg font-semibold text-slate-900">{tier.title}</h2>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">{tier.title}</h2>
+                <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{tier.contribution}</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-600">Non-cumulative monthly tier</p>
+              </div>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${approvedTier === tier.id ? "bg-emerald-50 text-emerald-700" : tier.badgeClass}`}
+              >
+                {tier.id.charAt(0).toUpperCase() + tier.id.slice(1)}
+              </span>
+            </div>
             {approvedTier === tier.id ? (
-              <p className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              <p className="mt-3 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                 Your approved tier
               </p>
             ) : null}
-            <p className="mt-1 text-sm text-slate-700">{tier.contribution}</p>
             <ul className="mt-3 space-y-2 text-sm text-slate-700">
               {tier.perks.map((perk) => (
                 <li key={`${tier.id}-${perk}`} className="flex gap-2">
@@ -172,7 +184,7 @@ export default async function PortalPledgePage() {
       <section className="rounded-lg border border-slate-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-slate-900">Donate via QR code</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Scan this QR code to submit your donation, then request your intended active donor tier below.
+          Scan this QR code to submit your monthly active donor contribution, then request the tier that matches your intended support below.
         </p>
         <div className="mt-4 inline-block rounded-lg border border-slate-200 bg-slate-50 p-3">
           <Image

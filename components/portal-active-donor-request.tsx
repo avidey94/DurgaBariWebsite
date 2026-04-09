@@ -11,10 +11,22 @@ interface PortalActiveDonorRequestProps {
   allowedStatuses: RequestedActiveDonorStatus[];
 }
 
-const tierLabels: Record<RequestedActiveDonorStatus, string> = {
-  bronze: "Bronze",
-  silver: "Silver",
-  gold: "Gold",
+const tierMeta: Record<RequestedActiveDonorStatus, { label: string; price: string; className: string }> = {
+  bronze: {
+    label: "Bronze",
+    price: "$100/mo",
+    className: "border-amber-300 bg-amber-50 text-amber-950",
+  },
+  silver: {
+    label: "Silver",
+    price: "$300/mo",
+    className: "border-slate-300 bg-slate-50 text-slate-950",
+  },
+  gold: {
+    label: "Gold",
+    price: "$500/mo",
+    className: "border-yellow-300 bg-yellow-50 text-yellow-950",
+  },
 };
 
 export function PortalActiveDonorRequest({
@@ -50,7 +62,7 @@ export function PortalActiveDonorRequest({
         throw new Error(payload.message ?? "Unable to submit request.");
       }
 
-      setMessage(`Request sent for ${tierLabels[selectedStatus]} active donor status. An admin will review it.`);
+      setMessage(`Request sent for ${tierMeta[selectedStatus].label} active donor status. An admin will review it.`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to submit request.");
     } finally {
@@ -61,12 +73,12 @@ export function PortalActiveDonorRequest({
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="text-xl font-semibold text-slate-900">
-        {currentStatus === "none" ? "Request active donor status" : "Request active donor tier upgrade"}
+        {currentStatus === "none" ? "Request active donor status" : "Request an active donor tier change"}
       </h2>
       <p className="mt-2 text-sm text-slate-600">
         {currentStatus === "none"
-          ? "Select your intended membership tier and submit it for membership manager or super admin approval."
-          : "You cannot request your current tier again. Select a higher tier and submit for admin approval."}
+          ? "Select your intended monthly tier and submit it for membership manager or super admin approval."
+          : "You can request either an upgrade or downgrade. Your current tier is excluded, and any new request replaces the previous pending choice."}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -83,20 +95,35 @@ export function PortalActiveDonorRequest({
 
       {allowedStatuses.length === 0 ? (
         <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-          You are currently at the highest tier. No further upgrade requests are available.
+          You are already at the only available tier for your current account state.
         </p>
       ) : (
         <fieldset className="mt-4 grid gap-2 sm:grid-cols-3">
           {allowedStatuses.map((status) => (
-          <label key={status} className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
-            <input
-              type="radio"
-              name="active-donor-request"
-              checked={selectedStatus === status}
-              onChange={() => setSelectedStatus(status)}
-            />
-            {tierLabels[status]}
-          </label>
+            <label
+              key={status}
+              className={`rounded-lg border px-4 py-3 text-sm transition ${
+                selectedStatus === status
+                  ? "border-[var(--db-selected-border)] bg-[var(--db-selected-bg)] text-[var(--db-selected-text)] shadow-[var(--db-selected-shadow)]"
+                  : tierMeta[status].className
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="radio"
+                  name="active-donor-request"
+                  checked={selectedStatus === status}
+                  onChange={() => setSelectedStatus(status)}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="font-semibold">{tierMeta[status].label}</p>
+                  <p className={`text-xs ${selectedStatus === status ? "text-[var(--db-text-soft)]" : "text-slate-600"}`}>
+                    {tierMeta[status].price}
+                  </p>
+                </div>
+              </div>
+            </label>
           ))}
         </fieldset>
       )}

@@ -17,6 +17,10 @@
   --db-border: #1f462f;
   --db-border-soft: #4c6b57;
   --db-border-strong: #0c2a1a;
+  --db-selected-bg: #e6f0e7;
+  --db-selected-text: #173724;
+  --db-selected-border: #3d6148;
+  --db-selected-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
 
   --db-shadow-panel: inset 0 1px 0 #ffffff, 0 1px 0 #b8c5b6;
   --db-shadow-raise: 0 2px 0 #0c2a1a;
@@ -46,6 +50,10 @@
   --db-border: #5f2222;
   --db-border-soft: #8b5555;
   --db-border-strong: #3f1010;
+  --db-selected-bg: #f5e9e3;
+  --db-selected-text: #4a1e1e;
+  --db-selected-border: #8b5555;
+  --db-selected-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
 
   --db-shadow-panel: inset 0 1px 0 #fffdfa, 0 1px 0 #cab9b0;
   --db-shadow-raise: 0 2px 0 #3f1010;

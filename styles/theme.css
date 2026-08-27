@@ -124,3 +124,318 @@
   --db-border-w: 1px;
   --db-border-w-strong: 2px;
 }
+
+[data-theme="durgacenter"] {
+  --db-bg: #ffede6;
+  --db-surface: #140609;
+  --db-panel: #ffffff;
+  --db-panel-strong: #ffffff;
+  --db-surface-soft: #fff7f3;
+  --db-muted: #ffede6;
+  --db-text: #3a3a3a;
+  --db-text-soft: #3a3a3a;
+
+  --db-brand: #dd183b;
+  --db-brand-2: #cc1939;
+  --db-brand-accent: #ffd1bf;
+  --db-danger: #dd183b;
+  --db-link: #dd183b;
+  --db-link-visited: #6c2b46;
+
+  --db-border: #ffd1bf;
+  --db-border-soft: #f2b7a3;
+  --db-border-strong: #140609;
+  --db-selected-bg: #ffede6;
+  --db-selected-text: #140609;
+  --db-selected-border: #dd183b;
+  --db-selected-shadow: none;
+
+  --db-shadow-panel: 0 1px 2px rgba(20, 6, 9, 0.08);
+  --db-shadow-raise: 0 1px 2px rgba(20, 6, 9, 0.12);
+  --db-shadow-soft: 0 16px 36px rgba(20, 6, 9, 0.08);
+  --db-bg-image: none;
+
+  --db-radius-xs: 4px;
+  --db-radius-sm: 4px;
+  --db-radius-md: 6px;
+  --db-radius-lg: 8px;
+  --db-border-w: 1px;
+  --db-border-w-strong: 1px;
+}
+
+.durgacenter-header {
+  background: #e8173d;
+  color: #fff;
+}
+
+.durgacenter-header-inner {
+  display: flex;
+  min-height: 150px;
+  width: min(1024px, calc(100% - 3rem));
+  margin: 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.durgacenter-logo img {
+  display: block;
+  width: 154px;
+  height: 145px;
+  object-fit: contain;
+}
+
+.durgacenter-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.2rem;
+  margin-left: auto;
+}
+
+.durgacenter-nav a,
+.durgacenter-nav a:visited,
+.durgacenter-tools a,
+.durgacenter-tools button {
+  color: #fff;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.durgacenter-nav a.is-current,
+.durgacenter-nav a.is-current:visited,
+.durgacenter-nav a:hover,
+.durgacenter-nav a:focus-visible {
+  color: #ffede6;
+}
+
+.durgacenter-nav a:hover,
+.durgacenter-tools a:hover,
+.durgacenter-tools button:hover {
+  color: #fff;
+}
+
+.durgacenter-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  white-space: nowrap;
+}
+
+.durgacenter-theme-switcher {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 4px;
+}
+
+.durgacenter-theme-switcher button {
+  cursor: pointer;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  padding: 0.35rem 0.5rem;
+  color: #fff;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.durgacenter-theme-switcher button:first-child {
+  border-left: 0;
+}
+
+.durgacenter-theme-switcher button:hover,
+.durgacenter-theme-switcher button.is-active {
+  background: rgba(20, 6, 9, 0.24);
+}
+
+.modern-site-tools {
+  gap: 0.55rem;
+}
+
+.modern-site-header .durgacenter-nav a {
+  white-space: nowrap;
+}
+
+.modern-site-tools .modern-language-link,
+.modern-site-tools .modern-profile-button,
+.modern-profile-menu > summary,
+.modern-theme-select-label select {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 4px;
+  background: transparent;
+  color: #fff;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.modern-site-tools .modern-language-link,
+.modern-site-tools .modern-profile-button,
+.modern-profile-menu > summary {
+  padding: 0.35rem 0.65rem;
+}
+
+.modern-theme-select-label select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 104px;
+  height: 34px;
+  padding: 0.35rem 1.65rem 0.35rem 0.65rem;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #fff !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-position: calc(100% - 10px) 14px, calc(100% - 6px) 14px;
+  background-repeat: no-repeat;
+}
+
+.modern-theme-select-label option {
+  color: #111;
+}
+
+.modern-site-tools .modern-language-link:hover,
+.modern-site-tools .modern-profile-button:hover,
+.modern-profile-menu > summary:hover,
+.modern-theme-select-label select:hover,
+.modern-profile-menu[open] > summary {
+  background: rgba(20, 6, 9, 0.24);
+  color: #fff;
+}
+
+.modern-profile-menu {
+  position: relative;
+}
+
+.modern-profile-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.modern-profile-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.modern-profile-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  width: 220px;
+  gap: 0.5rem;
+  border: 1px solid rgba(20, 6, 9, 0.25);
+  border-radius: 6px;
+  background: #fff;
+  padding: 0.8rem;
+  color: #242424;
+  box-shadow: 0 10px 24px rgba(20, 6, 9, 0.2);
+}
+
+.modern-profile-popover span {
+  overflow: hidden;
+  color: #666;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+}
+
+.modern-profile-popover a,
+.modern-profile-popover button {
+  border: 1px solid #e8173d;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0.45rem 0.6rem;
+  color: #e8173d;
+  font: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+
+.modern-profile-popover a:hover,
+.modern-profile-popover button:hover {
+  background: #fff0f2;
+}
+
+.durgacenter-menu-button {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 1.7rem;
+}
+
+@media (max-width: 1100px) {
+  .durgacenter-header-inner {
+    width: min(1024px, calc(100% - 2rem));
+    gap: 1rem;
+  }
+
+  .durgacenter-nav {
+    gap: 0.65rem;
+  }
+
+  .durgacenter-nav a,
+  .durgacenter-tools a,
+  .durgacenter-tools button {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 921px) {
+  .durgacenter-header-inner {
+    min-height: 96px;
+  }
+
+  .durgacenter-logo img {
+    width: 86px;
+    height: 82px;
+  }
+
+  .durgacenter-menu-button {
+    display: block;
+    margin-left: auto;
+  }
+
+  .durgacenter-nav {
+    position: absolute;
+    top: 96px;
+    right: 0;
+    left: 0;
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    background: #e8173d;
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .durgacenter-nav.is-open {
+    display: flex;
+  }
+
+  .durgacenter-nav a {
+    border-top: 1px solid rgba(255, 209, 191, 0.2);
+    padding: 0.7rem 0;
+  }
+
+  .durgacenter-tools a:nth-child(-n + 2) {
+    display: none;
+  }
+
+  .modern-site-tools {
+    display: none;
+  }
+}

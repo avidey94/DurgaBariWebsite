@@ -79,6 +79,7 @@ export const ensureFamilyForAuthUser = async (input: EnsureFamilyForAuthUserInpu
         auth_user_id: input.authUserId,
         family_display_name: toDisplayName(email),
         primary_email: email,
+        portal_access_state: "pending",
         phone_number: null,
         adults_count: 1,
         adult_names: [],

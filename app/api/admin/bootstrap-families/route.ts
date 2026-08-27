@@ -77,6 +77,7 @@ export async function POST() {
       auth_user_id: user.id,
       primary_email: (user.email ?? "").trim().toLowerCase(),
       family_display_name: toDisplayName((user.email ?? "").trim(), user.user_metadata),
+      portal_access_state: "approved",
       adults_count: 1,
       children_count: 0,
       founding_family_status: "not_founding",

@@ -1,20 +1,27 @@
-import { NextResponse } from "next/server";
-
+import { jsonNoStore } from "@/lib/http";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getFamilyDashboardSummary } from "@/lib/portal/server";
+import { canAccessMemberContent, getCurrentFamilyPortalContext, getFamilyDashboardSummary } from "@/lib/portal/server";
 
 export async function GET() {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const familyContext = await getCurrentFamilyPortalContext();
+  if (!familyContext) {
+    return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
+  }
+  if (!canAccessMemberContent(familyContext)) {
+    return jsonNoStore({ message: "Portal access is pending approval.", code: "portal_access_pending" }, { status: 403 });
   }
 
   const summary = await getFamilyDashboardSummary();
 
   if (!summary) {
-    return NextResponse.json({ message: "Family profile not found." }, { status: 404 });
+    return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ summary }, { status: 200 });
+  return jsonNoStore({ summary }, { status: 200 });
 }

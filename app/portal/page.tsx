@@ -5,6 +5,7 @@ import { PortalEventsPanel } from "@/components/portal-events-panel";
 import { PortalOnboardingForm } from "@/components/portal-onboarding-form";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
+  canAccessMemberContent,
   getCurrentFamilyPortalContext,
   listFamilyDonations,
 } from "@/lib/portal/server";
@@ -72,6 +73,23 @@ export default async function PortalPage() {
           initialAdultsCount={context.family.adultsCount}
           initialChildrenCount={context.family.childrenCount}
         />
+      </section>
+    );
+  }
+
+  if (!canAccessMemberContent(context)) {
+    return (
+      <section className="db-shell max-w-4xl">
+        <div className="db-panel p-6 md:p-8">
+          <p className="db-kicker">Portal Access Pending</p>
+          <h1 className="db-title mt-3">Your account is awaiting approval</h1>
+          <p className="mt-3 text-sm text-[var(--db-text-soft)]">
+            Your family profile is set up, but member-only portal features stay locked until an administrator approves access.
+          </p>
+          <p className="mt-4 text-sm text-[var(--db-text-soft)]">
+            Signed in as <strong>{user.email}</strong>. You can contact the temple administrators if approval is urgent.
+          </p>
+        </div>
       </section>
     );
   }

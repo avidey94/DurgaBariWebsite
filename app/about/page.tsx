@@ -1,14 +1,22 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { DurgacenterAboutPage } from "@/components/DurgacenterAboutPage";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
+import { cookies } from "next/headers";
 
 interface AboutPageProps {
   searchParams: Promise<{ lang?: string }>;
 }
 
 export default async function AboutPage({ searchParams }: AboutPageProps) {
+  const theme = (await cookies()).get("db_theme")?.value;
+
+  if (theme === "durgacenter") {
+    return <DurgacenterAboutPage />;
+  }
+
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";

@@ -7,6 +7,8 @@ import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const waysToGive = {
   en: [
@@ -90,6 +92,11 @@ interface DonatePageProps {
 }
 
 export default async function DonatePage({ searchParams }: DonatePageProps) {
+  const theme = (await cookies()).get("db_theme")?.value;
+  if (theme === "durgacenter") {
+    redirect("/join-hands-to-build-durga-bari/");
+  }
+
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";

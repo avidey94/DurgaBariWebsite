@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
+import { DurgacenterJourneyPage } from "@/components/DurgacenterJourneyPage";
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
@@ -71,6 +73,11 @@ interface OurJourneyPageProps {
 }
 
 export default async function OurJourneyPage({ searchParams }: OurJourneyPageProps) {
+  const theme = (await cookies()).get("db_theme")?.value;
+  if (theme === "durgacenter") {
+    return <DurgacenterJourneyPage />;
+  }
+
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";

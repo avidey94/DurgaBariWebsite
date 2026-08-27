@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
-
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { jsonNoStore } from "@/lib/http";
 import { normalizeUsPhoneNumber } from "@/lib/phone";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
-import type { ActiveDonorStatus, FamilyRole } from "@/lib/portal/types";
+import type { ActiveDonorStatus, FamilyRole, PortalAccessState } from "@/lib/portal/types";
 
 const ALLOWED_ROLES: FamilyRole[] = [
   "super_admin",
@@ -24,6 +23,7 @@ interface FamilyProfileUpdateBody {
   familyId?: string;
   familyDisplayName?: string;
   primaryEmail?: string;
+  portalAccessState?: PortalAccessState;
   phoneNumber?: string | null;
   adultsCount?: number;
   adultNames?: string[];
@@ -33,28 +33,30 @@ interface FamilyProfileUpdateBody {
   activeDonorStatus?: ActiveDonorStatus;
 }
 
+const ALLOWED_PORTAL_ACCESS_STATES: PortalAccessState[] = ["pending", "approved", "suspended"];
+
 export async function GET() {
   const access = await getAdminAccessContext();
 
   if (!access) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
   }
 
   if (!hasPortalPermission(access.roles, "roles.read_all")) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return jsonNoStore({ message: "Forbidden" }, { status: 403 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
 
   if (!supabase) {
-    return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+    return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
   }
 
   const [familiesResult, grantsResult] = await Promise.all([
     supabase
       .from("families")
       .select(
-        "id, family_display_name, primary_email, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, active_donor_status, requested_active_donor_status, requested_active_donor_at, created_at, updated_at",
+        "id, family_display_name, primary_email, portal_access_state, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, active_donor_status, requested_active_donor_status, requested_active_donor_at, created_at, updated_at",
       )
       .order("family_display_name", { ascending: true }),
     supabase
@@ -64,14 +66,14 @@ export async function GET() {
   ]);
 
   if (familiesResult.error) {
-    return NextResponse.json({ message: familiesResult.error.message }, { status: 500 });
+    return jsonNoStore({ message: familiesResult.error.message }, { status: 500 });
   }
 
   if (grantsResult.error) {
-    return NextResponse.json({ message: grantsResult.error.message }, { status: 500 });
+    return jsonNoStore({ message: grantsResult.error.message }, { status: 500 });
   }
 
-  return NextResponse.json(
+  return jsonNoStore(
     {
       families: familiesResult.data ?? [],
       roleGrants: grantsResult.data ?? [],
@@ -84,17 +86,17 @@ export async function POST(request: Request) {
   const access = await getAdminAccessContext();
 
   if (!access) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
   }
 
   if (!hasPortalPermission(access.roles, "roles.manage")) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return jsonNoStore({ message: "Forbidden" }, { status: 403 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
 
   if (!supabase) {
-    return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+    return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
   }
 
   const body = (await request.json()) as RoleMutationBody;
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
   const role = body.role;
 
   if (!familyId || !role || !ALLOWED_ROLES.includes(role)) {
-    return NextResponse.json({ message: "familyId and valid role are required." }, { status: 400 });
+    return jsonNoStore({ message: "familyId and valid role are required." }, { status: 400 });
   }
 
   const { data, error } = await supabase
@@ -117,30 +119,30 @@ export async function POST(request: Request) {
 
   if (error) {
     if (error.code === "23505") {
-      return NextResponse.json({ message: "Role is already assigned to this family." }, { status: 409 });
+      return jsonNoStore({ message: "Role is already assigned to this family." }, { status: 409 });
     }
 
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return jsonNoStore({ message: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ roleGrant: data }, { status: 201 });
+  return jsonNoStore({ roleGrant: data }, { status: 201 });
 }
 
 export async function DELETE(request: Request) {
   const access = await getAdminAccessContext();
 
   if (!access) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
   }
 
   if (!hasPortalPermission(access.roles, "roles.manage")) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return jsonNoStore({ message: "Forbidden" }, { status: 403 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
 
   if (!supabase) {
-    return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+    return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
   }
 
   const body = (await request.json()) as RoleMutationBody;
@@ -148,7 +150,7 @@ export async function DELETE(request: Request) {
   const role = body.role;
 
   if (!familyId || !role || !ALLOWED_ROLES.includes(role)) {
-    return NextResponse.json({ message: "familyId and valid role are required." }, { status: 400 });
+    return jsonNoStore({ message: "familyId and valid role are required." }, { status: 400 });
   }
 
   const { error } = await supabase
@@ -158,38 +160,39 @@ export async function DELETE(request: Request) {
     .eq("role", role);
 
   if (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return jsonNoStore({ message: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true }, { status: 200 });
+  return jsonNoStore({ success: true }, { status: 200 });
 }
 
 export async function PATCH(request: Request) {
   const access = await getAdminAccessContext();
 
   if (!access) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
   }
 
   if (!hasPortalPermission(access.roles, "families.manage")) {
-    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    return jsonNoStore({ message: "Forbidden" }, { status: 403 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
 
   if (!supabase) {
-    return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+    return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
   }
 
   const body = (await request.json()) as FamilyProfileUpdateBody;
   const familyId = (body.familyId ?? "").trim();
 
   if (!familyId) {
-    return NextResponse.json({ message: "familyId is required." }, { status: 400 });
+    return jsonNoStore({ message: "familyId is required." }, { status: 400 });
   }
 
   const familyDisplayName = (body.familyDisplayName ?? "").trim();
   const primaryEmail = (body.primaryEmail ?? "").trim().toLowerCase();
+  const portalAccessState = body.portalAccessState;
   const phoneNumberInput = body.phoneNumber?.trim() || null;
   const adultsCount = Math.floor(Number(body.adultsCount ?? 0));
   const childrenCount = Math.floor(Number(body.childrenCount ?? 0));
@@ -203,44 +206,48 @@ export async function PATCH(request: Request) {
   const activeDonorStatus = body.activeDonorStatus;
 
   if (!familyDisplayName || !primaryEmail) {
-    return NextResponse.json({ message: "familyDisplayName and primaryEmail are required." }, { status: 400 });
+    return jsonNoStore({ message: "familyDisplayName and primaryEmail are required." }, { status: 400 });
   }
 
   if (!primaryEmail.includes("@")) {
-    return NextResponse.json({ message: "primaryEmail must be a valid email address." }, { status: 400 });
+    return jsonNoStore({ message: "primaryEmail must be a valid email address." }, { status: 400 });
+  }
+
+  if (portalAccessState && !ALLOWED_PORTAL_ACCESS_STATES.includes(portalAccessState)) {
+    return jsonNoStore({ message: "portalAccessState must be pending, approved, or suspended." }, { status: 400 });
   }
 
   if (!Number.isFinite(adultsCount) || adultsCount < 0 || !Number.isFinite(childrenCount) || childrenCount < 0) {
-    return NextResponse.json({ message: "adultsCount and childrenCount must be non-negative numbers." }, { status: 400 });
+    return jsonNoStore({ message: "adultsCount and childrenCount must be non-negative numbers." }, { status: 400 });
   }
 
   if (includeActiveDonorStatus && !["none", "bronze", "silver", "gold"].includes(activeDonorStatus as string)) {
-    return NextResponse.json({ message: "activeDonorStatus must be none, bronze, silver, or gold." }, { status: 400 });
+    return jsonNoStore({ message: "activeDonorStatus must be none, bronze, silver, or gold." }, { status: 400 });
   }
 
   let phoneNumber: string | null = null;
   if (phoneNumberInput) {
     const normalizedPhone = normalizeUsPhoneNumber(phoneNumberInput);
     if (!normalizedPhone) {
-      return NextResponse.json({ message: "phoneNumber must be a valid US number." }, { status: 400 });
+      return jsonNoStore({ message: "phoneNumber must be a valid US number." }, { status: 400 });
     }
     phoneNumber = normalizedPhone;
   }
 
   if (adultNames.length !== adultsCount) {
-    return NextResponse.json({ message: "Provide one adult name per adult count." }, { status: 400 });
+    return jsonNoStore({ message: "Provide one adult name per adult count." }, { status: 400 });
   }
 
   if (childNames.length !== childrenCount) {
-    return NextResponse.json({ message: "Provide one child name per child count." }, { status: 400 });
+    return jsonNoStore({ message: "Provide one child name per child count." }, { status: 400 });
   }
 
   if (includeRoles && !hasPortalPermission(access.roles, "roles.manage")) {
-    return NextResponse.json({ message: "Only super_admin can modify roles." }, { status: 403 });
+    return jsonNoStore({ message: "Only super_admin can modify roles." }, { status: 403 });
   }
 
   if (includeRoles && roles.length === 0) {
-    return NextResponse.json({ message: "At least one role is required." }, { status: 400 });
+    return jsonNoStore({ message: "At least one role is required." }, { status: 400 });
   }
 
   const { error: familyUpdateError } = await supabase
@@ -248,6 +255,7 @@ export async function PATCH(request: Request) {
     .update({
       family_display_name: familyDisplayName,
       primary_email: primaryEmail,
+      ...(portalAccessState ? { portal_access_state: portalAccessState } : {}),
       phone_number: phoneNumber,
       adults_count: adultsCount,
       adult_names: adultNames,
@@ -267,7 +275,7 @@ export async function PATCH(request: Request) {
     .eq("id", familyId);
 
   if (familyUpdateError) {
-    return NextResponse.json({ message: familyUpdateError.message }, { status: 500 });
+    return jsonNoStore({ message: familyUpdateError.message }, { status: 500 });
   }
 
   if (includeRoles) {
@@ -277,7 +285,7 @@ export async function PATCH(request: Request) {
       .eq("family_id", familyId);
 
     if (grantsError) {
-      return NextResponse.json({ message: grantsError.message }, { status: 500 });
+      return jsonNoStore({ message: grantsError.message }, { status: 500 });
     }
 
     const currentRoles = new Set((currentGrants ?? []).map((grant) => grant.role as FamilyRole));
@@ -293,7 +301,7 @@ export async function PATCH(request: Request) {
         .in("role", rolesToRemove);
 
       if (removeError) {
-        return NextResponse.json({ message: removeError.message }, { status: 500 });
+        return jsonNoStore({ message: removeError.message }, { status: 500 });
       }
     }
 
@@ -309,10 +317,10 @@ export async function PATCH(request: Request) {
         );
 
       if (addError) {
-        return NextResponse.json({ message: addError.message }, { status: 500 });
+        return jsonNoStore({ message: addError.message }, { status: 500 });
       }
     }
   }
 
-  return NextResponse.json({ success: true }, { status: 200 });
+  return jsonNoStore({ success: true }, { status: 200 });
 }

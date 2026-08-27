@@ -7,6 +7,7 @@ import type {
   FamilyDashboardSummary,
   FamilyRole,
   FoundingPledgeProgress,
+  PortalAccessState,
   FundingProject,
   ProjectFundingSnapshot,
   ProjectUpdate,
@@ -17,6 +18,7 @@ interface FamilyRow {
   auth_user_id: string;
   family_display_name: string;
   primary_email: string;
+  portal_access_state: PortalAccessState;
   profile_completed: boolean;
   phone_number: string | null;
   adults_count: number;
@@ -147,11 +149,18 @@ export interface FamilyPortalContext {
   roles: FamilyRole[];
 }
 
+export const hasElevatedPortalAccess = (roles: FamilyRole[]): boolean =>
+  roles.some((role) => role !== "member");
+
+export const canAccessMemberContent = (context: FamilyPortalContext): boolean =>
+  context.family.portalAccessState === "approved" || hasElevatedPortalAccess(context.roles);
+
 const toFamilyAccount = (row: FamilyRow): FamilyAccount => ({
   id: row.id,
   authUserId: row.auth_user_id,
   familyDisplayName: row.family_display_name,
   primaryEmail: row.primary_email,
+  portalAccessState: row.portal_access_state ?? "approved",
   profileCompleted: row.profile_completed,
   phoneNumber: row.phone_number,
   adultsCount: row.adults_count,
@@ -243,7 +252,7 @@ export const getCurrentFamilyPortalContext = async (
   const { data: family, error: familyError } = await supabase
     .from("families")
     .select(
-      "id, auth_user_id, family_display_name, primary_email, profile_completed, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, active_donor_status, requested_active_donor_status, requested_active_donor_at, created_at, updated_at",
+      "id, auth_user_id, family_display_name, primary_email, portal_access_state, profile_completed, phone_number, adults_count, adult_names, children_count, child_names, founding_family_status, pledge_status, active_donor_status, requested_active_donor_status, requested_active_donor_at, created_at, updated_at",
     )
     .eq("auth_user_id", user.id)
     .maybeSingle();

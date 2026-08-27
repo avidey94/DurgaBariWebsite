@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { resolveLanguage, withLang } from "@/lib/i18n";
@@ -11,8 +12,10 @@ interface SiteHeaderProps {
   user: PortalUser | null;
   preview: PreviewState | null;
   showAdminLink: boolean;
-  initialTheme: "classic-green" | "revamp";
+  initialTheme: "classic-green" | "revamp" | "durgacenter";
 }
+
+type SiteTheme = SiteHeaderProps["initialTheme"];
 
 const copy = {
   en: {
@@ -21,7 +24,7 @@ const copy = {
       { label: "Our Journey", href: "/our-sacred-journey-from-vision-to-temple/" },
       { label: "About", href: "/about" },
       { label: "Events & Festivals", href: "/events-festivals" },
-      { label: "Donate", href: "/donate" },
+      { label: "Donate", href: "/join-hands-to-build-durga-bari/" },
       { label: "Projects", href: "/projects" },
       { label: "Sponsors", href: "/sponsors" },
       { label: "Contact", href: "/contact" },
@@ -37,6 +40,7 @@ const copy = {
     languageLabel: "বাংলা",
     themeClassic: "Classic",
     themeRevamp: "Modern",
+    themeDurgacenter: "Current site",
     account: "Account",
     guest: "Guest",
     signedInAs: "Signed in as",
@@ -49,7 +53,7 @@ const copy = {
       { label: "আমাদের যাত্রা", href: "/our-sacred-journey-from-vision-to-temple/" },
       { label: "পরিচিতি", href: "/about" },
       { label: "ইভেন্ট ও উৎসব", href: "/events-festivals" },
-      { label: "দান", href: "/donate" },
+      { label: "দান", href: "/join-hands-to-build-durga-bari/" },
       { label: "প্রজেক্টস", href: "/projects" },
       { label: "স্পন্সর", href: "/sponsors" },
       { label: "যোগাযোগ", href: "/contact" },
@@ -65,6 +69,7 @@ const copy = {
     languageLabel: "English",
     themeClassic: "ক্লাসিক",
     themeRevamp: "মডার্ন",
+    themeDurgacenter: "বর্তমান সাইট",
     account: "অ্যাকাউন্ট",
     guest: "অতিথি",
     signedInAs: "লগইন করা আছে",
@@ -73,13 +78,15 @@ const copy = {
   },
 } as const;
 
+type SiteCopy = (typeof copy)[keyof typeof copy];
+
 export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteHeaderProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
-  const [theme, setTheme] = useState<"classic-green" | "revamp">(initialTheme);
+  const [theme, setTheme] = useState<SiteTheme>(initialTheme);
   const durgaCenterMenuRef = useRef<HTMLDetailsElement | null>(null);
   const queryString = searchParams.toString();
   const language = useMemo(() => {
@@ -134,11 +141,40 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
     return `${pathname}${query ? `?${query}` : ""}`;
   }, [language, pathname, queryString]);
 
-  const isRevampTheme = theme === "revamp";
+  const isDurgacenterTheme = theme === "durgacenter";
+  const navItems = isDurgacenterTheme ? text.navItems.filter((item) => !["Projects", "Sponsors", "প্রজেক্টস", "স্পন্সর"].includes(item.label)) : text.navItems;
+
+  if (isDurgacenterTheme) {
+    return (
+      <ModernHeader
+        user={user}
+        text={text}
+        language={language}
+        pathname={pathname}
+        queryString={queryString}
+        toggleLanguageHref={toggleLanguageHref}
+        activeTheme={theme}
+      />
+    );
+  }
+
+  if (theme === "revamp") {
+    return (
+      <ModernHeader
+        user={user}
+        text={text}
+        language={language}
+        pathname={pathname}
+        queryString={queryString}
+        toggleLanguageHref={toggleLanguageHref}
+        activeTheme={theme}
+      />
+    );
+  }
 
   const toggleTheme = () => {
-    const nextTheme = isRevampTheme ? "classic-green" : "revamp";
-    document.cookie = `db_theme=${nextTheme === "revamp" ? "revamp" : "classic-green"}; path=/; max-age=31536000; samesite=lax`;
+    const nextTheme: SiteTheme = "revamp";
+    document.cookie = `db_theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
     setTheme(nextTheme);
     setMenuOpen(false);
     setAccountOpen(false);
@@ -205,7 +241,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
                 onClick={toggleTheme}
                 className="inline-flex h-[38px] min-w-[96px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[#111] hover:bg-[#f2f2f2]"
               >
-                {isRevampTheme ? text.themeClassic : text.themeRevamp}
+                {text.themeRevamp}
               </button>
 
               {user ? (
@@ -330,7 +366,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
               onClick={toggleTheme}
               className="inline-flex h-[42px] min-w-[98px] items-center justify-center border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#111] hover:bg-[#f2f2f2]"
             >
-              {isRevampTheme ? text.themeClassic : text.themeRevamp}
+                {text.themeRevamp}
             </button>
 
             {user ? (
@@ -444,7 +480,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
             </summary>
             <div className="left-0 top-full z-20 w-full border-t-[2px] border-[var(--db-border)] bg-white lg:absolute lg:min-w-[230px]">
               <ul className="p-2">
-                {text.navItems.map((item) => (
+                {navItems.map((item) => (
                   <li key={item.label}>
                     <Link
                       href={withLang(item.href, language)}
@@ -463,7 +499,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
               </ul>
             </div>
           </details>
-          {text.navItems.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.label}
               href={withLang(item.href, language)}
@@ -513,7 +549,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
         </div>
 
         <ul className="space-y-2">
-          {text.navItems.map((item) => (
+          {navItems.map((item) => (
             <li key={`sheet-${item.label}`}>
               <Link
                 href={withLang(item.href, language)}
@@ -539,6 +575,92 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
       </aside>
       </>
       ) : null}
+    </header>
+  );
+}
+
+function ModernHeader({
+  user,
+  text,
+  language,
+  pathname,
+  queryString,
+  toggleLanguageHref,
+  activeTheme,
+}: {
+  user: PortalUser | null;
+  text: SiteCopy;
+  language: "en" | "bn";
+  pathname: string;
+  queryString: string;
+  toggleLanguageHref: string;
+  activeTheme: SiteTheme;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navItems = text.navItems.filter((item) => !["Projects", "Sponsors", "প্রজেক্টস", "স্পন্সর"].includes(item.label));
+  const switchTheme = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextTheme = event.target.value as SiteTheme;
+    document.cookie = `db_theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
+    window.location.href = `${pathname}${queryString ? `?${queryString}` : ""}`;
+  };
+
+  return (
+    <header className="durgacenter-header modern-site-header">
+      <div className="durgacenter-header-inner">
+        <Link href={withLang("/", language)} className="durgacenter-logo" onClick={() => setMenuOpen(false)}>
+          <img src="https://thedurgacenter.org/wp-content/uploads/2025/09/cropped-ChatGPT-Image-Sep-16-2025-05_14_45-PM-154x145.png" alt="Durga Bari - Center for Spiritual and Cultural Excellence" />
+        </Link>
+        <button type="button" className="durgacenter-menu-button" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={text.menu}>☰</button>
+        <nav className={`durgacenter-nav ${menuOpen ? "is-open" : ""}`} aria-label="Primary site navigation">
+          {navItems.map((item) => (
+            <Link
+              key={item.label}
+              href={withLang(item.href, language)}
+              onClick={() => setMenuOpen(false)}
+              className={pathname.replace(/\/$/, "") === item.href.replace(/\/$/, "") ? "is-current" : undefined}
+              aria-current={pathname.replace(/\/$/, "") === item.href.replace(/\/$/, "") ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="durgacenter-tools modern-site-tools">
+          <Link href={toggleLanguageHref} onClick={() => setMenuOpen(false)} className="modern-language-link">
+            {text.languageLabel}
+          </Link>
+          <label className="modern-theme-select-label">
+            <span className="sr-only">Choose site theme</span>
+            <select value={activeTheme} onChange={switchTheme} aria-label="Choose site theme">
+              <option value="durgacenter">{language === "en" ? "Current" : "বর্তমান"}</option>
+              <option value="revamp">{text.themeRevamp}</option>
+              <option value="classic-green">{text.themeClassic}</option>
+            </select>
+          </label>
+          {user ? (
+            <details className="modern-profile-menu">
+              <summary aria-label={text.profileLabel}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21a8 8 0 1 0-16 0" />
+                  <circle cx="12" cy="8" r="4" />
+                </svg>
+              </summary>
+              <div className="modern-profile-popover" role="menu">
+                <strong>{text.account}</strong>
+                <span>{user.email}</span>
+                <Link href={withLang("/portal", language)}>{text.memberPortal}</Link>
+                <form action="/api/auth/logout" method="post"><button type="submit">{text.signOut}</button></form>
+              </div>
+            </details>
+          ) : (
+            <Link href={withLang("/login", language)} className="modern-profile-button" aria-label={text.login}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21a8 8 0 1 0-16 0" />
+                <circle cx="12" cy="8" r="4" />
+              </svg>
+            </Link>
+          )}
+        </div>
+      </div>
     </header>
   );
 }

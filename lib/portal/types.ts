@@ -8,6 +8,7 @@ export type FamilyRole =
 
 export type ActiveDonorStatus = "none" | "bronze" | "silver" | "gold";
 export type RequestedActiveDonorStatus = Exclude<ActiveDonorStatus, "none">;
+export type PortalAccessState = "pending" | "approved" | "suspended";
 
 export type FoundingFamilyStatus =
   | "not_founding"
@@ -44,6 +45,7 @@ export interface FamilyAccount {
   authUserId: string;
   familyDisplayName: string;
   primaryEmail: string;
+  portalAccessState: PortalAccessState;
   profileCompleted: boolean;
   phoneNumber: string | null;
   adultsCount: number;

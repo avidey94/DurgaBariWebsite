@@ -18,7 +18,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const siteTheme = cookieStore.get("db_theme")?.value === "classic-green" ? "classic-green" : "revamp";
+  const themeCookie = cookieStore.get("db_theme")?.value;
+  const siteTheme = themeCookie === "classic-green" || themeCookie === "durgacenter" ? themeCookie : "revamp";
   const [user, preview, adminAccess] = await Promise.all([
     getCurrentUser(),
     getActivePreviewState(),

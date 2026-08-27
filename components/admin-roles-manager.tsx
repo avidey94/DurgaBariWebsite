@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { formatUsPhoneNumber } from "@/lib/phone";
-import type { ActiveDonorStatus, FamilyRole, RequestedActiveDonorStatus } from "@/lib/portal/types";
+import type { ActiveDonorStatus, FamilyRole, PortalAccessState, RequestedActiveDonorStatus } from "@/lib/portal/types";
 
 interface FamilyRow {
   id: string;
   family_display_name: string;
   primary_email: string;
+  portal_access_state: PortalAccessState;
   phone_number: string | null;
   adults_count: number;
   adult_names: string[];
@@ -53,6 +54,7 @@ interface BootstrapPayload {
 interface FamilyDraft {
   family_display_name: string;
   primary_email: string;
+  portal_access_state: PortalAccessState;
   phone_number: string;
   adults_count: number;
   adult_names: string[];
@@ -77,6 +79,7 @@ const allRoles: FamilyRole[] = [
   "member",
 ];
 const activeDonorStatuses: ActiveDonorStatus[] = ["none", "bronze", "silver", "gold"];
+const portalAccessStates: PortalAccessState[] = ["pending", "approved", "suspended"];
 
 const resizeNames = (names: string[], targetCount: number, placeholderPrefix: string) => {
   const safeTarget = Number.isFinite(targetCount) ? Math.max(0, Math.floor(targetCount)) : 0;
@@ -122,6 +125,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
     (family: FamilyRow): FamilyDraft => ({
       family_display_name: family.family_display_name,
       primary_email: family.primary_email,
+      portal_access_state: family.portal_access_state ?? "approved",
       phone_number: family.phone_number ?? "",
       adults_count: family.adults_count,
       adult_names: resizeNames(family.adult_names ?? [], family.adults_count, "Adult"),
@@ -395,6 +399,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
           familyId,
           familyDisplayName: draft.family_display_name,
           primaryEmail: draft.primary_email,
+          portalAccessState: draft.portal_access_state,
           phoneNumber: draft.phone_number || null,
           adultsCount: draft.adults_count,
           adultNames: draft.adult_names.map((value) => value.trim()).filter(Boolean),
@@ -558,6 +563,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
                 <th className="px-3 py-2 font-semibold">Family Name</th>
                 <th className="px-3 py-2 font-semibold">Email</th>
                 <th className="px-3 py-2 font-semibold">Phone Number</th>
+                <th className="px-3 py-2 font-semibold">Portal Access</th>
                 <th className="px-3 py-2 font-semibold"># Adults</th>
                 <th className="px-3 py-2 font-semibold">Adult Names</th>
                 <th className="px-3 py-2 font-semibold"># Children</th>
@@ -595,6 +601,21 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
                         className="w-44 rounded-md border border-slate-300 px-2 py-1"
                         placeholder="925-555-1234"
                       />
+                    </td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={draft.portal_access_state}
+                        onChange={(event) =>
+                          updateDraft(family.id, "portal_access_state", event.target.value as PortalAccessState)
+                        }
+                        className="w-36 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      >
+                        {portalAccessStates.map((state) => (
+                          <option key={`${family.id}-access-${state}`} value={state}>
+                            {state}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-3 py-2">
                       <input

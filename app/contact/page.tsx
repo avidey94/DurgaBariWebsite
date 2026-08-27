@@ -1,14 +1,21 @@
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
+import { DurgacenterContactPage } from "@/components/DurgacenterContactPage";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
+import { cookies } from "next/headers";
 
 interface ContactPageProps {
   searchParams: Promise<{ lang?: string }>;
 }
 
 export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const theme = (await cookies()).get("db_theme")?.value;
+  if (theme === "durgacenter") {
+    return <DurgacenterContactPage />;
+  }
+
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";

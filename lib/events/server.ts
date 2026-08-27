@@ -2,6 +2,7 @@ import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 import {
   expandOccurrences,
   toSlug,
@@ -149,8 +150,8 @@ export const canManageEvents = async (): Promise<boolean> => {
 };
 
 export const canViewMemberEvents = async (): Promise<boolean> => {
-  const user = await getCurrentUser();
-  return Boolean(user);
+  const context = await getCurrentFamilyPortalContext();
+  return Boolean(context && canAccessMemberContent(context));
 };
 
 export const listVolunteerSlotsForEvents = async (eventIds: string[]): Promise<VolunteerSlot[]> => {
@@ -192,9 +193,14 @@ export const computeVisibilityForUser = async (): Promise<{
     return { includePrivate: true, includeMembers: true };
   }
 
+  const familyContext = await getCurrentFamilyPortalContext();
+  if (familyContext && canAccessMemberContent(familyContext)) {
+    return { includePrivate: false, includeMembers: true };
+  }
+
   const user = await getCurrentUser();
   if (user) {
-    return { includePrivate: false, includeMembers: true };
+    return { includePrivate: false, includeMembers: false };
   }
 
   return { includePrivate: false, includeMembers: false };

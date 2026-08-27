@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser } from "@/lib/auth/session";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 type RsvpStatus = "going" | "not_going" | "maybe";
 
@@ -18,6 +19,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> },
 ) {
   const user = await getCurrentUser();
+  const familyContext = user ? await getCurrentFamilyPortalContext() : null;
 
   if (!user || !user.id) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -45,7 +47,7 @@ export async function POST(
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, is_public, is_rsvp_enabled, capacity")
+    .select("id, is_public, is_rsvp_enabled, capacity, publish_status, visibility")
     .eq("id", eventId)
     .maybeSingle();
 
@@ -53,8 +55,16 @@ export async function POST(
     return NextResponse.json({ message: eventError.message }, { status: 500 });
   }
 
-  if (!event || !event.is_public) {
+  if (!event || event.publish_status !== "published") {
     return NextResponse.json({ message: "Event not found." }, { status: 404 });
+  }
+
+  if (event.visibility === "private") {
+    return NextResponse.json({ message: "Event not found." }, { status: 404 });
+  }
+
+  if (event.visibility === "members" && !(familyContext && canAccessMemberContent(familyContext))) {
+    return NextResponse.json({ message: "Members-only event." }, { status: 403 });
   }
 
   if (!event.is_rsvp_enabled) {

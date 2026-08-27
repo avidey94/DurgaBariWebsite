@@ -1,12 +1,11 @@
-import { NextResponse } from "next/server";
-
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { jsonNoStore } from "@/lib/http";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
   buildCreateExpenseAuditChanges,
   insertExpenseAuditEvent,
 } from "@/lib/portal/expense-audit";
-import { getCurrentFamilyPortalContext } from "@/lib/portal/server";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 type ExpenseType =
   | "operations"
@@ -78,19 +77,23 @@ export async function GET() {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
   }
 
   const context = await getCurrentFamilyPortalContext();
 
   if (!context) {
-    return NextResponse.json({ message: "Family profile not found." }, { status: 404 });
+    return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
+  }
+
+  if (!canAccessMemberContent(context)) {
+    return jsonNoStore({ message: "Portal access is pending approval.", code: "portal_access_pending" }, { status: 403 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
 
   if (!supabase) {
-    return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+    return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
   }
 
   const [projectsResult, expensesResult] = await Promise.all([
@@ -109,14 +112,14 @@ export async function GET() {
   ]);
 
   if (projectsResult.error) {
-    return NextResponse.json({ message: projectsResult.error.message }, { status: 500 });
+    return jsonNoStore({ message: projectsResult.error.message }, { status: 500 });
   }
 
   if (expensesResult.error) {
-    return NextResponse.json({ message: expensesResult.error.message }, { status: 500 });
+    return jsonNoStore({ message: expensesResult.error.message }, { status: 500 });
   }
 
-  return NextResponse.json(
+  return jsonNoStore(
     {
       projects: projectsResult.data ?? [],
       submissions: expensesResult.data ?? [],
@@ -129,19 +132,23 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
 
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
   }
 
   const context = await getCurrentFamilyPortalContext();
 
   if (!context) {
-    return NextResponse.json({ message: "Family profile not found." }, { status: 404 });
+    return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
+  }
+
+  if (!canAccessMemberContent(context)) {
+    return jsonNoStore({ message: "Portal access is pending approval.", code: "portal_access_pending" }, { status: 403 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
 
   if (!supabase) {
-    return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+    return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
   }
 
   const body = (await request.json()) as CreatePortalExpenseBody;
@@ -155,23 +162,23 @@ export async function POST(request: Request) {
   const incurredAt = parseDateInput(body.incurredAt) ?? new Date().toISOString();
 
   if (!ALLOWED_EXPENSE_TYPES.includes(expenseType)) {
-    return NextResponse.json({ message: "expenseType is invalid." }, { status: 400 });
+    return jsonNoStore({ message: "expenseType is invalid." }, { status: 400 });
   }
 
   if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
-    return NextResponse.json({ message: "paymentMethod is invalid." }, { status: 400 });
+    return jsonNoStore({ message: "paymentMethod is invalid." }, { status: 400 });
   }
 
   if (!projectId) {
-    return NextResponse.json({ message: "projectId is required." }, { status: 400 });
+    return jsonNoStore({ message: "projectId is required." }, { status: 400 });
   }
 
   if (!vendorName || !description) {
-    return NextResponse.json({ message: "vendorName and description are required." }, { status: 400 });
+    return jsonNoStore({ message: "vendorName and description are required." }, { status: 400 });
   }
 
   if (!Number.isFinite(amountCents) || amountCents < 0) {
-    return NextResponse.json({ message: "amountCents must be greater than or equal to 0." }, { status: 400 });
+    return jsonNoStore({ message: "amountCents must be greater than or equal to 0." }, { status: 400 });
   }
 
   const projectCheck = await supabase
@@ -182,11 +189,11 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (projectCheck.error) {
-    return NextResponse.json({ message: projectCheck.error.message }, { status: 500 });
+    return jsonNoStore({ message: projectCheck.error.message }, { status: 500 });
   }
 
   if (!projectCheck.data) {
-    return NextResponse.json({ message: "Selected project is unavailable for submissions." }, { status: 400 });
+    return jsonNoStore({ message: "Selected project is unavailable for submissions." }, { status: 400 });
   }
 
   const { data, error } = await supabase
@@ -214,7 +221,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    return jsonNoStore({ message: error.message }, { status: 500 });
   }
 
   const auditInsert = await insertExpenseAuditEvent(supabase, {
@@ -231,7 +238,7 @@ export async function POST(request: Request) {
     const rollback = await supabase.from("expenses").delete().eq("id", data.id);
 
     if (rollback.error) {
-      return NextResponse.json(
+      return jsonNoStore(
         {
           message: `Expense submission audit logging failed and rollback also failed. Manual cleanup needed for expense ${data.id}.`,
         },
@@ -239,11 +246,11 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(
+    return jsonNoStore(
       { message: `Unable to submit expense because audit logging failed: ${auditInsert.error.message}` },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ submission: data }, { status: 201 });
+  return jsonNoStore({ submission: data }, { status: 201 });
 }

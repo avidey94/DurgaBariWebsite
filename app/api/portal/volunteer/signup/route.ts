@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
-
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { jsonNoStore } from "@/lib/http";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCurrentFamilyPortalContext } from "@/lib/portal/server";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 interface SignupBody {
   slotId?: string;
@@ -31,24 +30,27 @@ const buildFamilyMemberSet = (family: {
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user?.id || !user.email) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user?.id || !user.email) return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
 
   const familyContext = await getCurrentFamilyPortalContext();
-  if (!familyContext) return NextResponse.json({ message: "Family profile not found." }, { status: 404 });
+  if (!familyContext) return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
+  if (!canAccessMemberContent(familyContext)) {
+    return jsonNoStore({ message: "Portal access is pending approval.", code: "portal_access_pending" }, { status: 403 });
+  }
 
   const body = (await request.json()) as SignupBody;
   const slotId = (body.slotId ?? "").trim();
-  if (!slotId) return NextResponse.json({ message: "slotId is required." }, { status: 400 });
+  if (!slotId) return jsonNoStore({ message: "slotId is required." }, { status: 400 });
 
   const participantNames = normalizeParticipantNames(body.participantNames, body.participantName);
   if (participantNames.length === 0) {
-    return NextResponse.json({ message: "Select at least one family member." }, { status: 400 });
+    return jsonNoStore({ message: "Select at least one family member." }, { status: 400 });
   }
 
   const familyMemberSet = buildFamilyMemberSet(familyContext.family);
   const invalidMembers = participantNames.filter((name) => !familyMemberSet.has(name));
   if (invalidMembers.length > 0) {
-    return NextResponse.json({ message: "One or more selected family members are invalid." }, { status: 400 });
+    return jsonNoStore({ message: "One or more selected family members are invalid." }, { status: 400 });
   }
 
   const participantTypeByName = new Map<string, "adult" | "child">();
@@ -62,7 +64,7 @@ export async function POST(request: Request) {
   });
 
   const supabase = createServiceRoleSupabaseClient();
-  if (!supabase) return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+  if (!supabase) return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
 
   const { data: slot, error: slotError } = await supabase
     .from("event_volunteer_slots")
@@ -70,22 +72,22 @@ export async function POST(request: Request) {
     .eq("id", slotId)
     .maybeSingle();
 
-  if (slotError) return NextResponse.json({ message: slotError.message }, { status: 500 });
-  if (!slot) return NextResponse.json({ message: "Slot not found." }, { status: 404 });
-  if (slot.slot_state !== "open") return NextResponse.json({ message: "Slot is closed." }, { status: 409 });
+  if (slotError) return jsonNoStore({ message: slotError.message }, { status: 500 });
+  if (!slot) return jsonNoStore({ message: "Slot not found." }, { status: 404 });
+  if (slot.slot_state !== "open") return jsonNoStore({ message: "Slot is closed." }, { status: 409 });
 
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select("id, publish_status, visibility")
     .eq("id", slot.event_id)
     .maybeSingle();
-  if (eventError) return NextResponse.json({ message: eventError.message }, { status: 500 });
-  if (!event || event.publish_status !== "published") return NextResponse.json({ message: "Event unavailable." }, { status: 404 });
-  if (event.visibility === "private") return NextResponse.json({ message: "Event unavailable." }, { status: 403 });
+  if (eventError) return jsonNoStore({ message: eventError.message }, { status: 500 });
+  if (!event || event.publish_status !== "published") return jsonNoStore({ message: "Event unavailable." }, { status: 404 });
+  if (event.visibility === "private") return jsonNoStore({ message: "Event unavailable." }, { status: 403 });
 
   const now = new Date();
   if (new Date(slot.start_time) < now) {
-    return NextResponse.json({ message: "This slot has already started." }, { status: 409 });
+    return jsonNoStore({ message: "This slot has already started." }, { status: 409 });
   }
 
   const { data: existingSignups, error: existingError } = await supabase
@@ -95,7 +97,7 @@ export async function POST(request: Request) {
     .eq("family_id", familyContext.family.id)
     .in("participant_name", participantNames);
 
-  if (existingError) return NextResponse.json({ message: existingError.message }, { status: 500 });
+  if (existingError) return jsonNoStore({ message: existingError.message }, { status: 500 });
 
   const existingByName = new Map<string, (typeof existingSignups)[number]>();
   (existingSignups ?? []).forEach((signup) => {
@@ -104,7 +106,7 @@ export async function POST(request: Request) {
 
   const alreadyConfirmed = participantNames.filter((name) => existingByName.get(name)?.signup_status === "confirmed");
   if (alreadyConfirmed.length > 0) {
-    return NextResponse.json(
+    return jsonNoStore(
       { message: `${alreadyConfirmed.join(", ")} already signed up for this slot.` },
       { status: 409 },
     );
@@ -118,7 +120,7 @@ export async function POST(request: Request) {
 
   const availableSeats = slot.capacity - (count ?? 0);
   if (participantNames.length > availableSeats) {
-    return NextResponse.json(
+    return jsonNoStore(
       { message: `Only ${Math.max(0, availableSeats)} spots left for this slot.` },
       { status: 409 },
     );
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
         toReactivate.map((entry) => entry.id),
       );
 
-    if (reactivateError) return NextResponse.json({ message: reactivateError.message }, { status: 500 });
+    if (reactivateError) return jsonNoStore({ message: reactivateError.message }, { status: 500 });
   }
 
   if (toInsert.length > 0) {
@@ -163,30 +165,33 @@ export async function POST(request: Request) {
     }));
 
     const { error: insertError } = await supabase.from("event_volunteer_signups").insert(insertRows);
-    if (insertError) return NextResponse.json({ message: insertError.message }, { status: 500 });
+    if (insertError) return jsonNoStore({ message: insertError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true }, { status: 201 });
+  return jsonNoStore({ success: true }, { status: 201 });
 }
 
 export async function DELETE(request: Request) {
   const user = await getCurrentUser();
-  if (!user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user?.id) return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
 
   const familyContext = await getCurrentFamilyPortalContext();
-  if (!familyContext) return NextResponse.json({ message: "Family profile not found." }, { status: 404 });
+  if (!familyContext) return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
+  if (!canAccessMemberContent(familyContext)) {
+    return jsonNoStore({ message: "Portal access is pending approval.", code: "portal_access_pending" }, { status: 403 });
+  }
 
   const body = (await request.json()) as SignupBody;
   const slotId = (body.slotId ?? "").trim();
-  if (!slotId) return NextResponse.json({ message: "slotId is required." }, { status: 400 });
+  if (!slotId) return jsonNoStore({ message: "slotId is required." }, { status: 400 });
 
   const participantNames = normalizeParticipantNames(body.participantNames, body.participantName);
   if (participantNames.length === 0) {
-    return NextResponse.json({ message: "participantName is required." }, { status: 400 });
+    return jsonNoStore({ message: "participantName is required." }, { status: 400 });
   }
 
   const supabase = createServiceRoleSupabaseClient();
-  if (!supabase) return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+  if (!supabase) return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
 
   const { data: slot } = await supabase
     .from("event_volunteer_slots")
@@ -194,9 +199,9 @@ export async function DELETE(request: Request) {
     .eq("id", slotId)
     .maybeSingle();
 
-  if (!slot) return NextResponse.json({ message: "Slot not found." }, { status: 404 });
+  if (!slot) return jsonNoStore({ message: "Slot not found." }, { status: 404 });
   if (new Date(slot.start_time) < new Date()) {
-    return NextResponse.json({ message: "Cannot cancel after slot start." }, { status: 409 });
+    return jsonNoStore({ message: "Cannot cancel after slot start." }, { status: 409 });
   }
 
   const { error } = await supabase
@@ -211,6 +216,6 @@ export async function DELETE(request: Request) {
     .in("participant_name", participantNames)
     .eq("signup_status", "confirmed");
 
-  if (error) return NextResponse.json({ message: error.message }, { status: 500 });
-  return NextResponse.json({ success: true }, { status: 200 });
+  if (error) return jsonNoStore({ message: error.message }, { status: 500 });
+  return jsonNoStore({ success: true }, { status: 200 });
 }

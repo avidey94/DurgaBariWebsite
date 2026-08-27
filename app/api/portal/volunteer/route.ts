@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
-
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { jsonNoStore } from "@/lib/http";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCurrentFamilyPortalContext } from "@/lib/portal/server";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 interface FamilyMemberOption {
   name: string;
@@ -29,13 +28,16 @@ const buildFamilyMembers = (family: {
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user?.id) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  if (!user?.id) return jsonNoStore({ message: "Unauthorized" }, { status: 401 });
 
   const familyContext = await getCurrentFamilyPortalContext();
-  if (!familyContext) return NextResponse.json({ message: "Family profile not found." }, { status: 404 });
+  if (!familyContext) return jsonNoStore({ message: "Family profile not found." }, { status: 404 });
+  if (!canAccessMemberContent(familyContext)) {
+    return jsonNoStore({ message: "Portal access is pending approval.", code: "portal_access_pending" }, { status: 403 });
+  }
 
   const supabase = createServiceRoleSupabaseClient();
-  if (!supabase) return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+  if (!supabase) return jsonNoStore({ message: "Supabase is not configured." }, { status: 500 });
 
   const now = new Date().toISOString();
   const [eventsResult, slotsResult, signupsResult] = await Promise.all([
@@ -58,9 +60,9 @@ export async function GET() {
       .in("signup_status", ["confirmed", "cancelled"]),
   ]);
 
-  if (eventsResult.error) return NextResponse.json({ message: eventsResult.error.message }, { status: 500 });
-  if (slotsResult.error) return NextResponse.json({ message: slotsResult.error.message }, { status: 500 });
-  if (signupsResult.error) return NextResponse.json({ message: signupsResult.error.message }, { status: 500 });
+  if (eventsResult.error) return jsonNoStore({ message: eventsResult.error.message }, { status: 500 });
+  if (slotsResult.error) return jsonNoStore({ message: slotsResult.error.message }, { status: 500 });
+  if (signupsResult.error) return jsonNoStore({ message: signupsResult.error.message }, { status: 500 });
 
   const signups = signupsResult.data ?? [];
   const confirmedCountBySlot = new Map<string, number>();
@@ -113,7 +115,7 @@ export async function GET() {
     )
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
-  return NextResponse.json(
+  return jsonNoStore(
     {
       events,
       myCommitments,

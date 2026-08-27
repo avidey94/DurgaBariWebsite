@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser, isAdmin } from "@/lib/auth/session";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 const DEFAULT_RANGE_DAYS = 365;
 
@@ -46,18 +47,21 @@ export async function GET(request: Request) {
   const includePrivate = url.searchParams.get("includePrivate") === "1";
   const user = includePrivate ? await getCurrentUser() : null;
   const canViewPrivate = Boolean(user && isAdmin(user));
+  const familyContext = canViewPrivate ? null : await getCurrentFamilyPortalContext();
+  const canViewMembers = Boolean(familyContext && canAccessMemberContent(familyContext));
 
   let query = supabase
     .from("events")
     .select(
-      "id, title, description, location, start_time, end_time, is_public, is_rsvp_enabled, capacity, form_schema, created_at, created_by, updated_at",
+      "id, title, description, location, start_time, end_time, is_public, is_rsvp_enabled, capacity, form_schema, publish_status, visibility, created_at, created_by, updated_at",
     )
+    .eq("publish_status", "published")
     .gte("start_time", from.toISOString())
     .lte("start_time", to.toISOString())
     .order("start_time", { ascending: true });
 
   if (!canViewPrivate) {
-    query = query.eq("is_public", true);
+    query = query.or(canViewMembers ? "visibility.eq.public,visibility.eq.members" : "visibility.eq.public");
   }
 
   const { data, error } = await query;

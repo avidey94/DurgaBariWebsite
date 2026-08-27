@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser } from "@/lib/auth/session";
+import { jsonNoStore } from "@/lib/http";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 const DEFAULT_RANGE_DAYS = 365;
 
@@ -42,23 +44,26 @@ export async function GET(request: Request) {
   }
 
   const user = await getCurrentUser();
+  const familyContext = user ? await getCurrentFamilyPortalContext() : null;
+  const canViewMembers = Boolean(familyContext && canAccessMemberContent(familyContext));
 
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, title, description, location, start_time, end_time, is_public, is_rsvp_enabled, capacity, form_schema",
+      "id, title, description, location, start_time, end_time, is_public, is_rsvp_enabled, capacity, form_schema, publish_status, visibility",
     )
-    .eq("is_public", true)
+    .eq("publish_status", "published")
+    .or(canViewMembers ? "visibility.eq.public,visibility.eq.members" : "visibility.eq.public")
     .gte("start_time", from.toISOString())
     .lte("start_time", to.toISOString())
     .order("start_time", { ascending: true });
 
   if (eventsError) {
-    return NextResponse.json({ message: eventsError.message }, { status: 500 });
+    return jsonNoStore({ message: eventsError.message }, { status: 500 });
   }
 
   if (!user?.id || (events ?? []).length === 0) {
-    return NextResponse.json({ events: events ?? [] }, { status: 200 });
+    return jsonNoStore({ events: events ?? [] }, { status: 200 });
   }
 
   const eventIds = (events ?? []).map((event) => event.id);
@@ -69,7 +74,7 @@ export async function GET(request: Request) {
     .eq("user_id", user.id);
 
   if (rsvpError) {
-    return NextResponse.json({ message: rsvpError.message }, { status: 500 });
+    return jsonNoStore({ message: rsvpError.message }, { status: 500 });
   }
 
   const byEventId = new Map((myRsvps ?? []).map((row) => [row.event_id, row]));
@@ -78,5 +83,5 @@ export async function GET(request: Request) {
     myRsvp: byEventId.get(event.id) ?? null,
   }));
 
-  return NextResponse.json({ events: eventsWithMyRsvp }, { status: 200 });
+  return jsonNoStore({ events: eventsWithMyRsvp }, { status: 200 });
 }

@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { getCurrentUser } from "@/lib/auth/session";
-import { getProjectDetailsBySlug } from "@/lib/portal/server";
+import { getProjectDetailsBySlug, canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await context.params;
-  const user = await getCurrentUser();
+  const familyContext = await getCurrentFamilyPortalContext();
 
-  const details = await getProjectDetailsBySlug(slug, Boolean(user));
+  const details = await getProjectDetailsBySlug(slug, Boolean(familyContext && canAccessMemberContent(familyContext)));
 
   if (!details) {
     return NextResponse.json({ message: "Project not found." }, { status: 404 });

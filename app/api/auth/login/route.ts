@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerSupabaseClient } from "@/lib/auth/supabase";
 import { buildAuthCallbackUrl } from "@/lib/auth/site-url";
 import { isDevLoginEnabled } from "@/lib/env";
+import { jsonNoStore } from "@/lib/http";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 
 interface LoginPayload {
   email?: string;
@@ -10,16 +12,36 @@ interface LoginPayload {
   mode?: "magic-link" | "password" | "signup";
 }
 
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_LIMIT = 8;
+
+const getClientIp = (request: NextRequest) =>
+  request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+  request.headers.get("x-real-ip")?.trim() ||
+  "unknown";
+
+const genericAuthError = (message = "Unable to process authentication request.") =>
+  jsonNoStore({ message }, { status: 400 });
+
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as LoginPayload;
   const email = body.email?.trim().toLowerCase();
 
   if (!email) {
-    return NextResponse.json({ message: "Email is required." }, { status: 400 });
+    return genericAuthError("Email is required.");
+  }
+
+  const ip = getClientIp(request);
+  const rateLimit = checkRateLimit(`${ip}:${email}:${body.mode ?? "unknown"}`, AUTH_LIMIT, AUTH_WINDOW_MS);
+  if (!rateLimit.allowed) {
+    console.warn(`[auth] rate limited login attempt for ${email} from ${ip}`);
+    const response = jsonNoStore({ message: "Too many authentication attempts. Please try again later." }, { status: 429 });
+    response.headers.set("Retry-After", String(rateLimit.retryAfterSeconds));
+    return response;
   }
 
   if (isDevLoginEnabled) {
-    return NextResponse.json(
+    return jsonNoStore(
       {
         message:
           "DEV_LOGIN_EMAIL is active. Auth is bypassed automatically, so you can go straight to /portal.",
@@ -31,7 +53,7 @@ export async function POST(request: NextRequest) {
   const authClient = createRouteHandlerSupabaseClient(request);
 
   if (!authClient) {
-    return NextResponse.json(
+    return jsonNoStore(
       {
         message:
           "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
@@ -51,10 +73,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      return NextResponse.json({ message: error.message }, { status: 400 });
+      console.warn(`[auth] magic-link failure for ${email} from ${ip}`);
+      return genericAuthError("If that email can receive sign-in links, a message will arrive shortly.");
     }
 
-    const response = NextResponse.json(
+    const response = jsonNoStore(
       { message: "Magic link sent. Check your inbox and click the link to continue." },
       { status: 200 },
     );
@@ -65,7 +88,7 @@ export async function POST(request: NextRequest) {
 
   if (body.mode === "signup") {
     if (!body.password || body.password.length < 8) {
-      return NextResponse.json(
+      return jsonNoStore(
         { message: "Password must be at least 8 characters." },
         { status: 400 },
       );
@@ -80,17 +103,18 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      return NextResponse.json({ message: error.message }, { status: 400 });
+      console.warn(`[auth] signup failure for ${email} from ${ip}`);
+      return genericAuthError("Unable to create account right now.");
     }
 
     if (data.session) {
-      const response = NextResponse.json({ message: "Account created. You are now logged in." }, { status: 200 });
+      const response = jsonNoStore({ message: "Account created. You are now logged in." }, { status: 200 });
       setResponse(response);
 
       return getResponse();
     }
 
-    const response = NextResponse.json(
+    const response = jsonNoStore(
       { message: "Account created. Check your email to confirm and finish sign in." },
       { status: 200 },
     );
@@ -110,14 +134,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      return NextResponse.json({ message: error.message }, { status: 401 });
+      console.warn(`[auth] password login failure for ${email} from ${ip}`);
+      return jsonNoStore({ message: "Invalid email or password." }, { status: 401 });
     }
 
-    const response = NextResponse.json({ message: "Login successful." }, { status: 200 });
+    const response = jsonNoStore({ message: "Login successful." }, { status: 200 });
     setResponse(response);
 
     return getResponse();
   }
 
-  return NextResponse.json({ message: "Unsupported login mode." }, { status: 400 });
+  return genericAuthError("Unsupported login mode.");
 }

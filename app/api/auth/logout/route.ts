@@ -8,11 +8,12 @@ export async function POST(request: NextRequest) {
   if (authClient) {
     const { getResponse, setResponse, supabase } = authClient;
     await supabase.auth.signOut();
-    const response = NextResponse.redirect(new URL("/", request.url));
+    const response = NextResponse.redirect(new URL("/login", request.url), { status: 303 });
+    response.headers.set("Cache-Control", "private, no-store");
     setResponse(response);
 
     return getResponse();
   }
 
-  return NextResponse.redirect(new URL("/", request.url));
+  return NextResponse.redirect(new URL("/login", request.url), { status: 303 });
 }

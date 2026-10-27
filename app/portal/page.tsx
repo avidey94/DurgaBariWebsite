@@ -90,6 +90,14 @@ export default async function PortalPage() {
             Signed in as <strong>{user.email}</strong>. You can contact the temple administrators if
             approval is urgent.
           </p>
+          <form action="/api/auth/logout" method="post" className="mt-6">
+            <button
+              type="submit"
+              className="rounded-md border border-[var(--db-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--db-text)] hover:bg-[var(--db-muted)]"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
       </section>
     );

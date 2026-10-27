@@ -376,6 +376,10 @@
   font-size: 1.7rem;
 }
 
+.modern-mobile-account {
+  display: none;
+}
+
 @media (max-width: 1100px) {
   .durgacenter-header-inner {
     width: min(1024px, calc(100% - 2rem));
@@ -415,6 +419,8 @@
     left: 0;
     z-index: 20;
     display: none;
+    max-height: calc(100dvh - 96px);
+    overflow-y: auto;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
@@ -429,6 +435,29 @@
   .durgacenter-nav a {
     border-top: 1px solid rgba(255, 209, 191, 0.2);
     padding: 0.7rem 0;
+  }
+
+  .modern-mobile-account {
+    display: grid;
+    gap: 0.7rem;
+    border-top: 1px solid rgba(255, 209, 191, 0.35);
+    margin-top: 0.5rem;
+    padding-top: 0.85rem;
+    color: #fff;
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+  }
+
+  .modern-mobile-account button {
+    width: 100%;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    background: #fff;
+    padding: 0.7rem 0.9rem;
+    color: #a90e2a;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
   }
 
   .durgacenter-tools a:nth-child(-n + 2) {

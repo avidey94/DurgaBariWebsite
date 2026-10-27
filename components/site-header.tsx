@@ -152,6 +152,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
     return (
       <ModernHeader
         user={user}
+        showAdminLink={showAdminLink}
         text={text}
         language={language}
         pathname={pathname}
@@ -166,6 +167,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
     return (
       <ModernHeader
         user={user}
+        showAdminLink={showAdminLink}
         text={text}
         language={language}
         pathname={pathname}
@@ -575,6 +577,18 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
               </Link>
             </li>
           ) : null}
+          {user ? (
+            <li>
+              <form action="/api/auth/logout" method="post">
+                <button
+                  type="submit"
+                  className="block w-full border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-left text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
+                >
+                  {text.signOut}
+                </button>
+              </form>
+            </li>
+          ) : null}
         </ul>
       </aside>
       </>
@@ -585,6 +599,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
 
 function ModernHeader({
   user,
+  showAdminLink,
   text,
   language,
   pathname,
@@ -593,6 +608,7 @@ function ModernHeader({
   activeTheme,
 }: {
   user: PortalUser | null;
+  showAdminLink: boolean;
   text: SiteCopy;
   language: "en" | "bn";
   pathname: string;
@@ -627,6 +643,19 @@ function ModernHeader({
               {item.label}
             </Link>
           ))}
+          {showAdminLink ? (
+            <Link href={withLang("/admin", language)} onClick={() => setMenuOpen(false)}>
+              {text.admin}
+            </Link>
+          ) : null}
+          {user ? (
+            <div className="modern-mobile-account">
+              <span>{text.signedInAs} {user.email}</span>
+              <form action="/api/auth/logout" method="post">
+                <button type="submit">{text.signOut}</button>
+              </form>
+            </div>
+          ) : null}
         </nav>
         <div className="durgacenter-tools modern-site-tools">
           <Link href={toggleLanguageHref} onClick={() => setMenuOpen(false)} className="modern-language-link">

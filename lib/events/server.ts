@@ -42,7 +42,7 @@ export interface VolunteerSignup {
 }
 
 const selectEventColumns =
-  "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at";
+  "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, blocks_reservations, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at";
 
 export const ensureEventSlug = async (title: string, eventId?: string): Promise<string> => {
   const supabase = createServiceRoleSupabaseClient();

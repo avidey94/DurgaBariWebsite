@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { ContentHero, ContentPageFrame } from "@/components/content-page";
 import { computeVisibilityForUser, listCalendarEvents } from "@/lib/events/server";
+import { toPacificLocal } from "@/lib/events/timezone";
 
 const eventTypeLabel: Record<string, string> = {
   darshan: "Darshan",
@@ -12,10 +13,11 @@ const eventTypeLabel: Record<string, string> = {
   special: "Special",
 };
 
-const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
-const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
-const dayFormatter = new Intl.DateTimeFormat("en-US", { day: "2-digit" });
+const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "America/Los_Angeles" });
+const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "America/Los_Angeles" });
+const dayFormatter = new Intl.DateTimeFormat("en-US", { day: "2-digit", timeZone: "America/Los_Angeles" });
 const dateLineFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
   month: "long",
   day: "numeric",
   hour: "numeric",
@@ -35,14 +37,14 @@ interface EventsFestivalsPageProps {
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0, 0);
 const endOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 
-const dayKey = (value: string) => new Date(value).toISOString().slice(0, 10);
+const dayKey = (value: string) => toPacificLocal(value).slice(0, 10);
 
 const formatTimeRange = (startIso: string, endIso: string | null, allDay: boolean) => {
   if (allDay) return "All day";
   const start = new Date(startIso);
   if (!endIso) return `${dateLineFormatter.format(start)}`;
   const end = new Date(endIso);
-  return `${dateLineFormatter.format(start)} - ${end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  return `${dateLineFormatter.format(start)} - ${end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" })}`;
 };
 
 export default async function EventsFestivalsPage({ searchParams }: EventsFestivalsPageProps) {
@@ -205,18 +207,24 @@ export default async function EventsFestivalsPage({ searchParams }: EventsFestiv
             <span>{monthFormatter.format(anchorMonth)}</span>
           </div>
 
-          <Link
-            href="/api/calendar/feed"
-            className="db-button-secondary px-4 py-1.5 text-xs no-underline"
-          >
-            Subscribe to Calendar
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/calendar" className="db-button-primary px-4 py-1.5 text-xs no-underline">
+              Check Space Availability
+            </Link>
+            <Link
+              href="/api/calendar/feed"
+              className="db-button-secondary px-4 py-1.5 text-xs no-underline"
+            >
+              Subscribe to Calendar
+            </Link>
+          </div>
         </div>
 
         {view === "day" ? (
           <section className="space-y-3">
             <h3 className="border-b border-[var(--db-border-soft)] pb-3 text-xl font-semibold text-[var(--db-text)]">
-              {new Date(`${selectedDay}T12:00:00`).toLocaleDateString("en-US", {
+              {new Date(`${selectedDay}T12:00:00Z`).toLocaleDateString("en-US", {
+                timeZone: "UTC",
                 weekday: "long",
                 month: "long",
                 day: "numeric",

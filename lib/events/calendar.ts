@@ -25,6 +25,7 @@ export interface CalendarEvent {
   cover_image_url: string | null;
   publish_status: EventPublishStatus;
   visibility: EventVisibility;
+  blocks_reservations: boolean;
   cta_text: string | null;
   volunteer_notes: string | null;
   max_volunteer_count: number | null;

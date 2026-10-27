@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { findEventSpaceConflict } from "@/lib/events/availability";
+import type { EventRecurrenceRule } from "@/lib/events/calendar";
 import { ensureEventSlug } from "@/lib/events/server";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
@@ -21,6 +23,7 @@ interface UpdateEventBody {
   coverImageUrl?: string | null;
   publishStatus?: "draft" | "published" | "archived";
   visibility?: "public" | "members" | "private";
+  blocksReservations?: boolean;
   ctaText?: string | null;
   volunteerNotes?: string | null;
   maxVolunteerCount?: number | null;
@@ -76,6 +79,7 @@ export async function PATCH(
     updates.visibility = body.visibility;
     updates.is_public = body.visibility === "public";
   }
+  if (body.blocksReservations !== undefined) updates.blocks_reservations = body.blocksReservations;
   if (body.ctaText !== undefined) updates.cta_text = body.ctaText?.trim() || null;
   if (body.volunteerNotes !== undefined) updates.volunteer_notes = body.volunteerNotes?.trim() || null;
   if (body.maxVolunteerCount !== undefined) {
@@ -86,12 +90,43 @@ export async function PATCH(
   const supabase = createServiceRoleSupabaseClient();
   if (!supabase) return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
 
+  const { data: existing, error: lookupError } = await supabase
+    .from("events")
+    .select("id, start_time, end_time, recurrence, recurrence_until, publish_status, blocks_reservations")
+    .eq("id", id)
+    .maybeSingle();
+  if (lookupError) return NextResponse.json({ message: "Could not load this event." }, { status: 500 });
+  if (!existing) return NextResponse.json({ message: "Event not found." }, { status: 404 });
+
+  const candidate = {
+    id,
+    start_time: (updates.start_time ?? existing.start_time) as string,
+    end_time: (updates.end_time !== undefined ? updates.end_time : existing.end_time) as string | null,
+    recurrence: (updates.recurrence !== undefined ? updates.recurrence : existing.recurrence) as EventRecurrenceRule | null,
+    recurrence_until: (updates.recurrence_until !== undefined ? updates.recurrence_until : existing.recurrence_until) as string | null,
+    publish_status: (updates.publish_status ?? existing.publish_status) as "draft" | "published" | "archived",
+    blocks_reservations: (updates.blocks_reservations ?? existing.blocks_reservations) as boolean,
+  };
+  if (candidate.blocks_reservations && (!candidate.end_time || new Date(candidate.end_time) <= new Date(candidate.start_time))) {
+    return NextResponse.json({ message: "A space-blocking event needs an end time after its start." }, { status: 400 });
+  }
+  if (candidate.publish_status === "published" && candidate.blocks_reservations) {
+    try {
+      const conflict = await findEventSpaceConflict(candidate);
+      if (conflict) {
+        return NextResponse.json({ message: "This event overlaps a space block or approved reservation on the central calendar." }, { status: 409 });
+      }
+    } catch {
+      return NextResponse.json({ message: "Could not verify space availability." }, { status: 503 });
+    }
+  }
+
   const { data, error } = await supabase
     .from("events")
     .update(updates)
     .eq("id", id)
     .select(
-      "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at",
+      "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, blocks_reservations, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at",
     )
     .maybeSingle();
 

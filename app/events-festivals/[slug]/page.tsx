@@ -5,7 +5,7 @@ import { ContentPageFrame } from "@/components/content-page";
 import { computeVisibilityForUser, getEventBySlug } from "@/lib/events/server";
 import { expandOccurrences } from "@/lib/events/calendar";
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short" });
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/Los_Angeles" });
 
 interface EventDetailsPageProps {
   params: Promise<{ slug: string }>;
@@ -54,12 +54,12 @@ export default async function EventDetailsPage({ params, searchParams }: EventDe
         <div className="db-card-muted grid gap-3 p-5 sm:grid-cols-2">
           <div>
             <p className="db-kicker text-[0.68rem]">Starts</p>
-            <p className="text-sm font-medium text-[var(--db-text)]">{dateTimeFormatter.format(new Date(startsAt))}</p>
+            <p className="text-sm font-medium text-[var(--db-text)]">{dateTimeFormatter.format(new Date(startsAt))} Pacific</p>
           </div>
           <div>
             <p className="db-kicker text-[0.68rem]">Ends</p>
             <p className="text-sm font-medium text-[var(--db-text)]">
-              {endsAt ? dateTimeFormatter.format(new Date(endsAt)) : "Not specified"}
+              {endsAt ? `${dateTimeFormatter.format(new Date(endsAt))} Pacific` : "Not specified"}
             </p>
           </div>
           <div>

@@ -49,9 +49,19 @@ export default async function AdminPage() {
 
   if (hasPortalPermission(access.roles, "events.manage")) {
     tiles.push({
+      href: "/admin/calendar",
+      title: "Central Calendar",
+      description: "See all public events, private space blocks, and approved reservations together.",
+    });
+    tiles.push({
       href: "/admin/events",
       title: "Events",
       description: "Manage events, RSVPs, and attendance breakdowns.",
+    });
+    tiles.push({
+      href: "/admin/reservations",
+      title: "Event Reservations",
+      description: "Review private space requests and verify Zeffy payments before approval.",
     });
   }
 

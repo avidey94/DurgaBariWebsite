@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
+import { findEventSpaceConflict } from "@/lib/events/availability";
+import type { EventRecurrenceRule } from "@/lib/events/calendar";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
 import { ensureEventSlug } from "@/lib/events/server";
@@ -21,6 +24,7 @@ interface CreateEventBody {
   coverImageUrl?: string | null;
   publishStatus?: "draft" | "published" | "archived";
   visibility?: "public" | "members" | "private";
+  blocksReservations?: boolean;
   ctaText?: string | null;
   volunteerNotes?: string | null;
   maxVolunteerCount?: number | null;
@@ -44,7 +48,7 @@ export async function GET() {
     supabase
       .from("events")
       .select(
-        "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at",
+        "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, blocks_reservations, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at",
       )
       .order("start_time", { ascending: true }),
     supabase.from("event_volunteer_slots").select("id, event_id"),
@@ -97,6 +101,10 @@ export async function POST(request: Request) {
   if (parsedEnd && parsedEnd < parsedStart) {
     return NextResponse.json({ message: "endTime must be after startTime." }, { status: 400 });
   }
+  const blocksReservations = body.blocksReservations !== false;
+  if (blocksReservations && (!parsedEnd || parsedEnd <= parsedStart)) {
+    return NextResponse.json({ message: "A space-blocking event needs an end time after its start." }, { status: 400 });
+  }
 
   const eventType = (body.eventType ?? "special").trim();
   if (!VALID_EVENT_TYPES.has(eventType)) {
@@ -115,6 +123,25 @@ export async function POST(request: Request) {
 
   const supabase = createServiceRoleSupabaseClient();
   if (!supabase) return NextResponse.json({ message: "Supabase is not configured." }, { status: 500 });
+
+  if (publishStatus === "published" && blocksReservations) {
+    try {
+      const conflict = await findEventSpaceConflict({
+        id: randomUUID(),
+        start_time: parsedStart.toISOString(),
+        end_time: parsedEnd?.toISOString() ?? null,
+        recurrence: (body.recurrence as EventRecurrenceRule | null) ?? null,
+        recurrence_until: body.recurrenceUntil ?? null,
+        publish_status: "published",
+        blocks_reservations: true,
+      });
+      if (conflict) {
+        return NextResponse.json({ message: "This event overlaps a space block or approved reservation on the central calendar." }, { status: 409 });
+      }
+    } catch {
+      return NextResponse.json({ message: "Could not verify space availability." }, { status: 503 });
+    }
+  }
 
   const slug = body.slug?.trim() ? await ensureEventSlug(body.slug.trim()) : await ensureEventSlug(title);
 
@@ -137,6 +164,7 @@ export async function POST(request: Request) {
       cover_image_url: body.coverImageUrl?.trim() || null,
       publish_status: publishStatus,
       visibility,
+      blocks_reservations: blocksReservations,
       is_public: visibility === "public",
       cta_text: body.ctaText?.trim() || null,
       volunteer_notes: body.volunteerNotes?.trim() || null,
@@ -149,7 +177,7 @@ export async function POST(request: Request) {
       created_by: access.familyId,
     })
     .select(
-      "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at",
+      "id, slug, title, short_summary, full_description, event_type, category, start_time, end_time, all_day, recurrence, recurrence_until, location, cover_image_url, publish_status, visibility, blocks_reservations, cta_text, volunteer_notes, max_volunteer_count, timezone, created_at, updated_at",
     )
     .single();
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { pacificLocalToIso, toPacificLocal } from "@/lib/events/timezone";
 
 type PublishStatus = "draft" | "published" | "archived";
 type Visibility = "public" | "members" | "private";
@@ -23,6 +24,7 @@ interface EventRecord {
   location: string | null;
   publish_status: PublishStatus;
   visibility: Visibility;
+  blocks_reservations: boolean;
   cta_text: string | null;
   max_volunteer_count: number | null;
   volunteer_slot_count: number;
@@ -53,14 +55,8 @@ interface SignupRecord {
   signed_up_at: string;
 }
 
-const toLocalInput = (iso: string | null) => {
-  if (!iso) return "";
-  const date = new Date(iso);
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-};
-
-const toIsoFromLocal = (value: string) => (value ? new Date(value).toISOString() : null);
+const toLocalInput = (iso: string | null) => (iso ? toPacificLocal(iso) : "");
+const toIsoFromLocal = (value: string) => (value ? pacificLocalToIso(value) : null);
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: string }) {
   return (
@@ -92,6 +88,7 @@ export function AdminEventsManager() {
     endTime: "",
     publishStatus: "draft" as PublishStatus,
     visibility: "public" as Visibility,
+    blocksReservations: true,
   });
 
   const [newEvent, setNewEvent] = useState({
@@ -108,6 +105,7 @@ export function AdminEventsManager() {
     location: "",
     publishStatus: "draft" as PublishStatus,
     visibility: "public" as Visibility,
+    blocksReservations: true,
     ctaText: "",
     maxVolunteerCount: "",
   });
@@ -197,6 +195,7 @@ export function AdminEventsManager() {
           location: newEvent.location || null,
           publishStatus: newEvent.publishStatus,
           visibility: newEvent.visibility,
+          blocksReservations: newEvent.blocksReservations,
           ctaText: newEvent.ctaText || null,
           maxVolunteerCount: newEvent.maxVolunteerCount ? Number(newEvent.maxVolunteerCount) : null,
         }),
@@ -289,8 +288,9 @@ export function AdminEventsManager() {
       endTime: toLocalInput(activeEvent.end_time),
       publishStatus: activeEvent.publish_status,
       visibility: activeEvent.visibility,
+      blocksReservations: activeEvent.blocks_reservations,
     });
-  }, [activeEvent?.id]);
+  }, [activeEvent]);
 
   const signupsBySlot = useMemo(() => {
     const map = new Map<string, SignupRecord[]>();
@@ -305,7 +305,7 @@ export function AdminEventsManager() {
       <header>
         <h2 className="text-xl font-semibold text-slate-900">Events & Volunteer Management</h2>
         <p className="text-sm text-slate-700">
-          Publish temple schedules, recurring rituals, and volunteer opportunities from one control center.
+          Publish temple schedules, recurring rituals, private space blocks, and volunteer opportunities from one control center.
         </p>
       </header>
 
@@ -390,6 +390,7 @@ export function AdminEventsManager() {
               <input
                 id="new-event-end-time"
                 type="datetime-local"
+                required={newEvent.blocksReservations}
                 value={newEvent.endTime}
                 onChange={(event) => setNewEvent((current) => ({ ...current, endTime: event.target.value }))}
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
@@ -418,6 +419,10 @@ export function AdminEventsManager() {
                 <option value="private">Private (admin only)</option>
               </select>
             </div>
+            <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 md:col-span-3">
+              <input type="checkbox" checked={newEvent.blocksReservations} onChange={(event) => setNewEvent((current) => ({ ...current, blocksReservations: event.target.checked }))} />
+              Block space reservations during this event
+            </label>
             <div className="space-y-1">
               <FieldLabel htmlFor="new-event-status">Publish status</FieldLabel>
               <select
@@ -471,7 +476,7 @@ export function AdminEventsManager() {
                       <p className="text-sm font-semibold text-slate-900">{event.title}</p>
                       <p className="text-xs text-slate-600">{new Date(event.start_time).toLocaleString("en-US")}</p>
                       <p className="text-xs text-slate-600 capitalize">
-                        {event.publish_status} • {event.visibility}
+                        {event.publish_status} • {event.visibility} • {event.blocks_reservations ? "Blocks space" : "Informational"}
                       </p>
                     </div>
                     <div className="text-right text-xs text-slate-600">
@@ -534,6 +539,7 @@ export function AdminEventsManager() {
                   endTime: toIsoFromLocal(eventDraft.endTime),
                   publishStatus: eventDraft.publishStatus,
                   visibility: eventDraft.visibility,
+                  blocksReservations: eventDraft.blocksReservations,
                 });
               }}
             >
@@ -609,6 +615,7 @@ export function AdminEventsManager() {
                     <input
                       id="edit-event-end"
                       type="datetime-local"
+                      required={eventDraft.blocksReservations}
                       value={eventDraft.endTime}
                       onChange={(event) => setEventDraft((current) => ({ ...current, endTime: event.target.value }))}
                       className="rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -648,6 +655,11 @@ export function AdminEventsManager() {
                     </select>
                   </div>
                 </div>
+
+                <label className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                  <input type="checkbox" checked={eventDraft.blocksReservations} onChange={(event) => setEventDraft((current) => ({ ...current, blocksReservations: event.target.checked }))} />
+                  Block space reservations during this event
+                </label>
 
                 <button
                   type="submit"

@@ -12,6 +12,7 @@ interface SiteHeaderProps {
   user: PortalUser | null;
   preview: PreviewState | null;
   showAdminLink: boolean;
+  adminNotificationCount: number;
   initialTheme: "classic-green" | "revamp" | "durgacenter";
 }
 
@@ -39,6 +40,7 @@ const copy = {
     durgaCenter: "The Durga Center",
     menu: "Menu",
     admin: "Admin",
+    notifications: "Notifications",
     languageLabel: "বাংলা",
     themeClassic: "Classic",
     themeRevamp: "Modern",
@@ -70,6 +72,7 @@ const copy = {
     durgaCenter: "দ্য দুর্গা সেন্টার",
     menu: "মেনু",
     admin: "অ্যাডমিন",
+    notifications: "বিজ্ঞপ্তি",
     languageLabel: "English",
     themeClassic: "ক্লাসিক",
     themeRevamp: "মডার্ন",
@@ -84,7 +87,7 @@ const copy = {
 
 type SiteCopy = (typeof copy)[keyof typeof copy];
 
-export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteHeaderProps) {
+export function SiteHeader({ user, preview, showAdminLink, adminNotificationCount, initialTheme }: SiteHeaderProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -153,6 +156,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
       <ModernHeader
         user={user}
         showAdminLink={showAdminLink}
+        adminNotificationCount={adminNotificationCount}
         text={text}
         language={language}
         pathname={pathname}
@@ -168,6 +172,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
       <ModernHeader
         user={user}
         showAdminLink={showAdminLink}
+        adminNotificationCount={adminNotificationCount}
         text={text}
         language={language}
         pathname={pathname}
@@ -521,7 +526,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
               onClick={() => setMenuOpen(false)}
               className="border-[2px] border-[var(--db-border)] bg-white px-3 py-1.5 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
             >
-              {text.admin}
+              {text.admin}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
             </Link>
           )}
         </div>
@@ -569,11 +574,22 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
           {showAdminLink ? (
             <li>
               <Link
+                href={withLang("/admin/notifications", language)}
+                onClick={() => setMenuOpen(false)}
+                className="block border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
+              >
+                {text.notifications}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
+              </Link>
+            </li>
+          ) : null}
+          {showAdminLink ? (
+            <li>
+              <Link
                 href={withLang("/admin", language)}
                 onClick={() => setMenuOpen(false)}
                 className="block border-[2px] border-[var(--db-border)] bg-white px-3 py-2 text-sm font-bold text-[#111] hover:bg-[#f5f5f5]"
               >
-                {text.admin}
+                {text.admin}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
               </Link>
             </li>
           ) : null}
@@ -600,6 +616,7 @@ export function SiteHeader({ user, preview, showAdminLink, initialTheme }: SiteH
 function ModernHeader({
   user,
   showAdminLink,
+  adminNotificationCount,
   text,
   language,
   pathname,
@@ -609,6 +626,7 @@ function ModernHeader({
 }: {
   user: PortalUser | null;
   showAdminLink: boolean;
+  adminNotificationCount: number;
   text: SiteCopy;
   language: "en" | "bn";
   pathname: string;
@@ -645,7 +663,12 @@ function ModernHeader({
           ))}
           {showAdminLink ? (
             <Link href={withLang("/admin", language)} onClick={() => setMenuOpen(false)}>
-              {text.admin}
+              {text.admin}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
+            </Link>
+          ) : null}
+          {showAdminLink ? (
+            <Link className="modern-mobile-notifications" href={withLang("/admin/notifications", language)} onClick={() => setMenuOpen(false)}>
+              {text.notifications}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
             </Link>
           ) : null}
           {user ? (
@@ -681,6 +704,11 @@ function ModernHeader({
                 <strong>{text.account}</strong>
                 <span>{user.email}</span>
                 <Link href={withLang("/portal", language)}>{text.memberPortal}</Link>
+                {showAdminLink ? (
+                  <Link href={withLang("/admin/notifications", language)}>
+                    {text.notifications}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
+                  </Link>
+                ) : null}
                 <form action="/api/auth/logout" method="post"><button type="submit">{text.signOut}</button></form>
               </div>
             </details>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { canAccessAdminHome, getAdminAccessContext } from "@/lib/portal/admin-auth";
+import { getAdminInboxCounts } from "@/lib/portal/admin-inbox";
 import { hasPortalPermission } from "@/lib/portal/rbac";
 
 interface AdminTile {
@@ -21,7 +22,12 @@ export default async function AdminPage() {
     redirect("/portal");
   }
 
-  const tiles: AdminTile[] = [];
+  const notificationCount = await getAdminInboxCounts(access).then((counts) => counts.total).catch(() => 0);
+  const tiles: AdminTile[] = [{
+    href: "/admin/notifications",
+    title: notificationCount > 0 ? `Notifications (${notificationCount})` : "Notifications",
+    description: "Review new member accounts, event reservations, and donor tier requests.",
+  }];
 
   if (hasPortalPermission(access.roles, "donations.manage")) {
     tiles.push({

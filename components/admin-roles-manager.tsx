@@ -111,6 +111,13 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
   const [drafts, setDrafts] = useState<Record<string, FamilyDraft>>({});
   const [savingByFamilyId, setSavingByFamilyId] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    if (!loading || !window.location.hash.startsWith("#family-")) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({
+      block: "center",
+    });
+  }, [families, loading]);
+
   const rolesByFamilyId = useMemo(() => {
     const map = new Map<string, Set<FamilyRole>>();
     roleGrants.forEach((grant) => {
@@ -579,7 +586,7 @@ export function AdminRolesManager({ canManageRoles, canUsePreview }: AdminRolesM
                 const draft = drafts[family.id] ?? buildFamilyDraft(family);
                 const requestedTier = family.requested_active_donor_status;
                 return (
-                  <tr key={family.id} className="border-t border-slate-100 align-top">
+                  <tr id={`family-${family.id}`} key={family.id} className="scroll-mt-28 border-t border-slate-100 align-top">
                     <td className="px-3 py-2">
                       <input
                         value={draft.family_display_name}

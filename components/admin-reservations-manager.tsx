@@ -28,6 +28,13 @@ export function AdminReservationsManager() {
 
   useEffect(() => { void load(); }, [load]);
 
+  useEffect(() => {
+    if (loading || !window.location.hash.startsWith("#reservation-")) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({
+      block: "center",
+    });
+  }, [loading, reservations]);
+
   const review = async (id: string, action: "approve" | "decline") => {
     setWorkingId(id);
     setError("");
@@ -59,7 +66,7 @@ export function AdminReservationsManager() {
       {error ? <p role="alert" className="rounded-lg bg-red-50 p-4 text-red-700">{error}</p> : null}
       {!reservations.length ? <div className="db-card p-6">No reservation requests yet.</div> : null}
       {reservations.map((reservation) => (
-        <article key={reservation.id} className="db-card p-5 sm:p-6">
+        <article id={`reservation-${reservation.id}`} key={reservation.id} className="db-card scroll-mt-28 p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--db-text-soft)]">{reservation.booking_reference}</p>

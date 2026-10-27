@@ -19,7 +19,10 @@ export default async function AdminRolesPage() {
     <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
       <header className="rounded-lg border border-slate-200 bg-white p-6">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Roles Admin</h1>
-        <p className="mt-2 text-sm text-slate-600">Assign roles and run preview mode audits.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          Manage families and assign roles. A super admin can grant the Membership Manager role to
+          someone who should review new member accounts.
+        </p>
       </header>
       <AdminRolesManager
         canManageRoles={hasPortalPermission(access.roles, "roles.manage")}

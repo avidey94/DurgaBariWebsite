@@ -380,6 +380,10 @@
   display: none;
 }
 
+.modern-site-header .modern-mobile-notifications {
+  display: none;
+}
+
 @media (max-width: 1100px) {
   .durgacenter-header-inner {
     width: min(1024px, calc(100% - 2rem));
@@ -435,6 +439,10 @@
   .durgacenter-nav a {
     border-top: 1px solid rgba(255, 209, 191, 0.2);
     padding: 0.7rem 0;
+  }
+
+  .modern-site-header .modern-mobile-notifications {
+    display: block;
   }
 
   .modern-mobile-account {

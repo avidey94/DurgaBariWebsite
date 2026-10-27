@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { SiteHeader } from "@/components/site-header";
 import { getActivePreviewState, getCurrentUser } from "@/lib/auth/session";
 import { canAccessAdminHome, getAdminAccessContext } from "@/lib/portal/admin-auth";
+import { getAdminInboxCounts } from "@/lib/portal/admin-inbox";
 
 import "./globals.css";
 
@@ -26,11 +27,14 @@ export default async function RootLayout({
     getAdminAccessContext(),
   ]);
   const showAdminLink = adminAccess ? canAccessAdminHome(adminAccess) : false;
+  const notificationCount = adminAccess && showAdminLink
+    ? await getAdminInboxCounts(adminAccess).then((counts) => counts.total).catch(() => 0)
+    : 0;
 
   return (
     <html lang="en" data-theme={siteTheme}>
       <body className="bg-[var(--db-bg)] text-[var(--db-text)] antialiased">
-        <SiteHeader user={user} preview={preview} showAdminLink={showAdminLink} initialTheme={siteTheme} />
+        <SiteHeader user={user} preview={preview} showAdminLink={showAdminLink} adminNotificationCount={notificationCount} initialTheme={siteTheme} />
         <main className="min-h-[calc(100vh-73px)]">{children}</main>
       </body>
     </html>

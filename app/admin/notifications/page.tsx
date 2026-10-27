@@ -125,11 +125,11 @@ export default async function AdminNotificationsPage({ searchParams }: Notificat
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <dt className="font-semibold">Adults</dt>
-                  <dd>{member.adult_names.join(", ") || member.adults_count}</dd>
+                  <dd>{member.adult_names?.join(", ") || member.adults_count}</dd>
                 </div>
                 <div>
                   <dt className="font-semibold">Children</dt>
-                  <dd>{member.child_names.join(", ") || member.children_count}</dd>
+                  <dd>{member.child_names?.join(", ") || member.children_count}</dd>
                 </div>
                 <div>
                   <dt className="font-semibold">Phone</dt>

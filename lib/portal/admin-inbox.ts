@@ -15,9 +15,9 @@ export interface PendingMember {
   primary_email: string;
   phone_number: string | null;
   adults_count: number;
-  adult_names: string[];
+  adult_names: string[] | null;
   children_count: number;
-  child_names: string[];
+  child_names: string[] | null;
   created_at: string;
 }
 

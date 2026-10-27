@@ -3,7 +3,7 @@ import { isDevLoginEnabled, isSupabaseConfigured } from "@/lib/env";
 import { resolveLanguage } from "@/lib/i18n";
 
 interface LoginPageProps {
-  searchParams: Promise<{ error?: string; lang?: string }>;
+  searchParams: Promise<{ error?: string; lang?: string; mode?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -18,6 +18,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         supabaseConfigured={isSupabaseConfigured}
         devBypassEnabled={isDevLoginEnabled}
         initialError={error}
+        initialMode={params.mode === "signup" ? "signup" : "password"}
       />
     </section>
   );

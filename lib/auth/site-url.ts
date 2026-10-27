@@ -49,7 +49,13 @@ const resolveSiteUrl = (): string => {
 export const getSiteUrl = (): string => resolveSiteUrl();
 
 export const normalizeNextPath = (nextPath: string | null | undefined): string => {
-  if (!nextPath || !nextPath.startsWith("/")) {
+  if (
+    !nextPath ||
+    !nextPath.startsWith("/") ||
+    nextPath.startsWith("//") ||
+    nextPath.includes("\\") ||
+    /[\u0000-\u001f]/.test(nextPath)
+  ) {
     return "/portal";
   }
 

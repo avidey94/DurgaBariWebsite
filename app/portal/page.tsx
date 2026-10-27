@@ -57,7 +57,7 @@ export default async function PortalPage() {
   const context = await getCurrentFamilyPortalContext();
 
   if (!context) {
-      return (
+    return (
       <section className="db-shell max-w-6xl">
         <PortalOnboardingForm email={user.email} />
       </section>
@@ -65,11 +65,10 @@ export default async function PortalPage() {
   }
 
   if (!context.family.profileCompleted) {
-      return (
+    return (
       <section className="db-shell max-w-6xl">
         <PortalOnboardingForm
           email={user.email}
-          initialName={context.family.familyDisplayName}
           initialAdultsCount={context.family.adultsCount}
           initialChildrenCount={context.family.childrenCount}
         />
@@ -84,10 +83,12 @@ export default async function PortalPage() {
           <p className="db-kicker">Portal Access Pending</p>
           <h1 className="db-title mt-3">Your account is awaiting approval</h1>
           <p className="mt-3 text-sm text-[var(--db-text-soft)]">
-            Your family profile is set up, but member-only portal features stay locked until an administrator approves access.
+            Your family profile is set up, but member-only portal features stay locked until an
+            administrator approves access.
           </p>
           <p className="mt-4 text-sm text-[var(--db-text-soft)]">
-            Signed in as <strong>{user.email}</strong>. You can contact the temple administrators if approval is urgent.
+            Signed in as <strong>{user.email}</strong>. You can contact the temple administrators if
+            approval is urgent.
           </p>
         </div>
       </section>
@@ -125,36 +126,53 @@ export default async function PortalPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="db-kicker text-[0.68rem]">Family Name</p>
-            <p className="text-lg font-semibold text-[var(--db-text)]">{context.family.familyDisplayName}</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">
+              {context.family.familyDisplayName}
+            </p>
           </div>
           <div>
             <p className="db-kicker text-[0.68rem]">Email</p>
-            <p className="text-sm font-semibold text-[var(--db-text)]">{context.family.primaryEmail}</p>
+            <p className="text-sm font-semibold text-[var(--db-text)]">
+              {context.family.primaryEmail}
+            </p>
             <p className="mt-1 text-xs text-[var(--db-text-soft)]">
-              Phone: {context.family.phoneNumber?.trim() ? context.family.phoneNumber : "Not provided"}
+              Phone:{" "}
+              {context.family.phoneNumber?.trim() ? context.family.phoneNumber : "Not provided"}
             </p>
           </div>
           <div>
             <p className="db-kicker text-[0.68rem]">Adults</p>
-            <p className="text-lg font-semibold text-[var(--db-text)]">{context.family.adultsCount}</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">
+              {context.family.adultsCount}
+            </p>
             <p className="mt-1 text-xs text-[var(--db-text-soft)]">
-              {context.family.adultNames.length > 0 ? context.family.adultNames.join(", ") : "No adult names listed"}
+              {context.family.adultNames.length > 0
+                ? context.family.adultNames.join(", ")
+                : "No adult names listed"}
             </p>
           </div>
           <div>
             <p className="db-kicker text-[0.68rem]">Children</p>
-            <p className="text-lg font-semibold text-[var(--db-text)]">{context.family.childrenCount}</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">
+              {context.family.childrenCount}
+            </p>
             <p className="mt-1 text-xs text-[var(--db-text-soft)]">
-              {context.family.childNames.length > 0 ? context.family.childNames.join(", ") : "No child names listed"}
+              {context.family.childNames.length > 0
+                ? context.family.childNames.join(", ")
+                : "No child names listed"}
             </p>
           </div>
           <div>
             <p className="db-kicker text-[0.68rem]">Roles</p>
-            <p className="text-sm font-semibold text-[var(--db-text)]">{activeRoleLabels.join(", ")}</p>
+            <p className="text-sm font-semibold text-[var(--db-text)]">
+              {activeRoleLabels.join(", ")}
+            </p>
           </div>
           <div>
             <p className="db-kicker text-[0.68rem]">Total Donations Made</p>
-            <p className="text-lg font-semibold text-[var(--db-text)]">{formatCurrency(totalDonationsCents)}</p>
+            <p className="text-lg font-semibold text-[var(--db-text)]">
+              {formatCurrency(totalDonationsCents)}
+            </p>
           </div>
         </div>
       </header>
@@ -178,7 +196,9 @@ export default async function PortalPage() {
           href="/portal/pledge"
           className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
         >
-          {context.family.activeDonorStatus !== "none" ? "View Active Donor Portal" : "Become an active donor"}
+          {context.family.activeDonorStatus !== "none"
+            ? "View Active Donor Portal"
+            : "Become an active donor"}
         </Link>
         <Link
           href="/portal/volunteer"

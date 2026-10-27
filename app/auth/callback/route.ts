@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const otpType = toOtpType(request.nextUrl.searchParams.get("type"));
-  const nextPath = normalizeNextPath(request.nextUrl.searchParams.get("next"));
+  const nextPath =
+    otpType === "recovery"
+      ? "/reset-password"
+      : normalizeNextPath(request.nextUrl.searchParams.get("next"));
 
   if (!code && !tokenHash) {
     return NextResponse.redirect(new URL("/login?error=missing_auth_token", request.url));
@@ -52,7 +55,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (error) {
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url));
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url),
+    );
   }
 
   const { data: userData } = await supabase.auth.getUser();
@@ -66,7 +71,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (ensured.error) {
-      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(ensured.error.message)}`, request.url));
+      return NextResponse.redirect(
+        new URL(`/login?error=${encodeURIComponent(ensured.error.message)}`, request.url),
+      );
     }
   }
 

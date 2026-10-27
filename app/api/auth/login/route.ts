@@ -9,7 +9,7 @@ import { checkRateLimit } from "@/lib/security/rate-limit";
 interface LoginPayload {
   email?: string;
   password?: string;
-  mode?: "magic-link" | "password" | "signup";
+  mode?: "magic-link" | "password" | "signup" | "recovery";
 }
 
 const AUTH_WINDOW_MS = 15 * 60 * 1000;
@@ -32,10 +32,17 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
-  const rateLimit = checkRateLimit(`${ip}:${email}:${body.mode ?? "unknown"}`, AUTH_LIMIT, AUTH_WINDOW_MS);
+  const rateLimit = checkRateLimit(
+    `${ip}:${email}:${body.mode ?? "unknown"}`,
+    AUTH_LIMIT,
+    AUTH_WINDOW_MS,
+  );
   if (!rateLimit.allowed) {
     console.warn(`[auth] rate limited login attempt for ${email} from ${ip}`);
-    const response = jsonNoStore({ message: "Too many authentication attempts. Please try again later." }, { status: 429 });
+    const response = jsonNoStore(
+      { message: "Too many authentication attempts. Please try again later." },
+      { status: 429 },
+    );
     response.headers.set("Retry-After", String(rateLimit.retryAfterSeconds));
     return response;
   }
@@ -74,7 +81,9 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.warn(`[auth] magic-link failure for ${email} from ${ip}`);
-      return genericAuthError("If that email can receive sign-in links, a message will arrive shortly.");
+      return genericAuthError(
+        "If that email can receive sign-in links, a message will arrive shortly.",
+      );
     }
 
     const response = jsonNoStore(
@@ -88,10 +97,7 @@ export async function POST(request: NextRequest) {
 
   if (body.mode === "signup") {
     if (!body.password || body.password.length < 8) {
-      return jsonNoStore(
-        { message: "Password must be at least 8 characters." },
-        { status: 400 },
-      );
+      return jsonNoStore({ message: "Password must be at least 8 characters." }, { status: 400 });
     }
 
     const { data, error } = await supabase.auth.signUp({
@@ -104,23 +110,72 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.warn(`[auth] signup failure for ${email} from ${ip}`);
+      if (error.status === 429 || error.code === "over_email_send_rate_limit") {
+        return jsonNoStore(
+          { message: "Email sending is temporarily limited. Please try again in about an hour." },
+          { status: 429 },
+        );
+      }
+      if (error.code === "email_address_not_authorized") {
+        return jsonNoStore(
+          {
+            message:
+              "Confirmation emails cannot be sent to this address yet. Please contact Durga Bari.",
+          },
+          { status: 503 },
+        );
+      }
       return genericAuthError("Unable to create account right now.");
     }
 
     if (data.session) {
-      const response = jsonNoStore({ message: "Account created. You are now logged in." }, { status: 200 });
+      const response = jsonNoStore(
+        { message: "Account created. You are now logged in.", nextStep: "portal" },
+        { status: 200 },
+      );
       setResponse(response);
 
       return getResponse();
     }
 
     const response = jsonNoStore(
-      { message: "Account created. Check your email to confirm and finish sign in." },
+      {
+        message: "Account created. Check your email to confirm and finish sign in.",
+        nextStep: "confirm-email",
+      },
       { status: 200 },
     );
     setResponse(response);
 
     return getResponse();
+  }
+
+  if (body.mode === "recovery") {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: buildAuthCallbackUrl("/reset-password"),
+    });
+
+    if (error?.status === 429 || error?.code === "over_email_send_rate_limit") {
+      return jsonNoStore(
+        { message: "Email sending is temporarily limited. Please try again in about an hour." },
+        { status: 429 },
+      );
+    }
+
+    if (error) {
+      console.warn(`[auth] password recovery failure for ${email} from ${ip}`);
+      return jsonNoStore(
+        { message: "Unable to send a reset email right now. Please try again later." },
+        { status: 503 },
+      );
+    }
+
+    return jsonNoStore(
+      {
+        message: "If this email has an account, a password reset link will arrive shortly.",
+      },
+      { status: 200 },
+    );
   }
 
   if (body.mode === "password") {

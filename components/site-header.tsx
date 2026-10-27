@@ -45,6 +45,9 @@ const copy = {
     themeClassic: "Classic",
     themeRevamp: "Modern",
     themeDurgacenter: "Current site",
+    siteView: "Site view",
+    originalSite: "Original site",
+    newSite: "New site",
     account: "Account",
     guest: "Guest",
     signedInAs: "Signed in as",
@@ -77,6 +80,9 @@ const copy = {
     themeClassic: "ক্লাসিক",
     themeRevamp: "মডার্ন",
     themeDurgacenter: "বর্তমান সাইট",
+    siteView: "সাইটের ধরন",
+    originalSite: "পুরনো সাইট",
+    newSite: "নতুন সাইট",
     account: "অ্যাকাউন্ট",
     guest: "অতিথি",
     signedInAs: "লগইন করা আছে",
@@ -636,8 +642,8 @@ function ModernHeader({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navItems = text.navItems.filter((item) => !["Projects", "Sponsors", "প্রজেক্টস", "স্পন্সর"].includes(item.label));
-  const switchTheme = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextTheme = event.target.value as SiteTheme;
+  const switchTheme = (nextTheme: SiteTheme) => {
+    if (nextTheme === activeTheme) return;
     document.cookie = `db_theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
     window.location.href = `${pathname}${queryString ? `?${queryString}` : ""}`;
   };
@@ -671,6 +677,7 @@ function ModernHeader({
               {text.notifications}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
             </Link>
           ) : null}
+          <button type="button" className="modern-mobile-classic-option" onClick={() => switchTheme("classic-green")}>{text.themeClassic}</button>
           {user ? (
             <div className="modern-mobile-account">
               <span>{text.signedInAs} {user.email}</span>
@@ -686,7 +693,7 @@ function ModernHeader({
           </Link>
           <label className="modern-theme-select-label">
             <span className="sr-only">Choose site theme</span>
-            <select value={activeTheme} onChange={switchTheme} aria-label="Choose site theme">
+            <select value={activeTheme} onChange={(event: ChangeEvent<HTMLSelectElement>) => switchTheme(event.target.value as SiteTheme)} aria-label="Choose site theme">
               <option value="durgacenter">{language === "en" ? "Current" : "বর্তমান"}</option>
               <option value="revamp">{text.themeRevamp}</option>
               <option value="classic-green">{text.themeClassic}</option>
@@ -721,6 +728,10 @@ function ModernHeader({
             </Link>
           )}
         </div>
+      </div>
+      <div className="modern-mobile-site-switcher" role="group" aria-label={text.siteView}>
+        <button type="button" aria-pressed={activeTheme === "durgacenter"} onClick={() => switchTheme("durgacenter")}>{text.originalSite}</button>
+        <button type="button" aria-pressed={activeTheme === "revamp"} onClick={() => switchTheme("revamp")}>{text.newSite}</button>
       </div>
     </header>
   );

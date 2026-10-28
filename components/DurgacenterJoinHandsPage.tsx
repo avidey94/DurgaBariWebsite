@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const qrCodeImage = "https://thedurgacenter.org/wp-content/uploads/2026/02/QR-Code-300x295.jpg";
+const qrCodeImage = "/durgacenter/zelle-qr.jpg";
 
 export function DurgacenterJoinHandsPage() {
   return (
@@ -9,18 +9,18 @@ export function DurgacenterJoinHandsPage() {
       <div className="durgacenter-join-content">
         <p><em>A Sacred Abode of Divine Energy and Cultural Excellence</em></p>
         <p>Durga Bari is a community‑led initiative to establish a center of worship, learning, and Bengali cultural excellence. Your generosity today lights the path—from seed funding to sanctum.</p>
-        <p><strong>Ready to pledge now?</strong> Email <a href="mailto:info@thedurgacenter.org">info@thedurgacenter.org</a> or use the <Link href="/contact">contact form</Link>.</p>
+        <p><strong>Ready to pledge now?</strong> Email <a href="mailto:info@thedurgacenter.org">info@thedurgacenter.org</a> or use the contact form: <Link href="/contact">https://thedurgacenter.org/contact/</Link></p>
 
         <h2>Ways to Give</h2>
         <ul>
-          <li>Founding Family (recurring) – $100/month (3‑year pledge)</li>
-          <li>One‑time or cumulative gifts – choose any membership tier below</li>
-          <li>Corporate matching – double your impact (ask your employer)</li>
-          <li>In‑kind – stage/storage, décor, AV, printing, hospitality</li>
+          <li><strong>Founding Family (recurring)</strong> – $100/month (3‑year pledge)</li>
+          <li><strong>One‑time or cumulative gifts</strong> – choose any membership tier below</li>
+          <li><strong>Corporate matching</strong> – double your impact (ask your employer)</li>
+          <li><strong>In‑kind</strong> – stage/storage, décor, AV, printing, hospitality</li>
         </ul>
 
         <p><strong>TO GET STARTED:</strong> Email <a href="mailto:info@thedurgacenter.org">info@thedurgacenter.org</a> or fill the form at <Link href="/contact">https://thedurgacenter.org/contact/</Link>.</p>
-        <p>Donate through Zelle, add recipient name “Durga Bari – Center for Spiritual and Cultural Excellence,” and select “durgabari” as your Zelle business tag. Alternatively, scan the QR code below using your banking app.</p>
+        <p>Donate through Zelle, add recipient name ” Durga Bari – Center for Spiritual and Cu” select “durgabari” as Zelle business tag. Alternatively scan the QR Code below (open your banking app, navigate to Zelle. Add recipient and use QR-Code icon to scan QR code shown below. This will help you select Durga Bari for Donation).</p>
         <img className="durgacenter-join-qr" src={qrCodeImage} alt="Durga Bari Zelle QR code" width={300} height={295} />
 
         <p><a className="durgacenter-join-button" href="https://www.zeffy.com/en-US/donation-form/support-durga-bari-sustaining-spiritual-and-community-wellbeing" target="_blank" rel="noreferrer">Donate through Zeffy</a> <a className="durgacenter-join-button" href="https://www.paypal.com/ncp/payment/PBSF3LY72MJSC" target="_blank" rel="noreferrer">Donate through Paypal</a></p>

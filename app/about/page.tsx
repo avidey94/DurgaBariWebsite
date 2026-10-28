@@ -5,13 +5,14 @@ import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 import { cookies } from "next/headers";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 interface AboutPageProps {
   searchParams: Promise<{ lang?: string }>;
 }
 
 export default async function AboutPage({ searchParams }: AboutPageProps) {
-  const theme = (await cookies()).get("db_theme")?.value;
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
 
   if (theme === "durgacenter") {
     return <DurgacenterAboutPage />;
@@ -119,3 +120,4 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
     </ContentPageFrame>
   );
 }
+export const metadata = { title: "About" };

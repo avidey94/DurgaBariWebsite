@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { resolveLanguage, withLang } from "@/lib/i18n";
+import { SITE_VIEW_COOKIE } from "@/lib/site-theme";
+import type { SiteTheme } from "@/lib/site-theme";
 import type { PortalUser, PreviewState } from "@/lib/types";
 
 interface SiteHeaderProps {
@@ -13,10 +16,8 @@ interface SiteHeaderProps {
   preview: PreviewState | null;
   showAdminLink: boolean;
   adminNotificationCount: number;
-  initialTheme: "classic-green" | "revamp" | "durgacenter";
+  initialTheme: SiteTheme;
 }
-
-type SiteTheme = SiteHeaderProps["initialTheme"];
 
 const copy = {
   en: {
@@ -159,7 +160,7 @@ export function SiteHeader({ user, preview, showAdminLink, adminNotificationCoun
 
   if (isDurgacenterTheme) {
     return (
-      <ModernHeader
+      <DurgacenterHeader
         user={user}
         showAdminLink={showAdminLink}
         adminNotificationCount={adminNotificationCount}
@@ -191,7 +192,7 @@ export function SiteHeader({ user, preview, showAdminLink, adminNotificationCoun
 
   const toggleTheme = () => {
     const nextTheme: SiteTheme = "revamp";
-    document.cookie = `db_theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
+    document.cookie = `${SITE_VIEW_COOKIE}=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
     setTheme(nextTheme);
     setMenuOpen(false);
     setAccountOpen(false);
@@ -644,7 +645,7 @@ function ModernHeader({
   const navItems = text.navItems.filter((item) => !["Projects", "Sponsors", "প্রজেক্টস", "স্পন্সর"].includes(item.label));
   const switchTheme = (nextTheme: SiteTheme) => {
     if (nextTheme === activeTheme) return;
-    document.cookie = `db_theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
+    document.cookie = `${SITE_VIEW_COOKIE}=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
     window.location.href = `${pathname}${queryString ? `?${queryString}` : ""}`;
   };
 
@@ -677,6 +678,10 @@ function ModernHeader({
               {text.notifications}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}
             </Link>
           ) : null}
+          <div className="modern-mobile-site-switcher" role="group" aria-label={text.siteView}>
+            <button type="button" aria-pressed={activeTheme === "durgacenter"} onClick={() => switchTheme("durgacenter")}>{text.originalSite}</button>
+            <button type="button" aria-pressed={activeTheme === "revamp"} onClick={() => switchTheme("revamp")}>{text.newSite}</button>
+          </div>
           <button type="button" className="modern-mobile-classic-option" onClick={() => switchTheme("classic-green")}>{text.themeClassic}</button>
           {user ? (
             <div className="modern-mobile-account">
@@ -729,10 +734,95 @@ function ModernHeader({
           )}
         </div>
       </div>
-      <div className="modern-mobile-site-switcher" role="group" aria-label={text.siteView}>
+    </header>
+  );
+}
+
+function DurgacenterHeader({
+  user,
+  showAdminLink,
+  adminNotificationCount,
+  text,
+  language,
+  pathname,
+  queryString,
+  toggleLanguageHref,
+  activeTheme,
+}: {
+  user: PortalUser | null;
+  showAdminLink: boolean;
+  adminNotificationCount: number;
+  text: SiteCopy;
+  language: "en" | "bn";
+  pathname: string;
+  queryString: string;
+  toggleLanguageHref: string;
+  activeTheme: SiteTheme;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const originalPaths = ["/", "/our-sacred-journey-from-vision-to-temple/", "/about", "/events-festivals", "/join-hands-to-build-durga-bari/", "/contact", "/get-involved"];
+  const navItems = originalPaths.map((path) => {
+    const item = text.navItems.find((entry) => entry.href === path)!;
+    return { ...item, href: path === "/events-festivals" ? "/coming-soon-a-calendar-of-sacred-celebrations" : path === "/get-involved" ? "/be-part-of-something-sacred-and-lasting" : path };
+  });
+  const mobileNavItems = [navItems[0], navItems[2], navItems[1], ...navItems.slice(3)];
+  const currentPath = pathname.replace(/\/$/, "") || "/";
+  const switchTheme = (nextTheme: SiteTheme) => {
+    if (nextTheme === activeTheme) return;
+    document.cookie = `${SITE_VIEW_COOKIE}=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
+    window.location.href = `${pathname}${queryString ? `?${queryString}` : ""}`;
+  };
+  const viewOptions = (
+    <div className="durgacenter-view-options" role="group" aria-label={text.siteView}>
+      <span>{text.siteView}</span>
+      <div>
         <button type="button" aria-pressed={activeTheme === "durgacenter"} onClick={() => switchTheme("durgacenter")}>{text.originalSite}</button>
         <button type="button" aria-pressed={activeTheme === "revamp"} onClick={() => switchTheme("revamp")}>{text.newSite}</button>
       </div>
+      <button type="button" className="durgacenter-classic-option" onClick={() => switchTheme("classic-green")}>{text.themeClassic}</button>
+    </div>
+  );
+
+  return (
+    <header className="durgacenter-header durgacenter-replica-header">
+      <div className="durgacenter-header-inner">
+        <Link href={withLang("/", language)} className="durgacenter-logo" onClick={() => setMenuOpen(false)}>
+          <Image src="/durgacenter/logo.png" width={154} height={145} alt="Durga Bari - Center for Spiritual and Cultural Excellence" priority />
+        </Link>
+        <nav className="durgacenter-desktop-nav" aria-label="Primary site navigation">
+          {navItems.map((item) => (
+            <Link key={item.href} href={withLang(item.href, language)} aria-current={currentPath === (item.href.replace(/\/$/, "") || "/") ? "page" : undefined}>{item.label}</Link>
+          ))}
+        </nav>
+        <div className="durgacenter-social-links" aria-label="Social media">
+          <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="17.5" cy="6.5" r="1.2"/></svg></a>
+          <a href="https://www.facebook.com/profile.php?id=61582255682301" target="_blank" rel="noreferrer" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M13.5 20v-7h2l.3-2.5h-2.3V9c0-.7.2-1.2 1.3-1.2H16V5.5a17 17 0 0 0-2-.1c-2 0-3.3 1.2-3.3 3.4v1.7H8.5V13h2.2v7" fill="#dd183b"/></svg></a>
+          <a href="#" aria-label="Twitter"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 5.8a8.2 8.2 0 0 1-2.4.7 4.2 4.2 0 0 0 1.8-2.3 8.4 8.4 0 0 1-2.7 1 4.2 4.2 0 0 0-7.2 3.8A11.9 11.9 0 0 1 2.9 4.6a4.2 4.2 0 0 0 1.3 5.6 4.2 4.2 0 0 1-1.9-.5v.1a4.2 4.2 0 0 0 3.4 4.1 4.1 0 0 1-5.2 1.8H1a12 12 0 0 0 6.5 1.9c7.8 0 12.1-6.5 12.1-12.1v-.5A8.6 8.6 0 0 0 22 5.8Z"/></svg></a>
+        </div>
+        <details className="durgacenter-desktop-options">
+          <summary aria-label="Site options">☰</summary>
+          <div className="durgacenter-desktop-options-panel">
+            {viewOptions}
+            <Link href={toggleLanguageHref}>{text.languageLabel}</Link>
+            {user ? <Link href={withLang("/portal", language)}>{text.memberPortal}</Link> : <Link href={withLang("/login", language)}>{text.login}</Link>}
+            {showAdminLink ? <Link href={withLang("/admin", language)}>{text.admin}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}</Link> : null}
+            {user ? <form action="/api/auth/logout" method="post"><button type="submit">{text.signOut}</button></form> : null}
+          </div>
+        </details>
+        <button type="button" className="durgacenter-menu-button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-label={text.menu}>{menuOpen ? "×" : "☰"}</button>
+      </div>
+      <nav className={`durgacenter-replica-mobile-nav ${menuOpen ? "is-open" : ""}`} aria-label="Primary site navigation">
+        {viewOptions}
+        {mobileNavItems.map((item) => (
+          <Link key={item.href} href={withLang(item.href, language)} onClick={() => setMenuOpen(false)} aria-current={currentPath === (item.href.replace(/\/$/, "") || "/") ? "page" : undefined}>{item.label}</Link>
+        ))}
+        <div className="durgacenter-replica-mobile-tools">
+          <Link href={toggleLanguageHref} onClick={() => setMenuOpen(false)}>{text.languageLabel}</Link>
+          {user ? <Link href={withLang("/portal", language)} onClick={() => setMenuOpen(false)}>{text.memberPortal}</Link> : <Link href={withLang("/login", language)} onClick={() => setMenuOpen(false)}>{text.login}</Link>}
+          {showAdminLink ? <Link href={withLang("/admin", language)} onClick={() => setMenuOpen(false)}>{text.admin}{adminNotificationCount > 0 ? ` (${adminNotificationCount})` : ""}</Link> : null}
+          {user ? <form action="/api/auth/logout" method="post"><button type="submit">{text.signOut}</button></form> : null}
+        </div>
+      </nav>
     </header>
   );
 }

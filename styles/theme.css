@@ -449,10 +449,9 @@
 
   .modern-mobile-site-switcher {
     display: flex;
-    width: min(1024px, calc(100% - 2rem));
+    width: 100%;
     gap: 0.5rem;
-    margin: 0 auto;
-    padding-bottom: 0.8rem;
+    padding: 0.8rem 0;
   }
 
   .modern-mobile-site-switcher button {
@@ -523,5 +522,266 @@
 
   .modern-site-tools {
     display: none;
+  }
+}
+
+/* The original view follows the public Durga Center header. Site controls
+   remain available inside the menu without occupying the visible header. */
+.durgacenter-replica-header {
+  background: #dd183b;
+}
+
+.durgacenter-replica-header .durgacenter-header-inner {
+  width: min(1200px, calc(100% - 80px));
+  min-height: 181.6px;
+  gap: 1.2rem;
+}
+
+.durgacenter-replica-header .durgacenter-logo {
+  flex: none;
+}
+
+.durgacenter-replica-header .durgacenter-logo img {
+  width: 154px;
+  height: 145px;
+}
+
+.durgacenter-desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.durgacenter-desktop-nav a,
+.durgacenter-desktop-nav a:visited {
+  padding: 0 18px;
+  color: #ffede6;
+  font: 400 18px/1.65 "Inter", Arial, Helvetica, sans-serif;
+  text-decoration: none;
+}
+
+.durgacenter-desktop-nav a:hover,
+.durgacenter-desktop-nav a:focus-visible {
+  color: #ffdfdf;
+}
+
+.durgacenter-social-links {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-left: 1px;
+}
+
+.durgacenter-social-links a {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: #fff;
+}
+
+.durgacenter-social-links svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.durgacenter-desktop-options {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.durgacenter-desktop-options > summary {
+  display: grid;
+  width: 30px;
+  height: 34px;
+  place-items: center;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.1rem;
+  list-style: none;
+}
+
+.durgacenter-desktop-options > summary::-webkit-details-marker {
+  display: none;
+}
+
+.durgacenter-desktop-options-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  width: 245px;
+  gap: 0.65rem;
+  border: 1px solid #e3e3e3;
+  background: #fff;
+  padding: 1rem;
+  color: #172033;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+}
+
+.durgacenter-desktop-options-panel > a,
+.durgacenter-desktop-options-panel > a:visited,
+.durgacenter-desktop-options-panel form button {
+  color: #172033;
+  font: 500 0.9rem "Inter", Arial, Helvetica, sans-serif;
+  text-align: left;
+  text-decoration: none;
+}
+
+.durgacenter-desktop-options-panel form button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.durgacenter-view-options > span {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.durgacenter-view-options > div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.durgacenter-view-options button {
+  min-height: 40px;
+  flex: 1;
+  border: 1px solid #dd183b;
+  border-radius: 3px;
+  background: #fff;
+  padding: 0.4rem;
+  color: #a20f2b;
+  cursor: pointer;
+  font: 600 0.77rem "Inter", Arial, Helvetica, sans-serif;
+}
+
+.durgacenter-view-options button[aria-pressed="true"] {
+  background: #dd183b;
+  color: #fff;
+}
+
+.durgacenter-view-options .durgacenter-classic-option {
+  width: 100%;
+  min-height: 28px;
+  margin-top: 0.4rem;
+  border: 0;
+  color: #555;
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.durgacenter-replica-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 1200px) and (min-width: 922px) {
+  .durgacenter-replica-header .durgacenter-header-inner {
+    width: calc(100% - 40px);
+    gap: 0.8rem;
+  }
+
+  .durgacenter-desktop-nav {
+    gap: 0;
+  }
+
+  .durgacenter-desktop-nav a {
+    font-size: 0.83rem;
+    padding: 0 8px;
+  }
+
+  .durgacenter-social-links {
+    gap: 0.6rem;
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 921px) {
+  .durgacenter-replica-header .durgacenter-header-inner {
+    width: 100%;
+    min-height: 177.8px;
+    padding: 0 20px;
+  }
+
+  .durgacenter-replica-header .durgacenter-menu-button {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  .durgacenter-desktop-nav,
+  .durgacenter-social-links,
+  .durgacenter-desktop-options {
+    display: none;
+  }
+
+  .durgacenter-replica-mobile-nav.is-open {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
+    z-index: 30;
+    display: block;
+    max-height: calc(100dvh - 177.8px);
+    overflow-y: auto;
+    background: #f8f8f8;
+  }
+
+  .durgacenter-replica-mobile-nav > a,
+  .durgacenter-replica-mobile-nav > a:visited {
+    display: flex;
+    min-height: 70px;
+    align-items: center;
+    border-bottom: 1px solid #e9e9e9;
+    padding: 0 15px;
+    color: #151c29;
+    font: 400 1rem "Inter", Arial, Helvetica, sans-serif;
+    text-decoration: none;
+  }
+
+  .durgacenter-replica-mobile-nav > a[aria-current="page"] {
+    color: #dd183b;
+  }
+
+  .durgacenter-replica-mobile-tools {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1.25rem 15px 1.5rem;
+    color: #172033;
+  }
+
+  .durgacenter-replica-mobile-nav > .durgacenter-view-options {
+    border-bottom: 1px solid #e9e9e9;
+    background: #fff;
+    padding: 14px 15px;
+  }
+
+  .durgacenter-replica-mobile-tools > a,
+  .durgacenter-replica-mobile-tools > a:visited,
+  .durgacenter-replica-mobile-tools form button {
+    color: #172033;
+    font: 500 0.9rem "Inter", Arial, Helvetica, sans-serif;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  .durgacenter-replica-mobile-tools form button {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
   }
 }

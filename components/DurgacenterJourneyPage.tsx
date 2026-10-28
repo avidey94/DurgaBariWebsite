@@ -52,6 +52,13 @@ export function DurgacenterJourneyPage() {
         </ul>
       </section>
 
+      <iframe
+        className="durgacenter-journey-video"
+        title="Durga Bari community gathering video"
+        src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F4263201827229176%2F&show_text=false&width=560&t=0"
+        loading="lazy"
+      />
+
       <section className="durgacenter-phase-section">
         <h2>🪔 Initiation — First Community Puja & Early Temple Worship (2026)</h2>
         <h3>Purpose</h3>
@@ -62,6 +69,13 @@ export function DurgacenterJourneyPage() {
           <li>Cultural evening (music, dance, recitation)</li>
           <li>Youth engagement (art, heritage storytelling)</li>
           <li>Community sign-ups (membership interest, volunteers, donors)</li>
+        </ul>
+        <h3>Milestones to track</h3>
+        <ul>
+          <li>🟡 Venue booked</li>
+          <li>🟡 Priest &amp; ritual items confirmed</li>
+          <li>🟡 Sponsorships secured</li>
+          <li>🟡 Volunteer teams filled (setup, decor, cultural, logistics, food, outreach)</li>
         </ul>
         <h3>How you can help</h3>
         <ul><li>Sponsor a puja item or day</li><li>Join a volunteer team</li><li>Invite your network</li></ul>
@@ -104,7 +118,7 @@ export function DurgacenterJourneyPage() {
         <h3>How it will be created</h3>
         <ul><li>Soil will be lovingly collected from each of the 52 Shakti Peethas and 12 Jyotirlingas.</li><li>Devotees and volunteers will help bring these sacred soils, to be placed in consecrated kalash (urns).</li><li>These kalash will be preserved until the permanent temple foundation ritual, where the Stoopas will be ritually installed.</li></ul>
         <h3>How you can help</h3>
-        <ul><li>Volunteer to assist in collecting soil from a Shakti Peetha or Jyotirlinga.</li><li>Sponsor the cost of soil collection journeys.</li><li>Participate in the Soil Offering Ceremony during Durga Puja.</li></ul>
+        <ul><li>Volunteer to assist in collecting soil from a Shakti Peetha or Jyotirlinga when you travel or through connections.</li><li>Sponsor the cost of soil collection journeys.</li><li>Participate in the Soil Offering Ceremony during Durga Puja.</li></ul>
       </section>
     </article>
   );

@@ -5,6 +5,7 @@ import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 import { cookies } from "next/headers";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const helpNowItems = {
   en: [
@@ -57,7 +58,7 @@ interface GetInvolvedPageProps {
 }
 
 export default async function GetInvolvedPage({ searchParams }: GetInvolvedPageProps) {
-  const theme = (await cookies()).get("db_theme")?.value;
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
   if (theme === "durgacenter") {
     return <DurgacenterGetInvolvedPage />;
   }
@@ -137,3 +138,4 @@ export default async function GetInvolvedPage({ searchParams }: GetInvolvedPageP
     </ContentPageFrame>
   );
 }
+export const metadata = { title: "Be Part of Something Sacred and Lasting" };

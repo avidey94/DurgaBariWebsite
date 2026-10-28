@@ -9,6 +9,7 @@ import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const waysToGive = {
   en: [
@@ -73,7 +74,7 @@ interface OurJourneyPageProps {
 }
 
 export default async function OurJourneyPage({ searchParams }: OurJourneyPageProps) {
-  const theme = (await cookies()).get("db_theme")?.value;
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
   if (theme === "durgacenter") {
     return <DurgacenterJourneyPage />;
   }
@@ -236,3 +237,4 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
     </ContentPageFrame>
   );
 }
+export const metadata = { title: "Our Sacred Journey: From Vision to Temple" };

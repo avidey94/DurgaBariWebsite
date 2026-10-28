@@ -1,7 +1,7 @@
 import type { Language } from "@/lib/i18n";
 
 const MAP_EMBED_URL = "https://maps.google.com/maps?q=2350%20Paragon%20Dr%2C%20San%20Jose%2C%20CA&t=m&z=17&output=embed&iwloc=near";
-const JOURNEY_IMAGE_URL = "https://thedurgacenter.org/wp-content/uploads/2025/09/Orange-and-Violet-Process-Flow-Timelines-Concept-Map.png";
+const JOURNEY_IMAGE_URL = "/durgacenter/timeline.png";
 
 const copy = {
   en: {
@@ -33,6 +33,9 @@ export function HomePageDurgacenter({ lang }: { lang: Language }) {
           </div>
           <div className="durgacenter-journey">
             <img src={JOURNEY_IMAGE_URL} alt="Our Sacred Journey" />
+          </div>
+          <div className="durgacenter-home-social">
+            <a href="https://www.facebook.com/profile.php?id=61582255682301" target="_blank" rel="noreferrer" aria-label="Facebook">f</a>
           </div>
         </article>
       </div>

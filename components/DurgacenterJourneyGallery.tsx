@@ -4,15 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 
 const images = [
   {
-    src: "https://thedurgacenter.org/wp-content/uploads/2026/03/IMG_7121-300x169.jpeg",
+    src: "/durgacenter/gathering-1.jpeg",
     alt: "Community gatherings at the Townhall Meeting",
   },
   {
-    src: "https://thedurgacenter.org/wp-content/uploads/2026/03/IMG_7311-300x169.jpeg",
+    src: "/durgacenter/gathering-2.jpeg",
     alt: "Townhall meeting",
   },
   {
-    src: "https://thedurgacenter.org/wp-content/uploads/2026/03/IMG_7416-300x225.jpeg",
+    src: "/durgacenter/gathering-3.jpeg",
     alt: "Community members at Townhall meeting",
   },
 ] as const;

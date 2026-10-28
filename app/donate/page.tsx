@@ -9,6 +9,7 @@ import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const waysToGive = {
   en: [
@@ -92,7 +93,7 @@ interface DonatePageProps {
 }
 
 export default async function DonatePage({ searchParams }: DonatePageProps) {
-  const theme = (await cookies()).get("db_theme")?.value;
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
   if (theme === "durgacenter") {
     redirect("/join-hands-to-build-durga-bari/");
   }

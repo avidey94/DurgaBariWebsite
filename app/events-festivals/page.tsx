@@ -3,6 +3,9 @@ import Link from "next/link";
 import { ContentHero, ContentPageFrame } from "@/components/content-page";
 import { computeVisibilityForUser, listCalendarEvents } from "@/lib/events/server";
 import { toPacificLocal } from "@/lib/events/timezone";
+import { cookies } from "next/headers";
+import { DurgacenterEventsPage } from "@/components/DurgacenterEventsPage";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const eventTypeLabel: Record<string, string> = {
   darshan: "Darshan",
@@ -48,6 +51,9 @@ const formatTimeRange = (startIso: string, endIso: string | null, allDay: boolea
 };
 
 export default async function EventsFestivalsPage({ searchParams }: EventsFestivalsPageProps) {
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
+  if (theme === "durgacenter") return <DurgacenterEventsPage />;
+
   const params = await searchParams;
   const selectedType = (params.eventType ?? "").trim().toLowerCase();
   const query = (params.q ?? "").trim().toLowerCase();

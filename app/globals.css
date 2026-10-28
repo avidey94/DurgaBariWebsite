@@ -1,6 +1,37 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600&display=swap");
 @import "tailwindcss";
 @import "../styles/theme.css";
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/durgacenter/inter-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/durgacenter/plus-jakarta-sans-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/durgacenter/roboto-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/durgacenter/roboto-italic-latin.woff2") format("woff2");
+}
 
 @theme inline {
   --color-background: var(--db-bg);
@@ -961,4 +992,518 @@ a:visited {
 
 [data-theme="revamp"] .content-module-header[data-tone="gold"] .content-module-title {
   color: #4a3720;
+}
+
+/* Match the current public Durga Center pages in the original view. */
+[data-theme="durgacenter"] body {
+  background: #ffede6;
+  color: #3a3a3a;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+[data-theme="durgacenter"] main {
+  min-height: 0;
+}
+
+.durgacenter-home {
+  min-height: 0;
+}
+
+.durgacenter-home > div {
+  width: min(1200px, calc(100% - 80px));
+  max-width: none;
+  padding: 60px 0 0;
+}
+
+.durgacenter-content {
+  max-width: none;
+}
+
+.durgacenter-content h1 {
+  color: #0f172a;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.durgacenter-intro,
+.durgacenter-location {
+  margin-right: 30px;
+  margin-left: 30px;
+  color: #7a7a7a;
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.durgacenter-intro {
+  margin-top: 58px;
+}
+
+.durgacenter-location {
+  margin-top: 48px;
+}
+
+.durgacenter-map {
+  margin: 40px 30px 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.durgacenter-map iframe {
+  height: 300px;
+}
+
+.durgacenter-journey {
+  width: min(1024px, calc(100% - 60px));
+  margin: 20px 30px 0;
+  background: transparent;
+}
+
+.durgacenter-home-social {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 70px;
+}
+
+.durgacenter-home-social a,
+.durgacenter-home-social a:visited {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 50%;
+  background: #405d97;
+  color: #fff;
+  font: 700 30px Arial, sans-serif;
+  text-decoration: none;
+}
+
+.durgacenter-footer {
+  display: flex;
+  min-height: 121px;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #e9d9d2;
+  padding: 20px;
+  color: #3a3a3a;
+  font: 400 18px "Inter", Arial, Helvetica, sans-serif;
+  text-align: center;
+}
+
+.durgacenter-about-page,
+.durgacenter-join-page,
+.durgacenter-contact-page,
+.durgacenter-involved-page,
+.durgacenter-journey-page,
+.durgacenter-events-page {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0 0 60px;
+  background: #ffede6;
+  color: #7a7a7a;
+  font: 400 18px/1.65 "Roboto", Arial, Helvetica, sans-serif;
+}
+
+.durgacenter-about-page > h1,
+.durgacenter-join-page > h1,
+.durgacenter-contact-page > h1,
+.durgacenter-involved-page > h1,
+.durgacenter-journey-page > h1,
+.durgacenter-events-page > h1 {
+  width: 100%;
+  max-width: none;
+  margin: 0 0 19.2px;
+  color: #0f172a;
+  font: 600 32px/1.2 "Plus Jakarta Sans", Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.durgacenter-about-content,
+.durgacenter-join-content,
+.durgacenter-contact-form,
+.durgacenter-involved-content,
+.durgacenter-journey-page > :not(h1),
+.durgacenter-events-content {
+  width: min(1140px, calc(100% - 140px));
+  max-width: none;
+  margin-right: auto;
+  margin-left: auto;
+  color: #7a7a7a;
+  font: 400 18px/1.65 "Roboto", Arial, Helvetica, sans-serif;
+}
+
+.durgacenter-about-content {
+  padding-top: 10px;
+}
+
+.durgacenter-about-content p,
+.durgacenter-join-content p,
+.durgacenter-involved-content p,
+.durgacenter-events-content p {
+  margin: 0 0 1.6rem;
+}
+
+.durgacenter-about-image {
+  width: min(768px, 100%);
+  margin: 49px auto 30px;
+}
+
+.durgacenter-join-content > p:first-child {
+  font-size: 18px;
+}
+
+.durgacenter-join-content {
+  padding-top: 10px;
+}
+
+.durgacenter-join-content h2 {
+  margin: 48px 0 20px;
+  font-size: 48px;
+  line-height: 1.3;
+}
+
+.durgacenter-join-content h3 {
+  font-size: 24px;
+}
+
+.durgacenter-join-content a,
+.durgacenter-involved-content a,
+.durgacenter-events-content a {
+  color: #b51c31;
+}
+
+.durgacenter-involved-content > p:first-child {
+  font-size: 18px;
+}
+
+.durgacenter-involved-content {
+  padding-top: 10px;
+}
+
+.durgacenter-involved-content h2 {
+  margin: 46px 0 25px;
+  border: 0;
+  padding: 0;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.durgacenter-involved-content h3 {
+  margin: 16px 0 0;
+  color: #7a7a7a;
+  font-family: "Roboto", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.durgacenter-journey-intro {
+  padding-top: 10px;
+  margin-bottom: 50px;
+}
+
+.durgacenter-journey-video {
+  display: block;
+  width: 100%;
+  height: 314px;
+  border: 0;
+}
+
+.durgacenter-journey-page > h1 {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.durgacenter-events-content h2 {
+  margin: 40px 0 20px;
+  color: #555;
+  font: 600 26px/1.3 "Plus Jakarta Sans", Arial, Helvetica, sans-serif;
+}
+
+.durgacenter-events-content h3 {
+  margin: 25px 0 16px;
+  color: #0f172a;
+  font: 600 24px/1.3 "Plus Jakarta Sans", Arial, Helvetica, sans-serif;
+}
+
+.durgacenter-events-content ul {
+  margin: 0 0 28px;
+  padding-left: 22px;
+}
+
+.durgacenter-join-content ul,
+.durgacenter-involved-content ul,
+.durgacenter-journey-page ul,
+.durgacenter-events-content ul {
+  list-style: disc;
+}
+
+.durgacenter-canva-embed {
+  width: min(100%, 900px);
+  aspect-ratio: 16 / 9;
+  margin: 25px 0 10px;
+}
+
+.durgacenter-canva-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.durgacenter-event-list-page {
+  min-height: 600px;
+  background: #fff;
+  padding: 58px 0 70px;
+  color: #111827;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+}
+
+.durgacenter-event-list-content {
+  width: min(1140px, calc(100% - 56px));
+  margin: 0 auto;
+}
+
+.durgacenter-event-list-toolbar,
+.durgacenter-event-list-icons,
+.durgacenter-event-list-month,
+.durgacenter-event-list-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.durgacenter-event-list-toolbar {
+  font-size: 20px;
+}
+
+.durgacenter-event-list-icons {
+  gap: 16px;
+  font-size: 26px;
+}
+
+.durgacenter-event-list-month {
+  gap: 18px;
+  margin-top: 46px;
+  font-size: 14px;
+}
+
+.durgacenter-event-list-month > span:last-child {
+  flex: 1;
+  border-top: 1px solid #dedede;
+}
+
+.durgacenter-event-list-empty {
+  margin: 36px 0;
+  font-size: 14px;
+}
+
+.durgacenter-event-list-item {
+  display: grid;
+  grid-template-columns: 61px 1fr;
+  gap: 14px;
+  min-height: 128px;
+  margin-top: 17px;
+  border-bottom: 1px solid #dedede;
+  border-left: 3px solid #4654ee;
+  padding: 0 14px 12px;
+}
+
+.durgacenter-event-list-day {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 53px;
+  border-bottom: 1px solid #111;
+  padding-top: 2px;
+}
+
+.durgacenter-event-list-day small {
+  font-size: 10px;
+}
+
+.durgacenter-event-list-day strong {
+  font-size: 18px;
+}
+
+.durgacenter-event-list-item p {
+  max-width: 200px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.durgacenter-event-list-item h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.durgacenter-event-list-item a,
+.durgacenter-event-list-item a:visited {
+  color: #111827;
+  text-decoration: none;
+}
+
+.durgacenter-event-list-pagination {
+  margin-top: 26px;
+  font-size: 12px;
+}
+
+.durgacenter-event-list-pagination a,
+.durgacenter-event-list-pagination a:visited {
+  color: #111827;
+  text-decoration: none;
+}
+
+.durgacenter-event-list-pagination .is-disabled {
+  color: #ddd;
+}
+
+.durgacenter-event-list-subscribe,
+.durgacenter-event-list-subscribe:visited {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 39px;
+  border: 1px solid #4654ee;
+  border-radius: 3px;
+  color: #4654ee;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 921px) {
+  [data-theme="durgacenter"] body {
+    font-size: 16.416px;
+  }
+
+  .durgacenter-home > div {
+    width: calc(100% - 40px);
+    padding-top: 0;
+  }
+
+  .durgacenter-content h1,
+  .durgacenter-about-page > h1,
+  .durgacenter-join-page > h1,
+  .durgacenter-contact-page > h1,
+  .durgacenter-involved-page > h1,
+  .durgacenter-journey-page > h1,
+  .durgacenter-events-page > h1 {
+    font-size: 29.184px;
+    line-height: 1.2;
+  }
+
+  .durgacenter-intro,
+  .durgacenter-location {
+    margin-right: 10px;
+    margin-left: 10px;
+    font-size: 16.416px;
+  }
+
+  .durgacenter-intro {
+    margin-top: 58px;
+  }
+
+  .durgacenter-location {
+    margin-top: 48px;
+  }
+
+  .durgacenter-map {
+    margin-right: 10px;
+    margin-left: 10px;
+  }
+
+  .durgacenter-journey {
+    width: calc(100% - 20px);
+    margin-right: 10px;
+    margin-left: 10px;
+  }
+
+  .durgacenter-about-page,
+  .durgacenter-join-page,
+  .durgacenter-contact-page,
+  .durgacenter-involved-page,
+  .durgacenter-journey-page,
+  .durgacenter-events-page {
+    font-size: 16.416px;
+    padding-bottom: 45px;
+  }
+
+  .durgacenter-about-page > h1,
+  .durgacenter-join-page > h1,
+  .durgacenter-contact-page > h1,
+  .durgacenter-involved-page > h1,
+  .durgacenter-journey-page > h1,
+  .durgacenter-events-page > h1 {
+    margin-right: 0;
+    margin-left: 0;
+    margin-bottom: 17.5px;
+  }
+
+  .durgacenter-about-content,
+  .durgacenter-join-content,
+  .durgacenter-contact-form,
+  .durgacenter-involved-content,
+  .durgacenter-journey-page > :not(h1),
+  .durgacenter-events-content {
+    width: calc(100% - 20px);
+    font-size: 16.416px;
+    line-height: 1.65;
+  }
+
+  .durgacenter-about-image {
+    margin-top: 46px;
+  }
+
+  .durgacenter-join-content > p:first-child,
+  .durgacenter-involved-content > p:first-child {
+    font-size: 16.416px;
+  }
+
+  .durgacenter-join-content h2 {
+    font-size: 43.776px;
+  }
+
+  .durgacenter-involved-content h2 {
+    font-size: 21.888px;
+  }
+
+  .durgacenter-involved-content h3 {
+    font-size: 16.416px;
+  }
+
+  .durgacenter-gallery-viewport {
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .durgacenter-gallery-slide {
+    padding: 0;
+  }
+
+  .durgacenter-gallery-slide img {
+    height: auto;
+  }
+
+  .durgacenter-events-content h2 {
+    font-size: 22px;
+  }
+
+  .durgacenter-events-content h3 {
+    font-size: 23px;
+  }
+
+  .durgacenter-footer {
+    font-size: 16px;
+  }
 }

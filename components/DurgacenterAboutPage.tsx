@@ -1,4 +1,4 @@
-const inaugurationImage = "https://thedurgacenter.org/wp-content/uploads/2026/03/maa-durga-inauguration-768x1024.jpg";
+const inaugurationImage = "/durgacenter/maa-durga-inauguration.jpg";
 
 export function DurgacenterAboutPage() {
   return (

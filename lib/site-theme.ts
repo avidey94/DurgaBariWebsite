@@ -1,9 +1,9 @@
 export type SiteTheme = "classic-green" | "revamp" | "durgacenter";
 
-// A new cookie resets earlier theme choices so visitors first see the current
-// Durga Center design. The menu can still switch to the other site views.
-export const SITE_VIEW_COOKIE = "db_site_view";
+// Start visitors on the new site after launch. Earlier saved view choices use
+// the previous cookie name; visitors can still switch views from the menu.
+export const SITE_VIEW_COOKIE = "db_site_view_v2";
 
 export function resolveSiteTheme(value: string | undefined): SiteTheme {
-  return value === "classic-green" || value === "revamp" ? value : "durgacenter";
+  return value === "classic-green" || value === "durgacenter" ? value : "revamp";
 }

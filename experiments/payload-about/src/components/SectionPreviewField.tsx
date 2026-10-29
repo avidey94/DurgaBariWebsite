@@ -12,6 +12,12 @@ type DragState = {
   startX: number
   startY: number
   source: HTMLElement
+  rowId: string | null
+  sourceIndex: number
+  destinationIndex: number
+  total: number
+  started: boolean
+  hasPosted: boolean
   target: HTMLElement | null
   frame: number | null
 }
@@ -20,6 +26,19 @@ function postHighlight(row: ActiveRow) {
   const iframe = document.getElementById('live-preview-iframe') as HTMLIFrameElement | null
   if (!iframe?.contentWindow || !iframe.src || new URL(iframe.src).origin !== window.location.origin) return
   iframe.contentWindow.postMessage({ type: messageType, rowId: row?.rowId ?? null, index: row?.index ?? null }, window.location.origin)
+}
+
+function postDrag(state: DragState, phase: 'moving' | 'dropped' | 'cancelled') {
+  const iframe = document.getElementById('live-preview-iframe') as HTMLIFrameElement | null
+  if (!iframe?.contentWindow || !iframe.src || new URL(iframe.src).origin !== window.location.origin) return
+  iframe.contentWindow.postMessage({
+    type: 'durga-bari-section-placement',
+    phase,
+    rowId: state.rowId,
+    sourceIndex: state.sourceIndex,
+    destinationIndex: state.destinationIndex,
+    total: state.total,
+  }, window.location.origin)
 }
 
 function rowIndex(target: EventTarget | null, root: HTMLElement | null): number | null {
@@ -59,7 +78,10 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
     const onPreviewReady = (event: MessageEvent) => {
       const iframe = document.getElementById('live-preview-iframe') as HTMLIFrameElement | null
       if (event.origin !== window.location.origin || event.source !== iframe?.contentWindow) return
-      if (event.data?.type === 'durga-bari-preview-ready') postHighlight(activeRow.current)
+      if (event.data?.type === 'durga-bari-preview-ready') {
+        if (drag.current?.started) postDrag(drag.current, 'moving')
+        else postHighlight(activeRow.current)
+      }
     }
     window.addEventListener('message', onPreviewReady)
     return () => window.removeEventListener('message', onPreviewReady)
@@ -75,6 +97,7 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
       if (!state.source.style.transform) return
 
       container.dataset.dragging = 'true'
+      state.started = true
       const rowElements = Array.from(container.querySelectorAll<HTMLElement>('[id^="layout-row-"]'))
         .filter((row) => rowPattern.test(row.id))
       const sourceIndex = Number(rowPattern.exec(state.source.id)?.[1])
@@ -88,6 +111,12 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
         if (offset < -1) destination = Math.max(destination, index)
         if (offset > 1) destination = Math.min(destination, index)
       })
+
+      if (destination !== state.destinationIndex || !state.hasPosted) {
+        state.destinationIndex = destination
+        state.hasPosted = true
+        postDrag(state, 'moving')
+      }
 
       const nextTarget = destination === sourceIndex ? null : rowElements.find((row) => row.id === `layout-row-${destination}`) || null
       if (state.target !== nextTarget) {
@@ -111,7 +140,7 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
       if (state.frame === null) state.frame = requestAnimationFrame(updateDestination)
     }
 
-    const finishDrag = (event?: PointerEvent) => {
+    const finishDrag = (event?: PointerEvent, cancelled = false) => {
       const state = drag.current
       if (!state || (event && event.pointerId !== state.pointerId)) return
       if (state.frame !== null) cancelAnimationFrame(state.frame)
@@ -119,6 +148,7 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
         delete state.target.dataset.dropTarget
         delete state.target.dataset.dropLabel
       }
+      if (state.started) postDrag(state, cancelled ? 'cancelled' : 'dropped')
       delete state.source.dataset.dragSource
       const container = root.current
       if (container) {
@@ -133,17 +163,18 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
       drag.current = null
     }
 
+    const onCancel = (event: PointerEvent) => finishDrag(event, true)
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') finishDrag()
+      if (event.key === 'Escape') finishDrag(undefined, true)
     }
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', finishDrag)
-    window.addEventListener('pointercancel', finishDrag)
+    window.addEventListener('pointercancel', onCancel)
     window.addEventListener('keydown', onKeyDown)
     return () => {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', finishDrag)
-      window.removeEventListener('pointercancel', finishDrag)
+      window.removeEventListener('pointercancel', onCancel)
       window.removeEventListener('keydown', onKeyDown)
       if (settleTimer.current) clearTimeout(settleTimer.current)
       if (drag.current?.frame !== null && drag.current?.frame !== undefined) cancelAnimationFrame(drag.current.frame)
@@ -161,13 +192,15 @@ export const SectionPreviewField: BlocksFieldClientComponent = (props) => {
       delete root.current.dataset.dragSettling
       root.current.dataset.dragPending = 'true'
       source.dataset.dragSource = 'true'
-      drag.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, source, target: null, frame: null }
+      const sourceIndex = Number(rowPattern.exec(source.id)?.[1])
+      drag.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, source, rowId: rows[sourceIndex]?.id || null, sourceIndex, destinationIndex: sourceIndex, total: rows.length, started: false, hasPosted: false, target: null, frame: null }
     }}
     onPointerOver={(event) => {
+      if (drag.current?.started) return
       const index = rowIndex(event.target, root.current)
       if (index !== null) highlight(index)
     }}
-    onPointerLeave={() => highlight(null)}
+    onPointerLeave={() => { if (!drag.current?.started) highlight(null) }}
     onFocusCapture={(event) => highlight(rowIndex(event.target, root.current))}
     onBlurCapture={(event) => {
       if (!root.current?.contains(event.relatedTarget as Node | null)) highlight(null)

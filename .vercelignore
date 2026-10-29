@@ -1,0 +1,8 @@
+.env*
+**/.env*
+**/.payload-accounts
+**/payload-about.db*
+**/node_modules
+**/.next
+**/.vercel
+exports/

@@ -3,6 +3,7 @@
 import { useLivePreview } from '@payloadcms/live-preview-react'
 import { Fragment, useEffect, useState } from 'react'
 import type { Page } from '@/payload-types'
+import { StoryCarousel } from './StoryCarousel'
 
 type HighlightedSection = { rowId: string; index: number } | null
 type Placement = { rowId: string | null; sourceIndex: number; destinationIndex: number; total: number; phase: 'moving' | 'dropped' }
@@ -34,6 +35,8 @@ function Section({ block, number, highlighted, moving }: { block: NonNullable<Pa
         <div className="image-story-media"><img src={block.imageUrl} alt={block.imageAlt} /></div>
         <div className="image-story-copy"><span className="section-index">{number}</span><p className="eyebrow">{block.eyebrow}</p><h2>{block.headline}</h2><p>{block.body}</p></div>
       </section>
+    case 'storyCarousel':
+      return <div className={`section-shell carousel-section-wrapper${stateClass}`} data-row-id={block.id}><StoryCarousel block={block} number={number} /></div>
     case 'quote':
       return <figure className={`quote-section section-shell${stateClass}`} data-row-id={block.id}><span className="quote-mark">“</span><blockquote>{block.quote}</blockquote>{block.attribution && <figcaption>{block.attribution}</figcaption>}</figure>
     case 'callToAction':

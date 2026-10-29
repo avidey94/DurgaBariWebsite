@@ -21,6 +21,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .section-shell--highlighted{outline:3px solid #a56f36;outline-offset:-8px;background-color:rgba(194,139,74,.07)}
 .section-shell--moving{outline:1px dashed rgba(165,111,54,.7);outline-offset:-8px;background-color:rgba(194,139,74,.035)}
 .section-shell--moving::after{content:'Moving';position:absolute;top:14px;right:max(5vw,26px);color:#986235;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.carousel-section-wrapper{padding:0;border:0}
 .section-drop-guide{position:relative;z-index:3;height:0;border-top:2px solid #a56f36;pointer-events:none}
 .section-drop-guide span{position:absolute;top:-13px;right:max(5vw,26px);display:flex;align-items:center;gap:12px;padding:4px 8px;background:var(--cream);color:#794f2c;font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap}
 .section-drop-guide strong{font-weight:700;font-variant-numeric:tabular-nums}

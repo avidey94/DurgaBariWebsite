@@ -2,6 +2,7 @@ export type PageBlock =
   | { id?: string; blockType: 'story'; eyebrow: string; headline: string; body: string }
   | { id?: string; blockType: 'principles'; eyebrow: string; headline?: string; items: Array<{ id?: string; title: string; body: string }> }
   | { id?: string; blockType: 'imageStory'; eyebrow: string; headline: string; body: string; imageUrl: string; imageAlt: string }
+  | { id?: string; blockType: 'storyCarousel'; eyebrow?: string; headline: string; introduction?: string; cards: Array<{ id?: string; label?: string; headline: string; body?: string; imageUrl: string; imageAlt: string; linkLabel?: string; linkUrl?: string }> }
   | { id?: string; blockType: 'quote'; quote: string; attribution?: string }
   | { id?: string; blockType: 'callToAction'; headline: string; body: string; linkLabel: string; linkUrl: string }
   | { id?: string; blockType: 'featureSlot'; feature: 'upcomingEvents' | 'visit' | 'memberPortal' | 'livestream' | 'contactForm' | 'donationMethods'; eyebrow?: string; headline?: string; body?: string };

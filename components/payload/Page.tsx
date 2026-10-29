@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth/session';
 import { listCalendarEvents } from '@/lib/events/server';
 import { env } from '@/lib/env';
 import type { PageBlock, PayloadPage } from '@/lib/payload/pages';
+import { StoryCarousel } from './StoryCarousel';
 import styles from './AboutPage.module.css';
 
 function Arrow() {
@@ -78,6 +79,8 @@ function Section({ block, number }: { block: PageBlock; number: number }) {
     <div className={styles.storyImage}>{safeImage(block.imageUrl) && <img src={safeImage(block.imageUrl)} alt={block.imageAlt || ''} />}</div>
     <div className={styles.heading}><span className={styles.index}>{number}</span><p className={styles.eyebrow}>{block.eyebrow}</p><h2>{block.headline}</h2><p className={styles.imageBody}>{block.body}</p></div>
   </section>;
+
+  if (block.blockType === 'storyCarousel') return <StoryCarousel block={block} number={number} />;
 
   if (block.blockType === 'quote') return <figure className={`${styles.section} ${styles.quote}`}><span aria-hidden="true">“</span><blockquote>{block.quote}</blockquote>{block.attribution && <figcaption>{block.attribution}</figcaption>}</figure>;
 

@@ -98,6 +98,33 @@ export const Pages: CollectionConfig = {
           ],
         },
         {
+          slug: 'storyCarousel',
+          labels: { singular: 'Story carousel', plural: 'Story carousels' },
+          admin: { disableBlockName: true },
+          fields: [
+            text('eyebrow', 'Eyebrow', false),
+            text('headline', 'Section heading'),
+            { name: 'introduction', label: 'Introduction', type: 'textarea' },
+            {
+              name: 'cards',
+              type: 'array',
+              label: 'Slides',
+              minRows: 2,
+              maxRows: 6,
+              admin: { initCollapsed: true, description: 'Each slide is a large editorial card. Drag slides to change their order.' },
+              fields: [
+                text('label', 'Small label', false),
+                text('headline', 'Headline'),
+                { name: 'body', label: 'Description', type: 'textarea' },
+                text('imageUrl', 'Image path or HTTPS URL'),
+                text('imageAlt', 'Image description'),
+                text('linkLabel', 'Link text', false),
+                text('linkUrl', 'Link path or HTTPS URL', false),
+              ],
+            },
+          ],
+        },
+        {
           slug: 'quote',
           labels: { singular: 'Pull quote', plural: 'Pull quotes' },
           admin: { disableBlockName: true },

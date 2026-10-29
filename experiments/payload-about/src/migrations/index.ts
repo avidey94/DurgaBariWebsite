@@ -1,6 +1,7 @@
 import * as migration_20261029_155241_initial_about from './20261029_155241_initial_about';
 import * as migration_20261029_155408_account_roles from './20261029_155408_account_roles';
 import * as migration_20261029_171320 from './20261029_171320';
+import * as migration_20261029_220209_story_carousel from './20261029_220209_story_carousel';
 
 export const migrations = [
   {
@@ -16,6 +17,11 @@ export const migrations = [
   {
     up: migration_20261029_171320.up,
     down: migration_20261029_171320.down,
-    name: '20261029_171320'
+    name: '20261029_171320',
+  },
+  {
+    up: migration_20261029_220209_story_carousel.up,
+    down: migration_20261029_220209_story_carousel.down,
+    name: '20261029_220209_story_carousel'
   },
 ];

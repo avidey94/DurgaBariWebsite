@@ -223,6 +223,29 @@ export interface Page {
             blockType: 'imageStory';
           }
         | {
+            eyebrow?: string | null;
+            headline: string;
+            introduction?: string | null;
+            /**
+             * Each slide is a large editorial card. Drag slides to change their order.
+             */
+            cards?:
+              | {
+                  label?: string | null;
+                  headline: string;
+                  body?: string | null;
+                  imageUrl: string;
+                  imageAlt: string;
+                  linkLabel?: string | null;
+                  linkUrl?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'storyCarousel';
+          }
+        | {
             quote: string;
             attribution?: string | null;
             id?: string | null;
@@ -457,6 +480,27 @@ export interface PagesSelect<T extends boolean = true> {
               body?: T;
               imageUrl?: T;
               imageAlt?: T;
+              id?: T;
+              blockName?: T;
+            };
+        storyCarousel?:
+          | T
+          | {
+              eyebrow?: T;
+              headline?: T;
+              introduction?: T;
+              cards?:
+                | T
+                | {
+                    label?: T;
+                    headline?: T;
+                    body?: T;
+                    imageUrl?: T;
+                    imageAlt?: T;
+                    linkLabel?: T;
+                    linkUrl?: T;
+                    id?: T;
+                  };
               id?: T;
               blockName?: T;
             };

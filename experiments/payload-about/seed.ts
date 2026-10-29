@@ -1,67 +1,37 @@
 import 'dotenv/config'
 import { randomBytes } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import config from './src/payload.config'
 import { getPayload } from 'payload'
 
 const payload = await getPayload({ config })
-const editorEmail = 'editor@durgabari.local'
-const existingEditor = await payload.find({ collection: 'users', where: { email: { equals: editorEmail } }, limit: 1 })
+const sharedDatabase = Boolean(process.env.PAYLOAD_POSTGRES_URL)
+const accounts = sharedDatabase ? [
+  { email: process.env.PAYLOAD_ADMIN_EMAIL || 'avidey94@gmail.com', password: process.env.PAYLOAD_ADMIN_PASSWORD, role: 'administrator' as const },
+  { email: process.env.PAYLOAD_EDITOR_EMAIL || 'it@thedurgacenter.org', password: process.env.PAYLOAD_EDITOR_PASSWORD, role: 'editor' as const },
+] : [
+  { email: 'editor@durgabari.local', password: randomBytes(32).toString('hex'), role: 'administrator' as const },
+]
 
-if (!existingEditor.docs.length) {
-  await payload.create({ collection: 'users', data: { email: editorEmail, password: randomBytes(32).toString('hex') } })
+for (const account of accounts) {
+  if (!account.password) throw new Error(`Set a password for ${account.email} before seeding the shared database.`)
+  const existing = await payload.find({ collection: 'users', where: { email: { equals: account.email } }, limit: 1 })
+  if (!existing.docs.length) {
+    await payload.create({ collection: 'users', data: { email: account.email, password: account.password, role: account.role } })
+  } else if (existing.docs[0].role !== account.role) {
+    await payload.update({ collection: 'users', id: existing.docs[0].id, data: { role: account.role } })
+  }
 }
 
 const existingPage = await payload.find({ collection: 'pages', where: { slug: { equals: 'about' } }, limit: 1 })
 
 if (!existingPage.docs.length) {
+  const initialPage = JSON.parse(readFileSync(new URL('./about-page.json', import.meta.url), 'utf8'))
   await payload.create({
     collection: 'pages',
-    data: {
-      slug: 'about',
-      title: 'About Durga Bari',
-      _status: 'published',
-      hero: {
-        eyebrow: 'About Durga Bari',
-        headline: 'A sacred home, shaped by community.',
-        lead: 'Durga Bari brings worship, cultural heritage, and community life together in one welcoming place.',
-        imageUrl: '/durgacenter/maa-durga-inauguration.jpg',
-        imageAlt: 'Worship at Durga Bari’s inaugural gathering',
-      },
-      layout: [
-        {
-          blockType: 'story',
-          eyebrow: 'Our purpose',
-          headline: 'A living place for worship and connection.',
-          body: 'We envision a home for prayer and spiritual growth that also makes room for cultural programs, youth education, and community gatherings. The people who take part give Durga Bari its meaning.',
-        },
-        {
-          blockType: 'principles',
-          eyebrow: 'What guides us',
-          items: [
-            { title: 'Devotion', body: 'A place to worship with humility and care.' },
-            { title: 'Heritage', body: 'A place to practice and share our festivals, arts, and traditions.' },
-            { title: 'Belonging', body: 'A place where generations and neighbors can come together.' },
-          ],
-        },
-        {
-          blockType: 'imageStory',
-          eyebrow: 'Our beginning',
-          headline: 'The community is the beginning.',
-          body: 'Before any building, there are people who choose to gather, listen, and offer their time. These early moments are part of Durga Bari’s foundation.',
-          imageUrl: '/durgacenter/gathering-1.jpeg',
-          imageAlt: 'Durga Bari community members at a gathering',
-        },
-        {
-          blockType: 'callToAction',
-          headline: 'There is room for you here.',
-          body: 'Join us in building a spiritual and cultural home for generations to come.',
-          linkLabel: 'Get involved',
-          linkUrl: 'http://localhost:3100/get-involved',
-        },
-      ],
-    },
+    data: initialPage,
   })
 }
 
-console.log('About prototype is ready. Open http://localhost:3200/about and http://localhost:3200/admin.')
+console.log('About page studio is ready. Open /about and /admin on the Payload host.')
 process.exit(0)

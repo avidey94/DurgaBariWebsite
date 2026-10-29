@@ -1,0 +1,54 @@
+{
+  "slug": "about",
+  "title": "About Durga Bari",
+  "_status": "published",
+  "hero": {
+    "eyebrow": "About Durga Bari",
+    "headline": "A sacred home, shaped by community.",
+    "lead": "Durga Bari brings worship, cultural heritage, and community life together in one welcoming place.",
+    "imageUrl": "/durgacenter/maa-durga-inauguration.jpg",
+    "imageAlt": "Worship at Durga Bari’s inaugural gathering"
+  },
+  "layout": [
+    {
+      "id": "6ae2e4c18ab752840167178b",
+      "blockType": "story",
+      "eyebrow": "Our purpose",
+      "headline": "A living place for worship and connection.",
+      "body": "We envision a home for prayer and spiritual growth that also makes room for cultural programs, youth education, and community gatherings. The people who take part give Durga Bari its meaning."
+    },
+    {
+      "id": "6ae2e52fa0f579b3bc13fd57",
+      "blockType": "quote",
+      "quote": "A place to return to. A place to grow together.",
+      "attribution": "Durga Bari"
+    },
+    {
+      "id": "6ae2e4c18ab7528401671790",
+      "blockType": "imageStory",
+      "eyebrow": "Our beginning",
+      "headline": "The community is the beginning.",
+      "body": "Before any building, there are people who choose to gather, listen, and offer their time. These early moments are part of Durga Bari’s foundation.",
+      "imageUrl": "/durgacenter/gathering-1.jpeg",
+      "imageAlt": "Durga Bari community members at a gathering"
+    },
+    {
+      "id": "6ae2e4c18ab752840167178f",
+      "blockType": "principles",
+      "eyebrow": "What guides us",
+      "items": [
+        { "id": "6ae2e4c18ab752840167178c", "title": "Devotion", "body": "A place to worship with humility and care." },
+        { "id": "6ae2e4c18ab752840167178d", "title": "Heritage", "body": "A place to practice and share our festivals, arts, and traditions." },
+        { "id": "6ae2e4c18ab752840167178e", "title": "Belonging", "body": "A place where generations and neighbors can come together." }
+      ]
+    },
+    {
+      "id": "6ae2e4c18ab7528401671791",
+      "blockType": "callToAction",
+      "headline": "There is room for you here.",
+      "body": "Join us in building a spiritual and cultural home for generations to come.",
+      "linkLabel": "Get involved",
+      "linkUrl": "/get-involved"
+    }
+  ]
+}

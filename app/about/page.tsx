@@ -2,11 +2,13 @@ import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { DurgacenterAboutPage } from "@/components/DurgacenterAboutPage";
 import { ElevatedAboutPage } from "@/components/elevated/ContentPages";
+import { PayloadAboutPageView } from "@/components/payload/AboutPage";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 import { cookies } from "next/headers";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
+import { getPublishedPayloadAbout } from "@/lib/payload/about";
 
 interface AboutPageProps {
   searchParams: Promise<{ lang?: string }>;
@@ -22,6 +24,10 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   if (theme === "revamp") {
+    if (lang === "en") {
+      const page = await getPublishedPayloadAbout();
+      if (page) return <PayloadAboutPageView page={page} />;
+    }
     return <ElevatedAboutPage lang={lang} />;
   }
   const isBn = lang === "bn";

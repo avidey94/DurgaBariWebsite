@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "seed": "tsx seed.ts",
-    "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
+    "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build --webpack",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
@@ -19,6 +19,7 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@payloadcms/db-postgres": "3.92.1",
     "@payloadcms/db-sqlite": "3.92.1",
     "@payloadcms/live-preview-react": "^3.92.1",
     "@payloadcms/next": "3.92.1",

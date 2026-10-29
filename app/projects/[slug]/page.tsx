@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
+import { ArrowLeftIcon } from "@/components/elevated/Icons";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
+import { getRevampFieldRenderer } from "@/lib/cms/revamp-fields";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getProjectDetailsBySlug } from "@/lib/portal/server";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 interface ProjectDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -20,6 +25,7 @@ const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(value));
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
   const { slug } = await params;
   const user = await getCurrentUser();
   const details = await getProjectDetailsBySlug(slug, Boolean(user));
@@ -30,6 +36,20 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
   const fundedAmount = details.funding?.fundedAmountCents ?? 0;
   const percent = Math.max(0, Math.min(100, details.funding?.percentFunded ?? 0));
+
+  if (theme === "revamp") {
+    const field = await getRevampFieldRenderer("project-detail", "en", await canCurrentUserManageCms());
+    return <main className="editorial-page elevated-wrap elevated-project-detail">
+      <Link className="elevated-text-link" href="/projects"><ArrowLeftIcon /> Back to projects</Link>
+      <header className="editorial-hero"><div className="editorial-hero-copy"><p className="elevated-eyebrow">{details.project.status} project</p><h1>{details.project.title}</h1><p>{details.project.shortDescription}</p></div></header>
+      {details.project.coverImageUrl && <div className="elevated-project-cover"><img src={details.project.coverImageUrl} alt="" loading="lazy" /></div>}
+      <section className="elevated-project-detail-stats"><div><p className="elevated-eyebrow">Raised</p><strong>{formatCurrency(fundedAmount)}</strong></div><div><p className="elevated-eyebrow">Goal</p><strong>{formatCurrency(details.project.fundingGoalCents)}</strong></div><div><p className="elevated-eyebrow">Funded</p><strong>{percent.toFixed(1)}%</strong></div><div className="elevated-project-progress" role="progressbar" aria-label="Funding progress" aria-valuenow={Math.round(percent)} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${percent}%` }} /></div></section>
+      <div className="elevated-project-detail-body"><p>{details.project.fullDescription}</p></div>
+      <section className="elevated-project-detail-list"><h2>Updates</h2>{details.updates.length === 0 ? <p>No updates have been published yet.</p> : <ul>{details.updates.map((update) => <li key={update.id}><time>{update.publishedAt ? formatDate(update.publishedAt) : "Draft"}</time><h3>{update.title}</h3><p>{update.body}</p></li>)}</ul>}</section>
+      <section className="elevated-project-detail-list"><h2>Supporters</h2>{details.supporters.length === 0 ? <p>No public supporters yet.</p> : <ul>{details.supporters.map((supporter) => <li key={supporter.donationId} className="elevated-project-supporter"><span>{supporter.familyName}</span><strong>{formatCurrency(supporter.amountCents)}</strong></li>)}</ul>}</section>
+      <div className="elevated-events-end">{field("end-body", "Support the wider Durga Bari mission.")}{field.link("give-link", "Ways to give", "/join-hands-to-build-durga-bari/", "elevated-text-link")}</div>
+    </main>;
+  }
 
   return (
     <section className="db-shell space-y-6">

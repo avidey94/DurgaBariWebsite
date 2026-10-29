@@ -6,6 +6,9 @@ import { toPacificLocal } from "@/lib/events/timezone";
 import { cookies } from "next/headers";
 import { DurgacenterEventsPage } from "@/components/DurgacenterEventsPage";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
+import { ArrowLeftIcon, ArrowRightIcon, ArrowUpRightIcon, CalendarIcon, SearchIcon } from "@/components/elevated/Icons";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
+import { getRevampFieldRenderer } from "@/lib/cms/revamp-fields";
 
 const eventTypeLabel: Record<string, string> = {
   darshan: "Darshan",
@@ -128,6 +131,83 @@ export default async function EventsFestivalsPage({ searchParams }: EventsFestiv
   };
 
   const monthEntries = Array.from(groupedByMonth.entries());
+
+  if (theme === "revamp") {
+    const field = await getRevampFieldRenderer("events", "en", await canCurrentUserManageCms());
+    const visibleGroups = view === "day"
+      ? [[new Date(`${selectedDay}T12:00:00Z`).toLocaleDateString("en-US", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric" }), dayOccurrences] as const]
+      : monthEntries;
+
+    return (
+      <main className="elevated-events-page elevated-wrap">
+        <header className="editorial-hero">
+          <div className="editorial-hero-copy">
+            {field("hero-eyebrow", "The Durga Bari calendar", "p", "elevated-eyebrow")}
+            {field("hero-title", "Gather with us.", "h1")}
+            {field("hero-lead", "Rituals, festivals, and time together in San Jose. Find a moment to join the community.")}
+          </div>
+        </header>
+
+        <div className="elevated-events-toolbar">
+          <form className="elevated-events-search" method="get">
+            <input type="hidden" name="monthOffset" value={String(monthOffset)} />
+            <input type="hidden" name="view" value={view} />
+            <label className="sr-only" htmlFor="elevated-events-q">Search events</label>
+            <input id="elevated-events-q" name="q" type="search" defaultValue={query} placeholder="Search events" />
+            <label className="sr-only" htmlFor="elevated-events-type">Event type</label>
+            <select id="elevated-events-type" name="eventType" defaultValue={selectedType}>
+              <option value="">All gatherings</option>
+              {availableTypes.map((type) => <option key={type} value={type}>{eventTypeLabel[type] ?? type}</option>)}
+            </select>
+            <button type="submit" aria-label="Search events"><SearchIcon /></button>
+          </form>
+          <div className="elevated-events-view" aria-label="Calendar view">
+            <Link href={urlFor({ view: "list", day: null })} aria-current={view === "list" ? "page" : undefined}>List</Link>
+            <span aria-hidden="true">/</span>
+            <Link href={urlFor({ view: "day", day: selectedDay })} aria-current={view === "day" ? "page" : undefined}>Day</Link>
+          </div>
+        </div>
+
+        <div className="elevated-events-navigation">
+          <div className="elevated-events-month">
+            <Link href={urlFor({ monthOffset: monthOffset - 1, day: null })} aria-label="Previous month"><ArrowLeftIcon /></Link>
+            <span>{monthFormatter.format(anchorMonth)}</span>
+            <Link href={urlFor({ monthOffset: monthOffset + 1, day: null })} aria-label="Next month"><ArrowRightIcon /></Link>
+            <Link className="elevated-events-today" href={urlFor({ monthOffset: 0, day: dayKey(now.toISOString()) })}>Today</Link>
+          </div>
+          <a className="elevated-text-link" href="/api/calendar/feed"><CalendarIcon /> Subscribe to calendar</a>
+        </div>
+
+        <div className="elevated-events-schedule">
+          {visibleGroups.length === 0 || (view === "day" && dayOccurrences.length === 0) ? (
+            field("empty-body", "No gatherings found for this selection. Try a different month or search.", "p", "elevated-events-none")
+          ) : visibleGroups.map(([label, entries]) => (
+            <section key={label} className="elevated-events-group">
+              <h2>{label}</h2>
+              <div>
+                {entries.map((entry) => {
+                  const eventHref = `/events-festivals/${entry.event.slug}?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`;
+                  const calendarHref = `/api/calendar/events/${entry.event.slug ?? entry.event.id}/ics?occurrenceStart=${encodeURIComponent(entry.occurrenceStart)}`;
+                  return <article key={entry.occurrenceKey} className="elevated-events-row">
+                    <div className="elevated-events-date"><span>{weekdayFormatter.format(new Date(entry.occurrenceStart))}</span><strong>{dayFormatter.format(new Date(entry.occurrenceStart))}</strong></div>
+                    <div className="elevated-events-info">
+                      <p className="elevated-events-meta">{eventTypeLabel[entry.event.event_type] ?? entry.event.event_type} <span aria-hidden="true">·</span> {formatTimeRange(entry.occurrenceStart, entry.occurrenceEnd, entry.event.all_day)}{entry.event.location ? ` · ${entry.event.location}` : ""}</p>
+                      <h3><Link href={eventHref}>{entry.event.title}<ArrowUpRightIcon /></Link></h3>
+                      {entry.event.short_summary && <p className="elevated-events-summary">{entry.event.short_summary}</p>}
+                      {entry.event.visibility === "members" && <p className="elevated-events-note">Members only</p>}
+                    </div>
+                    <a className="elevated-events-add" href={calendarHref} aria-label={`Add ${entry.event.title} to calendar`} title="Add to calendar"><CalendarIcon /></a>
+                  </article>;
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        <div className="elevated-events-end">{field("end-body", "Planning a gathering at Durga Bari?")}{field.link("calendar-link", "Check space availability", "/calendar", "elevated-text-link")}</div>
+      </main>
+    );
+  }
 
   return (
     <ContentPageFrame>

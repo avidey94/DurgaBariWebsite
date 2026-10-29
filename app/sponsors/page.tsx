@@ -1,11 +1,15 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
+import { cookies } from "next/headers";
+import Link from "next/link";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
+import { getRevampFieldRenderer } from "@/lib/cms/revamp-fields";
 import { ActiveDonorsSection, type ActiveDonor } from "@/components/active-donors-section";
 import { dataProvider } from "@/lib/data";
 import { env } from "@/lib/env";
-import { resolveLanguage } from "@/lib/i18n";
+import { resolveLanguage, withLang } from "@/lib/i18n";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 import type { FamilyProfile } from "@/lib/types";
 
 interface SponsorTier {
@@ -244,6 +248,24 @@ export default async function SponsorsPage({ searchParams }: SponsorsPageProps) 
   const lang = resolveLanguage(params.lang);
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "sponsors-bn" : "sponsors";
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
+  if (theme === "revamp") {
+    const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
+    const field = await getRevampFieldRenderer("sponsors", lang, canManageCms);
+    const text = isBn ? {
+      eyebrow: "সমর্থকদের স্বীকৃতি", title: "যাঁদের সহায়তায় এগিয়ে চলি।", lead: "দুর্গা বাড়ির ভবিষ্যৎ গড়ে ওঠে কমিউনিটির উদারতায়।",
+      intro: "<p>সমর্থকদের অবদান আমাদের উপাসনা, অনুষ্ঠান ও স্থায়ী ঘরের স্বপ্নকে এগিয়ে নিয়ে যায়।</p>", recognition: "স্বীকৃতির স্তর", end: "আপনিও এই যাত্রায় অংশ নিতে পারেন।", give: "দানের উপায় দেখুন",
+    } : {
+      eyebrow: "Recognizing support", title: "Made possible by generosity.", lead: "The future of Durga Bari takes shape through the generosity of our community.",
+      intro: "<p>Supporters help sustain worship and programs today and carry our vision for a permanent home forward.</p>", recognition: "Recognition levels", end: "There is a place for your support in this journey.", give: "Explore ways to give",
+    };
+    return <main className="editorial-page elevated-wrap elevated-sponsors">
+      <header className="editorial-hero"><div className="editorial-hero-copy">{field("hero-eyebrow", text.eyebrow, "p", "elevated-eyebrow")}{field("hero-title", text.title, "h1")}{field("hero-lead", text.lead)}</div></header>
+      <div className="editorial-opening"><CmsEditableBlock slug={cmsSlug} initialTitle={text.eyebrow} initialHtml={cmsIntro?.content_html || text.intro} isAdmin={canManageCms} /></div>
+      <section className="elevated-sponsor-tiers">{field("recognition-label", text.recognition, "p", "elevated-eyebrow")}{tiers[lang].map((tier, index) => <article key={tier.id}><span>0{index + 1}</span><div>{field(`tier-${index + 1}-title`, tier.title, "h2")}{field(`tier-${index + 1}-contribution`, tier.contribution, "strong")}</div>{field(`tier-${index + 1}-recognition`, tier.recognition)}</article>)}</section>
+      <div className="elevated-events-end">{field("end-body", text.end)}{field.link("give-link", text.give, withLang("/join-hands-to-build-durga-bari/", lang), "elevated-text-link")}</div>
+    </main>;
+  }
   const query = params.q?.trim() ?? "";
   const normalizedQuery = query.toLowerCase();
   const [families, activeDonors, canManageCms, cmsIntro] = await Promise.all([

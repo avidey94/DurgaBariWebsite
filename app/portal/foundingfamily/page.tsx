@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
+import { PortalMemberPage } from "@/components/portal-member-page";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCurrentFamilyPortalContext, getFamilyFoundingPledgeProgress, listFamilyDonations } from "@/lib/portal/server";
 import type { DonationLedgerEntry } from "@/lib/portal/types";
+import { isNewSitePortal } from "@/lib/portal/is-new-site";
 
 const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", {
@@ -81,6 +83,42 @@ export default async function PortalFoundingFamilyPage() {
   }, new Map());
 
   const foundingMonths = buildFoundingMonthRange();
+
+  if (await isNewSitePortal()) {
+    return (
+      <PortalMemberPage title="Founding family" eyebrow="Your pledge" description="Recorded progress on your founding commitment.">
+        {progress ? (
+          <dl className="member-metrics">
+            <div><dt>Contributed</dt><dd>{formatCurrency(progress.totalDonatedCents)}</dd></div>
+            <div><dt>Target to date</dt><dd>{formatCurrency(progress.targetDonatedByNowCents)}</dd><small>{progress.progressStatus.replace("_", " ")}</small></div>
+            <div><dt>Remaining</dt><dd>{formatCurrency(progress.remainingBalanceCents)}</dd></div>
+          </dl>
+        ) : null}
+        <section className="member-section" aria-labelledby="founding-months-heading">
+          <div className="member-section-heading">
+            <div><h2 id="founding-months-heading">Monthly record</h2><p className="member-section-lede">Payments recorded from 2026 through 2028. Monthly target: {formatCurrency(FOUNDING_MONTHLY_TARGET_CENTS)}.</p></div>
+          </div>
+          {["2026", "2027", "2028"].map((year) => (
+            <details className="member-year" key={year} open={year === "2026"}>
+              <summary>{year}</summary>
+              <ul className="member-month-list">
+                {foundingMonths.filter((month) => month.startsWith(year)).map((month) => {
+                  const amount = amountByFoundingMonth.get(month) ?? 0;
+                  return (
+                    <li key={month}>
+                      <span>{formatMonthLabel(month)}</span>
+                      <strong>{formatCurrency(amount)}</strong>
+                      <em>{amount === 0 ? "No record" : amount >= FOUNDING_MONTHLY_TARGET_CENTS ? "On target" : "Partial"}</em>
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
+          ))}
+        </section>
+      </PortalMemberPage>
+    );
+  }
 
   return (
     <section className="db-shell max-w-6xl space-y-6">

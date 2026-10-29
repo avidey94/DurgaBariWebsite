@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { PortalEventsPanel } from "@/components/portal-events-panel";
+import { PortalMemberDashboard } from "@/components/portal-member-dashboard";
 import { PortalOnboardingForm } from "@/components/portal-onboarding-form";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -10,6 +12,7 @@ import {
   listFamilyDonations,
 } from "@/lib/portal/server";
 import type { FamilyRole } from "@/lib/portal/types";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", {
@@ -106,6 +109,18 @@ export default async function PortalPage() {
   const allDonations = await listFamilyDonations(context.family.id, 5000);
 
   const totalDonationsCents = allDonations.reduce((sum, donation) => sum + donation.amountCents, 0);
+  const siteTheme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
+
+  if (siteTheme === "revamp") {
+    return (
+      <PortalMemberDashboard
+        context={context}
+        email={user.email}
+        totalDonationsCents={totalDonationsCents}
+      />
+    );
+  }
+
   const cumulativeRecognitionTier = getCumulativeRecognitionTier(totalDonationsCents);
   const activeRoleLabels: string[] = context.roles.map((role) => roleLabel(role));
 

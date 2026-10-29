@@ -1,6 +1,7 @@
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { DurgacenterAboutPage } from "@/components/DurgacenterAboutPage";
+import { ElevatedAboutPage } from "@/components/elevated/ContentPages";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
@@ -20,6 +21,9 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
 
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
+  if (theme === "revamp") {
+    return <ElevatedAboutPage lang={lang} />;
+  }
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "about-bn" : "about";
   const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);

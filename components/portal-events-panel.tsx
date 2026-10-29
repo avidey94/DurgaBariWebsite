@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type RsvpStatus = "going" | "maybe" | "not_going";
 
@@ -26,7 +27,9 @@ const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   timeStyle: "short",
 });
 
-export function PortalEventsPanel() {
+const formatHeadcount = (count: number) => `${count} ${count === 1 ? "person" : "people"}`;
+
+export function PortalEventsPanel({ elevated = false }: { elevated?: boolean }) {
   const [events, setEvents] = useState<EventWithMyRsvp[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export function PortalEventsPanel() {
   const from = useMemo(() => new Date().toISOString(), []);
   const to = useMemo(() => new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), []);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -71,11 +74,11 @@ export function PortalEventsPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [from, to]);
 
   useEffect(() => {
     void loadEvents();
-  }, []);
+  }, [loadEvents]);
 
   const submitRsvp = async (eventId: string) => {
     const status = statusByEventId[eventId] ?? "not_going";
@@ -107,6 +110,93 @@ export function PortalEventsPanel() {
       setSavingByEventId((current) => ({ ...current, [eventId]: false }));
     }
   };
+
+  if (elevated) {
+    return (
+      <section className="member-home-events" aria-labelledby="member-events-heading">
+        <div className="member-home-section-heading member-home-events-heading">
+          <div>
+            <h2 id="member-events-heading">Upcoming events</h2>
+            <Link href="/calendar" className="member-home-calendar-link">
+              Calendar <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" /></svg>
+            </Link>
+          </div>
+        </div>
+
+        {loading ? <p className="member-home-event-note">Loading events…</p> : null}
+        {error ? <p className="member-home-event-note" role="alert">{error}</p> : null}
+        {!loading && !error && events.length === 0 ? (
+          <p className="member-home-event-note">No upcoming events.</p>
+        ) : null}
+
+        <div className="member-home-event-list">
+          {events.map((event) => {
+            const start = new Date(event.start_time);
+            const status = statusByEventId[event.id] ?? "not_going";
+            const headcount = headcountByEventId[event.id] ?? 1;
+            const isSaving = Boolean(savingByEventId[event.id]);
+            const message = messageByEventId[event.id];
+
+            return (
+              <article key={event.id} className="member-home-event">
+                <time dateTime={event.start_time} className="member-home-event-date">
+                  <span>{new Intl.DateTimeFormat("en-US", { month: "short" }).format(start)}</span>
+                  <strong>{new Intl.DateTimeFormat("en-US", { day: "numeric" }).format(start)}</strong>
+                </time>
+                <div className="member-home-event-body">
+                  <h3>{event.title}</h3>
+                  <p className="member-home-event-meta">
+                    {new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }).format(start)}
+                    {event.location ? ` · ${event.location}` : ""}
+                  </p>
+                  {event.description ? <p className="member-home-event-description">{event.description}</p> : null}
+
+                  {event.is_rsvp_enabled ? (
+                    <div className="member-home-rsvp">
+                      {event.myRsvp ? (
+                        <p className="member-home-current-rsvp">Your RSVP: {event.myRsvp.status.replace("_", " ")}{event.myRsvp.status === "going" ? ` · ${formatHeadcount(event.myRsvp.headcount)}` : ""}</p>
+                      ) : null}
+                      <div className="member-home-rsvp-fields">
+                        <label>
+                          <span>RSVP</span>
+                          <select
+                            value={status}
+                            onChange={(e) => setStatusByEventId((current) => ({ ...current, [event.id]: e.target.value as RsvpStatus }))}
+                          >
+                            <option value="going">Going</option>
+                            <option value="maybe">Maybe</option>
+                            <option value="not_going">Not going</option>
+                          </select>
+                        </label>
+                        {status === "going" ? (
+                          <label>
+                            <span>Guests</span>
+                            <input
+                              type="number"
+                              min={1}
+                              value={headcount}
+                              onChange={(e) => setHeadcountByEventId((current) => ({
+                                ...current,
+                                [event.id]: Math.max(1, Number(e.target.value || "1")),
+                              }))}
+                            />
+                          </label>
+                        ) : null}
+                        <button type="button" onClick={() => void submitRsvp(event.id)} disabled={isSaving}>
+                          {isSaving ? "Saving…" : "Save RSVP"}
+                        </button>
+                      </div>
+                      {message ? <p className="member-home-rsvp-message" role="status">{message}</p> : null}
+                    </div>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="db-card space-y-4 p-6">

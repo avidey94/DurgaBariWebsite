@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { ContentPageFrame } from "@/components/content-page";
+import { ArrowLeftIcon, CalendarIcon } from "@/components/elevated/Icons";
 import { computeVisibilityForUser, getEventBySlug } from "@/lib/events/server";
 import { expandOccurrences } from "@/lib/events/calendar";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const dateTimeFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/Los_Angeles" });
 
@@ -13,6 +16,7 @@ interface EventDetailsPageProps {
 }
 
 export default async function EventDetailsPage({ params, searchParams }: EventDetailsPageProps) {
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
   const { slug } = await params;
   const query = await searchParams;
   const occurrenceStart = query.occurrenceStart;
@@ -38,6 +42,16 @@ export default async function EventDetailsPage({ params, searchParams }: EventDe
 
   const startsAt = selectedOccurrence?.occurrenceStart ?? event.start_time;
   const endsAt = selectedOccurrence?.occurrenceEnd ?? event.end_time;
+
+  if (theme === "revamp") {
+    return <main className="editorial-page elevated-wrap elevated-event-detail">
+      <Link href="/events-festivals" className="elevated-text-link"><ArrowLeftIcon /> Back to events</Link>
+      <header className="editorial-hero"><div className="editorial-hero-copy"><p className="elevated-eyebrow">{event.event_type}{event.visibility === "members" ? " · Members only" : ""}</p><h1>{event.title}</h1>{event.short_summary && <p>{event.short_summary}</p>}</div></header>
+      <div className="elevated-event-facts"><div><p className="elevated-eyebrow">When</p><p>{dateTimeFormatter.format(new Date(startsAt))} Pacific{endsAt ? ` – ${dateTimeFormatter.format(new Date(endsAt))} Pacific` : ""}</p></div><div><p className="elevated-eyebrow">Where</p><p>{event.location ?? "Durga Bari Campus"}</p></div></div>
+      {event.full_description && <div className="elevated-event-description"><p>{event.full_description}</p></div>}
+      <div className="elevated-event-actions"><a className="elevated-text-link" href={`/api/calendar/events/${event.slug ?? event.id}/ics?occurrenceStart=${encodeURIComponent(startsAt)}`}><CalendarIcon /> Add to calendar</a><Link className="elevated-text-link" href="/api/calendar/feed">Subscribe to calendar <CalendarIcon /></Link></div>
+    </main>;
+  }
 
   return (
     <ContentPageFrame>

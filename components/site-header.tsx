@@ -10,6 +10,7 @@ import { resolveLanguage, withLang } from "@/lib/i18n";
 import { SITE_VIEW_COOKIE } from "@/lib/site-theme";
 import type { SiteTheme } from "@/lib/site-theme";
 import type { PortalUser, PreviewState } from "@/lib/types";
+import { MenuIcon } from "@/components/elevated/Icons";
 
 interface SiteHeaderProps {
   user: PortalUser | null;
@@ -642,7 +643,7 @@ function ModernHeader({
   activeTheme: SiteTheme;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const navItems = text.navItems.filter((item) => !["Projects", "Sponsors", "প্রজেক্টস", "স্পন্সর"].includes(item.label));
+  const navItems = text.navItems.filter((item) => !["/", "/projects", "/sponsors", "/reserve-an-event", "/get-involved"].includes(item.href));
   const switchTheme = (nextTheme: SiteTheme) => {
     if (nextTheme === activeTheme) return;
     document.cookie = `${SITE_VIEW_COOKIE}=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
@@ -652,10 +653,11 @@ function ModernHeader({
   return (
     <header className="durgacenter-header modern-site-header">
       <div className="durgacenter-header-inner">
-        <Link href={withLang("/", language)} className="durgacenter-logo" onClick={() => setMenuOpen(false)}>
-          <img src="https://thedurgacenter.org/wp-content/uploads/2025/09/cropped-ChatGPT-Image-Sep-16-2025-05_14_45-PM-154x145.png" alt="Durga Bari - Center for Spiritual and Cultural Excellence" />
+        <Link href={withLang("/", language)} className="elevated-wordmark" onClick={() => setMenuOpen(false)} aria-label="Durga Bari home">
+          <span className="elevated-wordmark-mark" aria-hidden="true">DB</span>
+          <span><strong>{language === "bn" ? "দুর্গা বাড়ি" : "Durga Bari"}</strong><small>{language === "bn" ? "আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র" : "Center for Spiritual & Cultural Excellence"}</small></span>
         </Link>
-        <button type="button" className="durgacenter-menu-button" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={text.menu}>☰</button>
+        <button type="button" className="durgacenter-menu-button" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={text.menu}><MenuIcon /></button>
         <nav className={`durgacenter-nav ${menuOpen ? "is-open" : ""}`} aria-label="Primary site navigation">
           {navItems.map((item) => (
             <Link

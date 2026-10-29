@@ -68,6 +68,18 @@ export const getCmsPageContent = async (slug: string): Promise<CmsPageContent | 
   return data;
 };
 
+export const getCmsPageContentsByPrefix = async (prefix: string): Promise<CmsPageContent[]> => {
+  const supabase = createServiceRoleSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("page_content")
+    .select("id, slug, title, content_html, updated_at, updated_by")
+    .like("slug", `${prefix}%`);
+
+  return error ? [] : (data ?? []) as CmsPageContent[];
+};
+
 export const upsertCmsPageContent = async ({
   slug,
   title,

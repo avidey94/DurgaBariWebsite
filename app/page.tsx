@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 import { HomePageClassic } from "@/components/home/HomePageClassic";
 import { HomePageDurgacenter } from "@/components/home/HomePageDurgacenter";
-import { HomePageRevamp } from "@/components/home/HomePageRevamp";
+import { HomePageElevated } from "@/components/home/HomePageElevated";
 import { resolveLanguage } from "@/lib/i18n";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
@@ -18,5 +18,5 @@ export default async function Home({ searchParams }: HomePageProps) {
   if (theme === "durgacenter") {
     return <HomePageDurgacenter lang={lang} />;
   }
-  return theme === "classic-green" ? <HomePageClassic lang={lang} /> : <HomePageRevamp lang={lang} />;
+  return theme === "classic-green" ? <HomePageClassic lang={lang} /> : <HomePageElevated lang={lang} />;
 }

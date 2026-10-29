@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
+import { ElevatedDonatePage } from "@/components/elevated/DonatePage";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
@@ -100,6 +101,9 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
 
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
+  if (theme === "revamp") {
+    return <ElevatedDonatePage lang={lang} />;
+  }
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "donate-bn" : "donate";
   const waysToGiveSlug = `${cmsSlug}-ways-to-give`;

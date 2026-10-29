@@ -1,6 +1,7 @@
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { DurgacenterContactPage } from "@/components/DurgacenterContactPage";
+import { ElevatedContactPage } from "@/components/elevated/ContentPages";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
@@ -19,6 +20,9 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
 
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
+  if (theme === "revamp") {
+    return <ElevatedContactPage lang={lang} />;
+  }
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "contact-bn" : "contact";
   const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);

@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { PortalExpenseSubmission } from "@/components/portal-expense-submission";
+import { PortalMemberPage } from "@/components/portal-member-page";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getCurrentFamilyPortalContext } from "@/lib/portal/server";
+import { isNewSitePortal } from "@/lib/portal/is-new-site";
 
 export default async function PortalExpensePage() {
   const user = await getCurrentUser();
@@ -15,6 +17,14 @@ export default async function PortalExpensePage() {
 
   if (!context || !context.family.profileCompleted) {
     redirect("/portal");
+  }
+
+  if (await isNewSitePortal()) {
+    return (
+      <PortalMemberPage title="Expenses" eyebrow="Member finance" description="Submit and track project expenses.">
+        <PortalExpenseSubmission elevated />
+      </PortalMemberPage>
+    );
   }
 
   return (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { DurgacenterJourneyPage } from "@/components/DurgacenterJourneyPage";
+import { ElevatedJourneyPage } from "@/components/elevated/ContentPages";
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
@@ -81,6 +82,9 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
 
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
+  if (theme === "revamp") {
+    return <ElevatedJourneyPage lang={lang} />;
+  }
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "our-sacred-journey-from-vision-to-temple-bn" : "our-sacred-journey-from-vision-to-temple";
   const waysToGiveSlug = `${cmsSlug}-ways-to-give`;

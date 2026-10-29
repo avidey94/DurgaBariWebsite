@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PortalArrow, PortalMemberPage } from "@/components/portal-member-page";
 import { canAccessAdminHome, getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { getAdminInboxCounts } from "@/lib/portal/admin-inbox";
+import { isNewSitePortal } from "@/lib/portal/is-new-site";
 import { hasPortalPermission } from "@/lib/portal/rbac";
 
 interface AdminTile {
@@ -77,6 +79,36 @@ export default async function AdminPage() {
       title: "Roles",
       description: "Manage member profiles and role assignments.",
     });
+  }
+
+  if (await isNewSitePortal()) {
+    const details: Record<string, string> = {
+      "/admin/notifications": "Requests awaiting review",
+      "/admin/donations": "Records and reconciliation",
+      "/admin/expenses": "Approvals and reimbursements",
+      "/admin/projects": "Funding campaigns",
+      "/admin/calendar": "Events and space use",
+      "/admin/events": "Event details and RSVPs",
+      "/admin/reservations": "Private space requests",
+      "/admin/roles": "Member access",
+    };
+
+    return (
+      <PortalMemberPage title="Site administration" eyebrow="Team tools">
+        <section className="member-section" aria-labelledby="admin-areas-heading">
+          <div className="member-section-heading"><h2 id="admin-areas-heading">Your work areas</h2></div>
+          <nav className="member-admin-links" aria-label="Administration areas">
+            {tiles.map((tile, index) => (
+              <Link href={tile.href} key={tile.href}>
+                <span className="member-admin-index">{String(index + 1).padStart(2, "0")}</span>
+                <span><strong>{tile.title}</strong><small>{details[tile.href] ?? tile.description}</small></span>
+                <PortalArrow />
+              </Link>
+            ))}
+          </nav>
+        </section>
+      </PortalMemberPage>
+    );
   }
 
   return (

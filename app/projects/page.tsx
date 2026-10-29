@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
+import { ArrowUpRightIcon } from "@/components/elevated/Icons";
+import { canCurrentUserManageCms } from "@/lib/cms/access";
+import { getRevampFieldRenderer } from "@/lib/cms/revamp-fields";
 import { getCurrentFamilyPortalContext, listPublicProjectsWithContributors } from "@/lib/portal/server";
 import type { FundingProject } from "@/lib/portal/types";
+import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", {
@@ -22,8 +27,25 @@ const statusPillClasses: Record<FundingProject["status"], string> = {
 const clampPercent = (value: number) => Math.max(0, Math.min(100, value));
 
 export default async function ProjectsPage() {
+  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
   const context = await getCurrentFamilyPortalContext();
   const projects = await listPublicProjectsWithContributors(100, context?.family.id ?? null);
+
+  if (theme === "revamp") {
+    const field = await getRevampFieldRenderer("projects", "en", await canCurrentUserManageCms());
+    return <main className="editorial-page elevated-wrap elevated-projects">
+      <header className="editorial-hero"><div className="editorial-hero-copy">{field("hero-eyebrow", "Projects", "p", "elevated-eyebrow")}{field("hero-title", "What we are building.", "h1")}{field("hero-lead", "Follow the work and the contributions that help Durga Bari grow.")}</div></header>
+      {projects.length === 0 ? field("empty-body", "There are no public projects to share yet. We will post them here as plans take shape.", "p", "elevated-projects-empty") : (
+        <div className="elevated-projects-list">{projects.map(({ project, funding, totalContributors }) => {
+          const percent = clampPercent(funding?.percentFunded ?? 0);
+          return <article key={project.id} className="elevated-project-row">
+            <div className="elevated-project-image">{project.coverImageUrl ? <img src={project.coverImageUrl} alt="" loading="lazy" /> : <span aria-hidden="true">DB</span>}</div>
+            <div className="elevated-project-copy"><p className="elevated-eyebrow">{project.status}</p><h2><Link href={`/projects/${project.slug}`}>{project.title}<ArrowUpRightIcon /></Link></h2><p>{project.shortDescription}</p><div className="elevated-project-progress" role="progressbar" aria-label={`${project.title} funding progress`} aria-valuenow={Math.round(percent)} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${percent}%` }} /></div><div className="elevated-project-stats"><span>{formatCurrency(funding?.fundedAmountCents ?? 0)} raised</span><span>{formatCurrency(project.fundingGoalCents)} goal</span><span>{totalContributors} contributors</span></div></div>
+          </article>;
+        })}</div>
+      )}
+    </main>;
+  }
 
   return (
     <section className="db-shell space-y-8">

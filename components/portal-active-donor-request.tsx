@@ -9,6 +9,7 @@ interface PortalActiveDonorRequestProps {
   requestedStatus: RequestedActiveDonorStatus | null;
   requestedAt: string | null;
   allowedStatuses: RequestedActiveDonorStatus[];
+  elevated?: boolean;
 }
 
 const tierMeta: Record<RequestedActiveDonorStatus, { label: string; price: string; className: string }> = {
@@ -34,6 +35,7 @@ export function PortalActiveDonorRequest({
   requestedStatus,
   requestedAt,
   allowedStatuses,
+  elevated = false,
 }: PortalActiveDonorRequestProps) {
   const [selectedStatus, setSelectedStatus] = useState<RequestedActiveDonorStatus>(
     requestedStatus && allowedStatuses.includes(requestedStatus)
@@ -69,6 +71,44 @@ export function PortalActiveDonorRequest({
       setSubmitting(false);
     }
   };
+
+  if (elevated) {
+    return (
+      <section className="member-section member-tier-request" aria-labelledby="tier-request-heading">
+        <div className="member-section-heading">
+          <div>
+            <h2 id="tier-request-heading">{currentStatus === "none" ? "Join active giving" : "Change your tier"}</h2>
+            <p className="member-section-lede">Choose a monthly level. Requests are reviewed before your status changes.</p>
+          </div>
+        </div>
+        {requestedStatus ? (
+          <p className="member-request-pending">Pending request: <strong>{tierMeta[requestedStatus].label}</strong>{requestedAt ? ` · ${new Date(requestedAt).toLocaleDateString("en-US")}` : ""}</p>
+        ) : null}
+        {allowedStatuses.length === 0 ? (
+          <p className="member-empty">No other tier is available.</p>
+        ) : (
+          <fieldset className="member-tier-options">
+            <legend className="sr-only">Choose a donor tier</legend>
+            {allowedStatuses.map((status) => (
+              <label key={status} className={selectedStatus === status ? "is-selected" : ""}>
+                <input type="radio" name="active-donor-request-elevated" checked={selectedStatus === status} onChange={() => setSelectedStatus(status)} />
+                <span>{tierMeta[status].label}</span>
+                <strong>{tierMeta[status].price}</strong>
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {allowedStatuses.length > 0 ? (
+          <button type="button" className="member-submit" disabled={submitting} onClick={() => void submitRequest()}>
+            {submitting ? "Sending…" : "Send request"}
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" /></svg>
+          </button>
+        ) : null}
+        {message ? <p className="member-feedback" role="status">{message}</p> : null}
+        {error ? <p className="member-feedback" role="alert">{error}</p> : null}
+      </section>
+    );
+  }
 
   return (
     <section className="db-card p-6">

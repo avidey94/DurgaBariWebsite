@@ -2,7 +2,9 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { PortalActiveDonorRequest } from "@/components/portal-active-donor-request";
+import { PortalPledgeElevated } from "@/components/portal-pledge-elevated";
 import { getCurrentUser } from "@/lib/auth/session";
+import { isNewSitePortal } from "@/lib/portal/is-new-site";
 import { getCurrentFamilyPortalContext, listFamilyDonations } from "@/lib/portal/server";
 import type { DonationLedgerEntry, RequestedActiveDonorStatus } from "@/lib/portal/types";
 
@@ -128,6 +130,22 @@ export default async function PortalPledgePage() {
     return map;
   }, new Map());
   const monthRange = buildMonthRange();
+
+  if (await isNewSitePortal()) {
+    return (
+      <PortalPledgeElevated
+        approvedTier={approvedTier}
+        requestedStatus={context.family.requestedActiveDonorStatus}
+        requestedAt={context.family.requestedActiveDonorAt}
+        allowedStatuses={allowedStatuses}
+        tiers={tiers}
+        activeDonorDonations={activeDonorDonations}
+        activeDonorTotalCents={activeDonorTotalCents}
+        monthTotals={monthTotals}
+        monthRange={monthRange}
+      />
+    );
+  }
 
   return (
     <section className="db-shell max-w-6xl space-y-6">

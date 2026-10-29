@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { createServiceRoleSupabaseClient } from "@/lib/auth/supabase";
 import { getCurrentUser } from "@/lib/auth/session";
+import { PortalArrow, PortalMemberPage } from "@/components/portal-member-page";
+import { isNewSitePortal } from "@/lib/portal/is-new-site";
 import { getCurrentFamilyPortalContext, listFamilyDonations } from "@/lib/portal/server";
 import type { DonationLedgerEntry } from "@/lib/portal/types";
 
@@ -22,6 +24,15 @@ const formatBucketLabel = (donationType: DonationLedgerEntry["donationType"]) =>
   if (donationType === "founding_pledge") return "Founding Family";
   if (donationType === "project") return "Project";
   return "Ad-hoc";
+};
+
+const formatGiftLabel = (donationType: DonationLedgerEntry["donationType"]) => {
+  if (donationType === "founding_pledge") return "Founding family";
+  if (donationType === "project") return "Project gift";
+  if (donationType === "general") return "General gift";
+  if (donationType === "active_donor_bronze") return "Bronze donor";
+  if (donationType === "active_donor_silver") return "Silver donor";
+  return "Gold donor";
 };
 
 const formatMonthSubtype = (value: string) =>
@@ -98,6 +109,52 @@ export default async function PortalDonationsPage() {
 
       projectTitleById = new Map((data ?? []).map((project) => [project.id as string, project.title as string]));
     }
+  }
+
+  if (await isNewSitePortal()) {
+    const totalCents = donations.reduce((sum, donation) => sum + donation.amountCents, 0);
+
+    return (
+      <PortalMemberPage title="Giving history" eyebrow="Your contributions" description="Gifts recorded for your family account.">
+        <dl className="member-metrics member-metrics-two">
+          <div><dt>Total recorded</dt><dd>{formatCurrency(totalCents)}</dd></div>
+          <div><dt>Gifts</dt><dd>{donations.length}</dd></div>
+        </dl>
+
+        <section className="member-section" aria-labelledby="giving-records-heading">
+          <div className="member-section-heading">
+            <h2 id="giving-records-heading">Your record</h2>
+            <Link href="/donate" className="member-inline-link">Make a contribution <PortalArrow diagonal /></Link>
+          </div>
+          {donations.length === 0 ? (
+            <p className="member-empty">No contributions have been recorded yet.</p>
+          ) : (
+            <div className="member-ledger">
+              {donations.map((donation) => {
+                const privacy = getDonationPrivacy(donation);
+                const detail = donation.donationType === "project"
+                  ? getDonationSubtype(donation, projectTitleById)
+                  : donation.donationType === "founding_pledge"
+                    ? formatMonthSubtype(getFoundingSubtypeDate(donation))
+                    : null;
+                return (
+                  <article key={donation.id} className="member-ledger-row">
+                    <div>
+                      <strong>{formatGiftLabel(donation.donationType)}</strong>
+                      <p>{formatDate(donation.occurredAt)}{detail ? ` · ${detail}` : ""}</p>
+                      {donation.notes || privacy !== "-" ? (
+                        <small>{[privacy !== "-" ? privacy : null, donation.notes].filter(Boolean).join(" · ")}</small>
+                      ) : null}
+                    </div>
+                    <span>{formatCurrency(donation.amountCents)}</span>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </PortalMemberPage>
+    );
   }
 
   return (

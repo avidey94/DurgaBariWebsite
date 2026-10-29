@@ -75,7 +75,7 @@ const statusBadge = (status: SubmissionRow["expense_status"]) => {
   return "bg-amber-100 text-amber-700";
 };
 
-export function PortalExpenseSubmission() {
+export function PortalExpenseSubmission({ elevated = false }: { elevated?: boolean }) {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,11 +84,12 @@ export function PortalExpenseSubmission() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [projectId, setProjectId] = useState("");
-  const [expenseType, setExpenseType] = useState<(typeof expenseTypeOptions)[number]["value"]>("other");
-  const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethodOptions)[number]["value"]>("manual");
+  const [expenseType, setExpenseType] = useState<(typeof expenseTypeOptions)[number]["value"] | "">(elevated ? "" : "other");
+  const [paymentMethod, setPaymentMethod] = useState<(typeof paymentMethodOptions)[number]["value"] | "">(elevated ? "" : "manual");
   const [vendorName, setVendorName] = useState("");
   const [description, setDescription] = useState("");
   const [amountCents, setAmountCents] = useState("5000");
+  const [amountDollars, setAmountDollars] = useState("");
   const [incurredAt, setIncurredAt] = useState(() => formatDateTimeInput(new Date().toISOString()));
   const [receiptUrl, setReceiptUrl] = useState("");
   const [notes, setNotes] = useState("");
@@ -138,7 +139,7 @@ export function PortalExpenseSubmission() {
           paymentMethod,
           vendorName,
           description,
-          amountCents: Number(amountCents),
+          amountCents: elevated ? Math.round(Number(amountDollars) * 100) : Number(amountCents),
           incurredAt: incurredAt ? new Date(incurredAt).toISOString() : new Date().toISOString(),
           receiptUrl: receiptUrl || null,
           notes: notes || null,
@@ -155,6 +156,7 @@ export function PortalExpenseSubmission() {
       setVendorName("");
       setDescription("");
       setAmountCents("5000");
+      setAmountDollars("");
       setReceiptUrl("");
       setNotes("");
       await loadData();
@@ -166,6 +168,56 @@ export function PortalExpenseSubmission() {
   };
 
   const projectNameById = new Map(projects.map((project) => [project.id, project.title]));
+
+  if (elevated) {
+    return (
+      <>
+        <section className="member-section" aria-labelledby="expense-submit-heading">
+          <div className="member-section-heading">
+            <div><h2 id="expense-submit-heading">Submit an expense</h2><p className="member-section-lede">Project expenses are reviewed by the treasurer.</p></div>
+          </div>
+          {loading ? <p className="member-empty">Loading projects…</p> : projects.length === 0 ? (
+            <p className="member-empty">No active project is available for expense submissions.</p>
+          ) : (
+            <form className="member-form-grid" onSubmit={submitExpense}>
+              <label className="member-field"><span>Project</span><select value={projectId} onChange={(event) => setProjectId(event.target.value)} required>{projects.map((project) => <option key={project.id} value={project.id}>{project.title}</option>)}</select></label>
+              <label className="member-field"><span>Expense type</span><select value={expenseType} onChange={(event) => setExpenseType(event.target.value as (typeof expenseTypeOptions)[number]["value"])} required><option value="">Select type</option>{expenseTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              <label className="member-field"><span>Vendor</span><input value={vendorName} onChange={(event) => setVendorName(event.target.value)} required /></label>
+              <label className="member-field"><span>Amount (USD)</span><input value={amountDollars} onChange={(event) => setAmountDollars(event.target.value)} type="number" min="0.01" step="0.01" inputMode="decimal" required /></label>
+              <label className="member-field member-field-wide"><span>What was purchased?</span><input value={description} onChange={(event) => setDescription(event.target.value)} required /></label>
+              <label className="member-field"><span>Paid on</span><input value={incurredAt} onChange={(event) => setIncurredAt(event.target.value)} type="datetime-local" required /></label>
+              <label className="member-field"><span>Payment method</span><select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value as (typeof paymentMethodOptions)[number]["value"])} required><option value="">Select method</option>{paymentMethodOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              <label className="member-field member-field-wide"><span>Receipt link (optional)</span><input value={receiptUrl} onChange={(event) => setReceiptUrl(event.target.value)} type="url" placeholder="https://" /></label>
+              <label className="member-field member-field-wide"><span>Notes (optional)</span><textarea value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
+              <button type="submit" className="member-submit" disabled={submitting}>{submitting ? "Submitting…" : "Submit expense"}</button>
+            </form>
+          )}
+          {error ? <p className="member-feedback" role="alert">{error}</p> : null}
+          {successMessage ? <p className="member-feedback" role="status">{successMessage}</p> : null}
+        </section>
+
+        <section className="member-section" aria-labelledby="expense-history-heading">
+          <div className="member-section-heading"><h2 id="expense-history-heading">Your submissions</h2></div>
+          {loading ? <p className="member-empty">Loading submissions…</p> : submissions.length === 0 ? (
+            <p className="member-empty">No expenses submitted yet.</p>
+          ) : (
+            <div className="member-ledger">
+              {submissions.map((row) => (
+                <article key={row.id} className="member-ledger-row">
+                  <div>
+                    <strong>{row.vendor_name}</strong>
+                    <p>{row.description}</p>
+                    <small>{formatDate(row.created_at)} · {row.project_id ? projectNameById.get(row.project_id) ?? "Project" : "Unlinked"} · <span className="member-status-text">{row.expense_status}</span></small>
+                  </div>
+                  <span>{formatCurrency(row.amount_cents)}</span>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </>
+    );
+  }
 
   return (
     <section className="db-card space-y-5 p-6">

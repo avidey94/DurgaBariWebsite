@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { PortalMemberPage } from "@/components/portal-member-page";
 
 interface FamilyMemberOption {
   name: string;
@@ -54,7 +56,7 @@ interface Commitment {
   location: string | null;
 }
 
-export function PortalVolunteerCenter() {
+export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean }) {
   const [events, setEvents] = useState<VolunteerEvent[]>([]);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [familyMembers, setFamilyMembers] = useState<FamilyMemberOption[]>([]);
@@ -63,7 +65,7 @@ export function PortalVolunteerCenter() {
   const [savingSlotId, setSavingSlotId] = useState<string | null>(null);
   const [selectedBySlot, setSelectedBySlot] = useState<Record<string, string[]>>({});
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -86,11 +88,11 @@ export function PortalVolunteerCenter() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const toggleMemberForSlot = (slotId: string, name: string) => {
     setSelectedBySlot((current) => {
@@ -153,6 +155,92 @@ export function PortalVolunteerCenter() {
     familyMembers.forEach((member) => map.set(member.name, member.type));
     return map;
   }, [familyMembers]);
+
+  if (elevated) {
+    return (
+      <PortalMemberPage title="Volunteer" eyebrow="Member service" description="Find a place to help at upcoming events.">
+        {error ? <p className="member-feedback" role="alert">{error}</p> : null}
+
+        <section className="member-section" aria-labelledby="commitments-heading">
+          <div className="member-section-heading"><h2 id="commitments-heading">Your commitments</h2></div>
+          {loading ? <p className="member-empty">Loading commitments…</p> : commitments.length === 0 ? (
+            <p className="member-empty">No upcoming commitments.</p>
+          ) : (
+            <div className="member-ledger">
+              {commitments.map((commitment) => (
+                <article key={commitment.signup_id} className="member-ledger-row">
+                  <div>
+                    <strong>{commitment.event_title}</strong>
+                    <p>{commitment.slot_title} · {new Date(commitment.start_time).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
+                    <small>{commitment.participant_name}{commitment.location ? ` · ${commitment.location}` : ""}</small>
+                  </div>
+                  <button type="button" className="member-text-action" disabled={savingSlotId === commitment.slot_id} onClick={() => void cancelSignup(commitment.slot_id, commitment.participant_name)}>
+                    Cancel
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="member-section" aria-labelledby="opportunities-heading">
+          <div className="member-section-heading"><h2 id="opportunities-heading">Open opportunities</h2></div>
+          {!loading && events.length === 0 ? <p className="member-empty">No volunteer openings right now.</p> : null}
+          <div className="member-volunteer-events">
+            {events.map((event) => (
+              <article key={event.id} className="member-volunteer-event">
+                <div className="member-volunteer-event-head">
+                  <div>
+                    <p className="member-section-eyebrow">{new Date(event.start_time).toLocaleDateString("en-US", { dateStyle: "medium" })}{event.visibility === "members" ? " · Members only" : ""}</p>
+                    <h3>{event.title}</h3>
+                    {event.location ? <p>{event.location}</p> : null}
+                    {event.short_summary ? <p>{event.short_summary}</p> : null}
+                  </div>
+                </div>
+                <div className="member-volunteer-slots">
+                  {event.volunteer_slots.map((slot) => {
+                    const full = slot.confirmed_count >= slot.capacity;
+                    const closed = slot.slot_state === "closed";
+                    const busy = savingSlotId === slot.id;
+                    const myNames = new Set(slot.my_signups.map((signup) => signup.participant_name));
+                    const availableMembers = familyMembers.filter((member) => !myNames.has(member.name));
+                    const selectedMembers = selectedBySlot[slot.id] ?? [];
+                    const canSignup = !full && !closed && selectedMembers.length > 0;
+                    return (
+                      <section key={slot.id} className="member-volunteer-slot" aria-label={`${slot.title} volunteer slot`}>
+                        <div className="member-volunteer-slot-head">
+                          <div><h4>{slot.title}</h4><p>{new Date(slot.start_time).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p></div>
+                          <small>{closed ? "Closed" : full ? "Full" : `${slot.capacity - slot.confirmed_count} places left`}</small>
+                        </div>
+                        {slot.description ? <p className="member-volunteer-slot-description">{slot.description}</p> : null}
+                        {slot.my_signups.length > 0 ? <p className="member-volunteer-signed">Signed up: {slot.my_signups.map((signup) => signup.participant_name).join(", ")}</p> : null}
+                        {availableMembers.length > 0 && !full && !closed ? (
+                          <fieldset className="member-volunteer-people">
+                            <legend>Who will volunteer?</legend>
+                            {availableMembers.map((member) => (
+                              <label key={`${slot.id}-${member.name}`}>
+                                <input type="checkbox" checked={selectedMembers.includes(member.name)} onChange={() => toggleMemberForSlot(slot.id, member.name)} disabled={busy} />
+                                <span>{member.name} <small>({familyMemberTypeByName.get(member.name) ?? member.type})</small></span>
+                              </label>
+                            ))}
+                          </fieldset>
+                        ) : !full && !closed ? <p className="member-volunteer-signed">Everyone in your household is signed up.</p> : null}
+                        {!full && !closed ? (
+                          <button type="button" className="member-submit" disabled={busy || !canSignup} onClick={() => void signup(slot.id)}>
+                            {busy ? "Saving…" : "Confirm volunteers"}
+                          </button>
+                        ) : null}
+                      </section>
+                    );
+                  })}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </PortalMemberPage>
+    );
+  }
 
   return (
     <section className="space-y-6">

@@ -1,0 +1,197 @@
+/* Member dashboard for the new site only. */
+html[data-theme="revamp"]:has(.member-home) {
+  --db-bg: #f5f1e9;
+  --db-bg-image: none;
+  --db-text: #242622;
+  --db-text-soft: #625f57;
+  --db-link: #752c36;
+  --db-link-visited: #752c36;
+}
+
+html[data-theme="revamp"]:has(.member-home) body {
+  background: #f5f1e9;
+  color: #242622;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+[data-theme="revamp"] .member-home {
+  min-height: 70vh;
+  padding-bottom: 7rem;
+  color: #242622;
+}
+
+.member-home-inner {
+  width: min(1220px, calc(100% - 80px));
+  margin-inline: auto;
+}
+
+.member-home-eyebrow {
+  margin: 0;
+  color: #8a604e;
+  font-size: 0.67rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.member-home-eyebrow span { padding-inline: 0.35rem; color: #a89784; }
+
+.member-home-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 3rem;
+  border-bottom: 1px solid #b9a690;
+  padding: clamp(3.5rem, 6vw, 6rem) 0 3.25rem;
+}
+
+.member-home-hero h1 {
+  margin: 0.9rem 0 0;
+  font: 400 clamp(3.5rem, 6vw, 6rem)/0.99 Georgia, "Times New Roman", serif;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
+}
+
+.member-home-identity {
+  display: flex;
+  flex: 0 1 320px;
+  flex-direction: column;
+  gap: 0.42rem;
+  border-left: 1px solid #c9bca9;
+  padding-left: 1.6rem;
+}
+
+.member-home-identity span,
+.member-home-overview p {
+  margin: 0;
+  color: #8a604e;
+  font-size: 0.67rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.member-home-identity strong {
+  font: 400 1.5rem/1.2 Georgia, "Times New Roman", serif;
+  letter-spacing: -0.035em;
+}
+
+.member-home-identity small { color: #625f57; font-size: 0.81rem; overflow-wrap: anywhere; }
+
+.member-home-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid #d4c8b8;
+  padding: 2.1rem 0 2.3rem;
+}
+
+.member-home-overview > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding-inline: 2.2rem;
+}
+
+.member-home-overview > div:first-child { padding-left: 0; }
+.member-home-overview > div + div { border-left: 1px solid #d4c8b8; }
+.member-home-overview strong { margin-top: 0.55rem; font: 400 clamp(1.5rem, 2vw, 2rem)/1.2 Georgia, "Times New Roman", serif; letter-spacing: -0.04em; }
+.member-home-overview small { margin-top: 0.4rem; color: #746d62; font-size: 0.79rem; line-height: 1.45; }
+.member-home-overview small span { padding-inline: 0.2rem; }
+
+.member-home-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  align-items: start;
+  gap: clamp(3rem, 6vw, 6rem);
+  padding-top: 4.7rem;
+}
+
+.member-home-section-heading { margin-bottom: 1.7rem; }
+.member-home-section-heading h2 { margin: 0.45rem 0 0; font: 400 clamp(2.25rem, 3vw, 3.15rem)/1.08 Georgia, "Times New Roman", serif; letter-spacing: -0.05em; }
+.member-home-links { display: block; border-top: 1px solid #b9a690; }
+.member-home-links a {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 1.05rem;
+  min-height: 90px;
+  border-bottom: 1px solid #d4c8b8;
+  padding: 1.05rem 0;
+  color: #242622;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+.member-home-links a:visited { color: #242622; }
+.member-home-links a:hover,
+.member-home-links a:focus-visible { color: #752c36; }
+.member-home-link-icon { color: #8a604e; }
+.member-home-link-copy { display: flex; flex-direction: column; gap: 0.23rem; }
+.member-home-link-copy strong { font: 400 1.32rem/1.2 Georgia, "Times New Roman", serif; letter-spacing: -0.035em; }
+.member-home-link-copy small { color: #746d62; font-size: 0.79rem; }
+.member-home-links a > svg { color: #752c36; transition: transform 160ms ease; }
+.member-home-links a:hover > svg { transform: translateX(3px); }
+
+.member-home-events-heading > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.member-home-calendar-link { display: inline-flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; border-bottom: 1px solid #752c36; padding-bottom: 0.16rem; color: #752c36 !important; font-size: 0.78rem; font-weight: 650; text-decoration: none; }
+.member-home-event-note { margin: 0; border-top: 1px solid #b9a690; padding-top: 1.4rem; color: #625f57; font-size: 0.87rem; line-height: 1.55; }
+.member-home-event-list { border-top: 1px solid #b9a690; }
+.member-home-event-list:empty { display: none; }
+.member-home-event {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 1.2rem;
+  border-bottom: 1px solid #d4c8b8;
+  padding: 1.45rem 0 1.65rem;
+}
+.member-home-event-date { display: flex; flex-direction: column; gap: 0.1rem; color: #752c36; text-align: center; }
+.member-home-event-date span { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.member-home-event-date strong { font: 400 2.1rem/1 Georgia, "Times New Roman", serif; letter-spacing: -0.06em; }
+.member-home-event-body h3 { margin: 0; font: 400 1.4rem/1.25 Georgia, "Times New Roman", serif; letter-spacing: -0.035em; }
+.member-home-event-meta { margin: 0.45rem 0 0; color: #625f57; font-size: 0.8rem; line-height: 1.5; }
+.member-home-event-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin: 0.7rem 0 0; color: #625f57; font-size: 0.83rem; line-height: 1.55; }
+.member-home-rsvp { margin-top: 1.1rem; }
+.member-home-current-rsvp { margin: 0 0 0.8rem; color: #752c36; font-size: 0.76rem; font-weight: 650; text-transform: capitalize; }
+.member-home-rsvp-fields { display: flex; flex-wrap: wrap; align-items: end; gap: 0.8rem 1rem; }
+.member-home-rsvp-fields label { display: flex; flex-direction: column; gap: 0.3rem; color: #746d62; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.member-home-rsvp-fields select,
+.member-home-rsvp-fields input { min-height: 32px; border: 0; border-bottom: 1px solid #b9a690; border-radius: 0; padding: 0 1.2rem 0 0; background: transparent; color: #242622; font: 500 0.82rem "Avenir Next", "Segoe UI", sans-serif; }
+.member-home-rsvp-fields input { width: 56px; padding-right: 0; }
+.member-home-rsvp-fields button { min-height: 32px; border: 0; border-bottom: 1px solid #752c36; border-radius: 0; padding: 0; background: transparent; color: #752c36; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.member-home-rsvp-fields button:disabled { opacity: 0.5; cursor: wait; }
+.member-home-rsvp-message { margin: 0.7rem 0 0; color: #625f57; font-size: 0.78rem; }
+
+[data-theme="revamp"] .member-home :focus-visible { outline: 2px solid #752c36; outline-offset: 3px; }
+
+@media (max-width: 900px) {
+  .member-home-main { grid-template-columns: 1fr; gap: 4rem; }
+  .member-home-hero h1 { font-size: clamp(3.3rem, 7vw, 5rem); }
+}
+
+@media (max-width: 680px) {
+  .member-home-inner { width: calc(100% - 42px); }
+  .member-home-hero { align-items: flex-start; flex-direction: column; gap: 2rem; padding: 3.2rem 0 2rem; }
+  .member-home-hero h1 { font-size: clamp(3.25rem, 10vw, 4.8rem); }
+  .member-home-identity { flex-basis: auto; gap: 0.25rem; border-left: 0; padding-left: 0; }
+  .member-home-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.8rem 0; padding: 1.8rem 0 2rem; }
+  .member-home-overview > div { padding-inline: 1rem; }
+  .member-home-overview > div:nth-child(2) { border-left: 1px solid #d4c8b8; }
+  .member-home-overview > div:nth-child(3) { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #d4c8b8; padding: 1.3rem 0 0; }
+  .member-home-overview strong { font-size: 1.5rem; }
+  .member-home-main { gap: 3.7rem; padding-top: 3.5rem; }
+  .member-home-section-heading h2 { font-size: 2.55rem; }
+  .member-home-events-heading > div { align-items: end; }
+  .member-home-links a { min-height: 78px; }
+}
+
+@media (max-width: 420px) {
+  .member-home-overview { grid-template-columns: 1fr; gap: 0; }
+  .member-home-overview > div,
+  .member-home-overview > div:first-child,
+  .member-home-overview > div:nth-child(2),
+  .member-home-overview > div:nth-child(3) { grid-column: auto; border-left: 0; border-top: 0; padding: 0.75rem 0; }
+  .member-home-overview > div + div { border-top: 1px solid #d4c8b8 !important; padding-top: 1.1rem !important; }
+  .member-home-events-heading > div { align-items: start; flex-direction: column; }
+}

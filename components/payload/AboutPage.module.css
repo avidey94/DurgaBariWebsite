@@ -3,6 +3,9 @@
 .page h1,.page h2,.page h3,.quote blockquote{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-.035em}
 .eyebrow{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--saffron);margin:0 0 26px}
 .hero{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);min-height:560px}
+.heroWithoutImage{display:flex;min-height:470px}
+.heroWithoutImage .heroCopy{width:100%;padding-right:max(5vw,26px)}
+.heroWithoutImage h1{max-width:1000px}
 .heroCopy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:75px 7vw 80px max(5vw,26px)}
 .hero h1{font-size:clamp(58px,5.5vw,105px);line-height:.98;margin:0;max-width:670px}
 .lead{font-size:16px;line-height:1.75;color:var(--muted);max-width:455px;margin:34px 0 0}
@@ -34,4 +37,37 @@
 .invitation p:not(.eyebrow){color:var(--muted);font-size:17px;line-height:1.7;max-width:620px}
 .invitation a{display:flex;align-items:center;gap:18px;padding:0 0 8px;text-decoration:none;white-space:nowrap;border-bottom:1px solid var(--ink);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
 .invitation svg{width:17px;height:17px}
+.featureHeading{max-width:760px;margin-bottom:48px}
+.featureHeading h2{margin:0}
+.featureHeading>p:not(.eyebrow){font-size:17px;line-height:1.75;color:var(--muted);margin:20px 0 0;max-width:630px}
+.feature{position:relative}
+.featureLink{display:inline-flex;align-items:center;gap:16px;width:max-content;border-bottom:1px solid var(--ink);padding:0 0 8px;margin:30px 30px 0 0;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}
+.featureLink svg,.eventList svg{width:17px;height:17px;flex:none}
+.featureEmpty{color:var(--muted);font-size:15px}
+.eventList{border-top:1px solid var(--line)}
+.eventList a{display:grid;grid-template-columns:160px 1fr 20px;align-items:center;gap:20px;border-bottom:1px solid var(--line);padding:27px 0;text-decoration:none}
+.eventList time{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--saffron)}
+.eventList strong{font-family:Newsreader,Georgia,serif;font-weight:400;font-size:clamp(24px,2.6vw,40px)}
+.visit,.contact{display:grid;grid-template-columns:1fr 1fr;gap:8vw;align-items:start}
+.visit address,.contact address,.givingGrid address{font-size:16px;font-style:normal;line-height:1.75;color:var(--muted)}
+.visit iframe{width:100%;min-height:360px;border:0;filter:grayscale(1)}
+.member{display:flex;justify-content:space-between;align-items:end;gap:30px;background:#e7e7da}
+.member .featureHeading{margin:0}
+.member .featureLink{flex:none}
+.contact a:not(.featureLink){font-family:Newsreader,Georgia,serif;font-size:clamp(24px,2.6vw,38px);text-decoration:none;border-bottom:1px solid var(--ink)}
+.contact address{margin-top:32px}
+.contact iframe{width:100%;min-height:620px;border:0;background:#fff}
+.givingGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.givingGrid>div{padding:30px 30px 0 0;border-right:1px solid var(--line)}
+.givingGrid>div+div{padding-left:30px}
+.givingGrid>div:last-child{border-right:0}
+.givingGrid span{font-size:11px;color:var(--saffron)}
+.givingGrid h3{font-size:32px;margin:20px 0 12px}
+.givingGrid p{font-size:14px;line-height:1.7;color:var(--muted)}
+.givingGrid img{width:min(100%,220px);height:auto;margin-top:22px}
+.givingGrid .featureLink{display:flex;margin:24px 0 0}
+.taxNote{font-size:12px;color:var(--muted);margin:55px 0 0}
+.live iframe{display:block;width:100%;aspect-ratio:16/9;border:0;max-width:1060px}
+@media(max-width:1000px){.givingGrid{grid-template-columns:1fr}.givingGrid>div,.givingGrid>div+div{padding:30px 0;border-right:0;border-bottom:1px solid var(--line)}}
 @media(max-width:800px){.hero{display:flex;flex-direction:column}.heroCopy{padding:70px 22px}.heroImage{height:420px;min-height:0}.section{padding:72px 22px}.split,.imageStory{display:block}.storyBody{margin:34px 0 0}.principles{margin-top:40px}.storyImage{height:380px;margin-bottom:50px}.invitation{display:block}.invitation a{width:max-content;margin-top:45px}}
+@media(max-width:800px){.heroWithoutImage{min-height:0}.eventList a{grid-template-columns:1fr 20px;gap:6px}.eventList time{grid-column:1/-1}.visit,.contact{display:block}.visit iframe,.contact iframe{margin-top:40px}.member{display:block}.member .featureLink{margin-top:35px}}

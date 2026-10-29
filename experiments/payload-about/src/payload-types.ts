@@ -173,6 +173,9 @@ export interface Media {
  */
 export interface Page {
   id: number;
+  /**
+   * Matches the public page path. Use home for the homepage.
+   */
   slug: string;
   title: string;
   hero: {
@@ -197,6 +200,7 @@ export interface Page {
           }
         | {
             eyebrow: string;
+            headline?: string | null;
             items?:
               | {
                   title: string;
@@ -233,6 +237,18 @@ export interface Page {
             id?: string | null;
             blockName?: string | null;
             blockType: 'callToAction';
+          }
+        | {
+            /**
+             * Place an existing site feature among editorial sections. Its live data and service links stay connected.
+             */
+            feature: 'upcomingEvents' | 'visit' | 'memberPortal' | 'livestream' | 'contactForm' | 'donationMethods';
+            eyebrow?: string | null;
+            headline?: string | null;
+            body?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'featureSlot';
           }
       )[]
     | null;
@@ -422,6 +438,7 @@ export interface PagesSelect<T extends boolean = true> {
           | T
           | {
               eyebrow?: T;
+              headline?: T;
               items?:
                 | T
                 | {
@@ -458,6 +475,16 @@ export interface PagesSelect<T extends boolean = true> {
               body?: T;
               linkLabel?: T;
               linkUrl?: T;
+              id?: T;
+              blockName?: T;
+            };
+        featureSlot?:
+          | T
+          | {
+              feature?: T;
+              eyebrow?: T;
+              headline?: T;
+              body?: T;
               id?: T;
               blockName?: T;
             };

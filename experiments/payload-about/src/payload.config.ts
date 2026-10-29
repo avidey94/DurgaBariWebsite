@@ -47,7 +47,7 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     autoLogin: process.env.NODE_ENV === 'development' && !postgresURL ? { email: 'editor@durgabari.local' } : false,
-    livePreview: { url: '/about?preview=1', collections: ['pages'] },
+    livePreview: { url: ({ data }) => `/${data.slug || 'about'}?preview=1`, collections: ['pages'] },
     importMap: {
       baseDir: path.resolve(dirname),
     },

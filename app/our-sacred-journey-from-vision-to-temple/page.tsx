@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { DurgacenterJourneyPage } from "@/components/DurgacenterJourneyPage";
 import { ElevatedJourneyPage } from "@/components/elevated/ContentPages";
+import { PayloadPageView } from "@/components/payload/Page";
 import { ContentHero, ContentModule, ContentPageFrame } from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
@@ -10,6 +11,7 @@ import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
+import { getPublishedPayloadPage } from "@/lib/payload/pages";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 const waysToGive = {
@@ -83,6 +85,10 @@ export default async function OurJourneyPage({ searchParams }: OurJourneyPagePro
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   if (theme === "revamp") {
+    if (lang === "en") {
+      const page = await getPublishedPayloadPage("our-sacred-journey-from-vision-to-temple");
+      if (page) return <PayloadPageView page={page} />;
+    }
     return <ElevatedJourneyPage lang={lang} />;
   }
   const isBn = lang === "bn";

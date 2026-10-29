@@ -33,8 +33,8 @@ export const Pages: CollectionConfig = {
   },
   versions: { drafts: true, maxPerDoc: 0 },
   fields: [
-    { name: 'slug', type: 'text', required: true, unique: true, defaultValue: 'about', admin: { position: 'sidebar' } },
-    { name: 'title', type: 'text', required: true, defaultValue: 'About Durga Bari' },
+    { name: 'slug', type: 'text', required: true, unique: true, admin: { position: 'sidebar', description: 'Matches the public page path. Use home for the homepage.' } },
+    { name: 'title', type: 'text', required: true },
     {
       name: 'hero',
       type: 'group',
@@ -70,6 +70,7 @@ export const Pages: CollectionConfig = {
           admin: { disableBlockName: true },
           fields: [
             text('eyebrow', 'Eyebrow'),
+            text('headline', 'Section heading', false),
             {
               name: 'items',
               type: 'array',
@@ -107,6 +108,30 @@ export const Pages: CollectionConfig = {
             textarea('body', 'Body'),
             text('linkLabel', 'Link label'),
             text('linkUrl', 'Link URL'),
+          ],
+        },
+        {
+          slug: 'featureSlot',
+          labels: { singular: 'Site feature', plural: 'Site features' },
+          admin: { disableBlockName: true },
+          fields: [
+            {
+              name: 'feature',
+              type: 'select',
+              required: true,
+              admin: { description: 'Place an existing site feature among editorial sections. Its live data and service links stay connected.' },
+              options: [
+                { label: 'Upcoming events', value: 'upcomingEvents' },
+                { label: 'Visit and directions', value: 'visit' },
+                { label: 'Member portal', value: 'memberPortal' },
+                { label: 'Livestream', value: 'livestream' },
+                { label: 'Contact form', value: 'contactForm' },
+                { label: 'Giving methods', value: 'donationMethods' },
+              ],
+            },
+            text('eyebrow', 'Eyebrow', false),
+            text('headline', 'Heading', false),
+            { name: 'body', label: 'Introduction', type: 'textarea' },
           ],
         },
       ],

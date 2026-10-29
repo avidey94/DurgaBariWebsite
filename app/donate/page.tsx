@@ -4,10 +4,12 @@ import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { CmsEditableList } from "@/components/cms/CmsEditableList";
 import { ElevatedDonatePage } from "@/components/elevated/DonatePage";
+import { PayloadPageView } from "@/components/payload/Page";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { parseCmsListContent } from "@/lib/cms/list-content";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage, withLang } from "@/lib/i18n";
+import { getPublishedPayloadPage } from "@/lib/payload/pages";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
@@ -102,6 +104,10 @@ export default async function DonatePage({ searchParams }: DonatePageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   if (theme === "revamp") {
+    if (lang === "en") {
+      const page = await getPublishedPayloadPage("donate");
+      if (page) return <PayloadPageView page={page} />;
+    }
     return <ElevatedDonatePage lang={lang} />;
   }
   const isBn = lang === "bn";

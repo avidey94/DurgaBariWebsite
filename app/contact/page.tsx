@@ -2,9 +2,11 @@ import { ContentHero, ContentModule, ContentPageFrame } from "@/components/conte
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { DurgacenterContactPage } from "@/components/DurgacenterContactPage";
 import { ElevatedContactPage } from "@/components/elevated/ContentPages";
+import { PayloadPageView } from "@/components/payload/Page";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
+import { getPublishedPayloadPage } from "@/lib/payload/pages";
 import { cookies } from "next/headers";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
@@ -21,6 +23,10 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   if (theme === "revamp") {
+    if (lang === "en") {
+      const page = await getPublishedPayloadPage("contact");
+      if (page) return <PayloadPageView page={page} />;
+    }
     return <ElevatedContactPage lang={lang} />;
   }
   const isBn = lang === "bn";

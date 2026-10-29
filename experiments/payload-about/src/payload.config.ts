@@ -33,7 +33,7 @@ const database = postgresURL
   ? postgresAdapter({
       pool: {
         connectionString: postgresConnection!.toString(),
-        max: 1,
+        max: 2,
         idleTimeoutMillis: 1_000,
         ssl: { ca: certificate, rejectUnauthorized: true },
       },

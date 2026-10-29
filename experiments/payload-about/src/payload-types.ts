@@ -186,7 +186,7 @@ export interface Page {
     imageAlt?: string | null;
   };
   /**
-   * Add sections between existing sections, then drag to set their order. Saved changes appear in Versions and Section history.
+   * Hover over a section to locate it in the preview. Add sections between existing sections, then drag to set their order. Saved changes appear in Versions and Section history.
    */
   layout?:
     | (

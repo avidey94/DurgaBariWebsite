@@ -52,7 +52,11 @@ export const Pages: CollectionConfig = {
       type: 'blocks',
       label: 'Content sections',
       labels: { singular: 'section', plural: 'sections' },
-      admin: { initCollapsed: true, description: 'Add sections between existing sections, then drag to set their order. Saved changes appear in Versions and Section history.' },
+      admin: {
+        initCollapsed: true,
+        description: 'Hover over a section to locate it in the preview. Add sections between existing sections, then drag to set their order. Saved changes appear in Versions and Section history.',
+        components: { Field: '/components/SectionPreviewField#SectionPreviewField' },
+      },
       blocks: [
         {
           slug: 'story',

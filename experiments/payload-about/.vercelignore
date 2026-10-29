@@ -1,0 +1,9 @@
+.env
+.env.*
+.payload-accounts
+payload-about.db
+payload-about.db-*
+media/
+node_modules/
+.next/
+.vercel/

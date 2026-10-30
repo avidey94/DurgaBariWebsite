@@ -34,7 +34,7 @@ const database = postgresURL
   ? postgresAdapter({
       pool: {
         connectionString: postgresConnection!.toString(),
-        max: 2,
+        max: 6,
         idleTimeoutMillis: 1_000,
         connectionTimeoutMillis: 5_000,
         query_timeout: 15_000,

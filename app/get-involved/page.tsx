@@ -2,11 +2,10 @@ import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { DurgacenterGetInvolvedPage } from "@/components/DurgacenterGetInvolvedPage";
 import { ElevatedGetInvolvedPage } from "@/components/elevated/ContentPages";
-import { PayloadPageView } from "@/components/payload/Page";
+import { CinematicGetInvolvedPage } from "@/components/community/CinematicGetInvolvedPage";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
-import { getPublishedPayloadPage } from "@/lib/payload/pages";
 import { cookies } from "next/headers";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
@@ -69,10 +68,7 @@ export default async function GetInvolvedPage({ searchParams }: GetInvolvedPageP
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   if (theme === "revamp") {
-    if (lang === "en") {
-      const page = await getPublishedPayloadPage("get-involved");
-      if (page) return <PayloadPageView page={page} />;
-    }
+    if (lang === "en") return <CinematicGetInvolvedPage />;
     return <ElevatedGetInvolvedPage lang={lang} />;
   }
   const isBn = lang === "bn";
@@ -148,4 +144,7 @@ export default async function GetInvolvedPage({ searchParams }: GetInvolvedPageP
     </ContentPageFrame>
   );
 }
-export const metadata = { title: "Be Part of Something Sacred and Lasting" };
+export const metadata = {
+  title: "Get Involved — Help Build Our Shared Home",
+  description: "Give your time, share the vision, or connect a supporter. Discover ways to help Durga Bari grow as a spiritual and cultural home in San Jose.",
+};

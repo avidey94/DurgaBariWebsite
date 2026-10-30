@@ -10,6 +10,7 @@ interface LoginFormProps {
   devBypassEnabled: boolean;
   initialError?: string;
   initialMode?: "password" | "signup";
+  returnTo?: string;
 }
 
 type AuthMode = "password" | "signup" | "recovery" | "check-email" | "recovery-sent";
@@ -33,6 +34,7 @@ export function LoginForm({
   devBypassEnabled,
   initialError,
   initialMode = "password",
+  returnTo = "/portal",
 }: LoginFormProps) {
   const isBn = language === "bn";
   const [email, setEmail] = useState("");
@@ -98,7 +100,7 @@ export function LoginForm({
         return;
       }
       if (mode === "password" || result.nextStep === "portal") {
-        window.location.assign("/portal");
+        window.location.assign(returnTo);
       } else {
         changeMode(mode === "signup" ? "check-email" : "recovery-sent");
       }

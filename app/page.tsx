@@ -1,16 +1,22 @@
 import { cookies } from "next/headers";
+import type { Metadata } from "next";
 
 import { HomePageClassic } from "@/components/home/HomePageClassic";
 import { HomePageDurgacenter } from "@/components/home/HomePageDurgacenter";
 import { HomePageElevated } from "@/components/home/HomePageElevated";
-import { PayloadPageView } from "@/components/payload/Page";
+import { HomePageCinematic } from "@/components/home/HomePageCinematic";
 import { resolveLanguage } from "@/lib/i18n";
-import { getPublishedPayloadPage } from "@/lib/payload/pages";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
 interface HomePageProps {
   searchParams: Promise<{ lang?: string }>;
 }
+
+export const metadata: Metadata = {
+  title: "A Home for Maa Durga in San Jose",
+  description:
+    "A new spiritual and cultural home taking shape in San Jose, California. Discover Maa Durga and her family, meet our growing community, and be part of Durga Bari’s beginning.",
+};
 
 export default async function Home({ searchParams }: HomePageProps) {
   const params = await searchParams;
@@ -21,9 +27,6 @@ export default async function Home({ searchParams }: HomePageProps) {
     return <HomePageDurgacenter lang={lang} />;
   }
   if (theme === "classic-green") return <HomePageClassic lang={lang} />;
-  if (lang === "en") {
-    const page = await getPublishedPayloadPage("home");
-    if (page) return <PayloadPageView page={page} />;
-  }
+  if (lang === "en") return <HomePageCinematic />;
   return <HomePageElevated lang={lang} />;
 }

@@ -11,6 +11,9 @@ import { SITE_VIEW_COOKIE } from "@/lib/site-theme";
 import type { SiteTheme } from "@/lib/site-theme";
 import type { PortalUser, PreviewState } from "@/lib/types";
 import { MenuIcon } from "@/components/elevated/Icons";
+import { CinematicHeader } from "@/components/home/CinematicHeader";
+import { DurgaBariMark } from "@/components/brand/DurgaBariMark";
+import { OriginalSiteLink } from "@/components/brand/OriginalSiteLink";
 
 interface SiteHeaderProps {
   user: PortalUser | null;
@@ -26,7 +29,6 @@ const copy = {
       { label: "Home", href: "/" },
       { label: "Our Journey", href: "/our-sacred-journey-from-vision-to-temple/" },
       { label: "About", href: "/about" },
-      { label: "Events & Festivals", href: "/events-festivals" },
       { label: "Calendar", href: "/calendar" },
       { label: "Reserve an Event", href: "/reserve-an-event" },
       { label: "Donate", href: "/join-hands-to-build-durga-bari/" },
@@ -61,7 +63,6 @@ const copy = {
       { label: "হোম", href: "/" },
       { label: "আমাদের যাত্রা", href: "/our-sacred-journey-from-vision-to-temple/" },
       { label: "পরিচিতি", href: "/about" },
-      { label: "ইভেন্ট ও উৎসব", href: "/events-festivals" },
       { label: "ক্যালেন্ডার", href: "/calendar" },
       { label: "ইভেন্ট বুক করুন", href: "/reserve-an-event" },
       { label: "দান", href: "/join-hands-to-build-durga-bari/" },
@@ -158,6 +159,16 @@ export function SiteHeader({ user, preview, showAdminLink, adminNotificationCoun
 
   const isDurgacenterTheme = theme === "durgacenter";
   const navItems = isDurgacenterTheme ? text.navItems.filter((item) => !["Projects", "Sponsors", "প্রজেক্টস", "স্পন্সর"].includes(item.label)) : text.navItems;
+
+  const cinematicPage = pathname === "/" ? "home"
+    : pathname === "/about" ? "about"
+    : pathname === "/calendar" ? "calendar"
+    : pathname === "/contact" ? "contact"
+    : pathname === "/get-involved" || pathname === "/be-part-of-something-sacred-and-lasting" ? "get-involved"
+    : null;
+  if (theme === "revamp" && cinematicPage && language === "en") {
+    return <CinematicHeader user={user} showAdminLink={showAdminLink} adminNotificationCount={adminNotificationCount} preview={preview} page={cinematicPage} />;
+  }
 
   if (isDurgacenterTheme) {
     return (
@@ -654,7 +665,7 @@ function ModernHeader({
     <header className="durgacenter-header modern-site-header">
       <div className="durgacenter-header-inner">
         <Link href={withLang("/", language)} className="elevated-wordmark" onClick={() => setMenuOpen(false)} aria-label="Durga Bari home">
-          <span className="elevated-wordmark-mark" aria-hidden="true">DB</span>
+          <DurgaBariMark />
           <span><strong>{language === "bn" ? "দুর্গা বাড়ি" : "Durga Bari"}</strong><small>{language === "bn" ? "আধ্যাত্মিক ও সাংস্কৃতিক উৎকর্ষের কেন্দ্র" : "Center for Spiritual & Cultural Excellence"}</small></span>
         </Link>
         <button type="button" className="durgacenter-menu-button" onClick={() => setMenuOpen((value) => !value)} aria-expanded={menuOpen} aria-label={text.menu}><MenuIcon /></button>
@@ -694,10 +705,20 @@ function ModernHeader({
             </div>
           ) : null}
         </nav>
+        <div className="modern-comparison-actions">
+          <Link href={withLang(user ? "/portal" : "/login", language)} className="modern-member-portal">{text.memberPortal}</Link>
+          <OriginalSiteLink appearance="light" />
+        </div>
         <div className="durgacenter-tools modern-site-tools">
-          <Link href={toggleLanguageHref} onClick={() => setMenuOpen(false)} className="modern-language-link">
-            {text.languageLabel}
-          </Link>
+          {language === "en" ? (
+            <button type="button" disabled lang="bn" className="modern-language-link" title="Bengali translation is coming later">
+              বাংলা
+            </button>
+          ) : (
+            <Link href={toggleLanguageHref} onClick={() => setMenuOpen(false)} className="modern-language-link">
+              {text.languageLabel}
+            </Link>
+          )}
           <label className="modern-theme-select-label">
             <span className="sr-only">Choose site theme</span>
             <select value={activeTheme} onChange={(event: ChangeEvent<HTMLSelectElement>) => switchTheme(event.target.value as SiteTheme)} aria-label="Choose site theme">
@@ -762,10 +783,10 @@ function DurgacenterHeader({
   activeTheme: SiteTheme;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const originalPaths = ["/", "/our-sacred-journey-from-vision-to-temple/", "/about", "/events-festivals", "/join-hands-to-build-durga-bari/", "/contact", "/get-involved"];
+  const originalPaths = ["/", "/our-sacred-journey-from-vision-to-temple/", "/about", "/calendar", "/join-hands-to-build-durga-bari/", "/contact", "/get-involved"];
   const navItems = originalPaths.map((path) => {
     const item = text.navItems.find((entry) => entry.href === path)!;
-    return { ...item, href: path === "/events-festivals" ? "/coming-soon-a-calendar-of-sacred-celebrations" : path === "/get-involved" ? "/be-part-of-something-sacred-and-lasting" : path };
+    return { ...item, href: path === "/get-involved" ? "/be-part-of-something-sacred-and-lasting" : path };
   });
   const mobileNavItems = [navItems[0], navItems[2], navItems[1], ...navItems.slice(3)];
   const currentPath = pathname.replace(/\/$/, "") || "/";

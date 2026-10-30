@@ -1,118 +1,24 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
-
-import { ContentPageFrame } from "@/components/content-page";
-import { ArrowLeftIcon, CalendarIcon } from "@/components/elevated/Icons";
+import { redirect } from "next/navigation";
+import { pacificDay } from "@/lib/events/hub";
 import { computeVisibilityForUser, getEventBySlug } from "@/lib/events/server";
-import { expandOccurrences } from "@/lib/events/calendar";
-import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/Los_Angeles" });
-
-interface EventDetailsPageProps {
+export default async function EventDetailsPage({
+  params,
+  searchParams,
+}: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ occurrenceStart?: string }>;
-}
-
-export default async function EventDetailsPage({ params, searchParams }: EventDetailsPageProps) {
-  const theme = resolveSiteTheme((await cookies()).get(SITE_VIEW_COOKIE)?.value);
-  const { slug } = await params;
-  const query = await searchParams;
-  const occurrenceStart = query.occurrenceStart;
-  const visibility = await computeVisibilityForUser();
-
-  const event = await getEventBySlug(slug, {
-    includePrivate: visibility.includePrivate,
-    includeMembers: visibility.includeMembers,
-  });
-  if (!event) {
-    notFound();
+}) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const search = new URLSearchParams({ event: slug });
+  const start =
+    query.occurrenceStart && !Number.isNaN(Date.parse(query.occurrenceStart))
+      ? query.occurrenceStart
+      : (await getEventBySlug(slug, await computeVisibilityForUser()))?.start_time;
+  if (start) {
+    const date = pacificDay(start);
+    search.set("date", date);
+    search.set("month", date.slice(0, 7));
   }
-
-  const selectedOccurrence =
-    occurrenceStart
-      ? expandOccurrences(
-          event,
-          new Date(new Date(occurrenceStart).getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          new Date(new Date(occurrenceStart).getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          50,
-        ).find((entry) => entry.occurrenceStart === occurrenceStart)
-      : null;
-
-  const startsAt = selectedOccurrence?.occurrenceStart ?? event.start_time;
-  const endsAt = selectedOccurrence?.occurrenceEnd ?? event.end_time;
-
-  if (theme === "revamp") {
-    return <main className="editorial-page elevated-wrap elevated-event-detail">
-      <Link href="/events-festivals" className="elevated-text-link"><ArrowLeftIcon /> Back to events</Link>
-      <header className="editorial-hero"><div className="editorial-hero-copy"><p className="elevated-eyebrow">{event.event_type}{event.visibility === "members" ? " · Members only" : ""}</p><h1>{event.title}</h1>{event.short_summary && <p>{event.short_summary}</p>}</div></header>
-      <div className="elevated-event-facts"><div><p className="elevated-eyebrow">When</p><p>{dateTimeFormatter.format(new Date(startsAt))} Pacific{endsAt ? ` – ${dateTimeFormatter.format(new Date(endsAt))} Pacific` : ""}</p></div><div><p className="elevated-eyebrow">Where</p><p>{event.location ?? "Durga Bari Campus"}</p></div></div>
-      {event.full_description && <div className="elevated-event-description"><p>{event.full_description}</p></div>}
-      <div className="elevated-event-actions"><a className="elevated-text-link" href={`/api/calendar/events/${event.slug ?? event.id}/ics?occurrenceStart=${encodeURIComponent(startsAt)}`}><CalendarIcon /> Add to calendar</a><Link className="elevated-text-link" href="/api/calendar/feed">Subscribe to calendar <CalendarIcon /></Link></div>
-    </main>;
-  }
-
-  return (
-    <ContentPageFrame>
-      <article className="db-card space-y-5 p-6 md:p-8">
-        <p className="db-kicker">{event.event_type}</p>
-        {event.visibility === "members" ? (
-          <p className="db-pill">
-            Members only
-          </p>
-        ) : null}
-        <h1 className="db-title">{event.title}</h1>
-        {event.short_summary ? <p className="db-subtitle">{event.short_summary}</p> : null}
-
-        <div className="db-card-muted grid gap-3 p-5 sm:grid-cols-2">
-          <div>
-            <p className="db-kicker text-[0.68rem]">Starts</p>
-            <p className="text-sm font-medium text-[var(--db-text)]">{dateTimeFormatter.format(new Date(startsAt))} Pacific</p>
-          </div>
-          <div>
-            <p className="db-kicker text-[0.68rem]">Ends</p>
-            <p className="text-sm font-medium text-[var(--db-text)]">
-              {endsAt ? `${dateTimeFormatter.format(new Date(endsAt))} Pacific` : "Not specified"}
-            </p>
-          </div>
-          <div>
-            <p className="db-kicker text-[0.68rem]">Location</p>
-            <p className="text-sm font-medium text-[var(--db-text)]">{event.location ?? "Durga Bari Campus"}</p>
-          </div>
-          <div>
-            <p className="db-kicker text-[0.68rem]">Type</p>
-            <p className="text-sm font-medium capitalize text-[var(--db-text)]">{event.event_type}</p>
-          </div>
-        </div>
-
-        {event.full_description ? (
-          <div className="db-prose max-w-none text-sm">
-            <p>{event.full_description}</p>
-          </div>
-        ) : null}
-
-        <div className="flex flex-wrap gap-2">
-          <a
-            href={`/api/calendar/events/${event.slug ?? event.id}/ics?occurrenceStart=${encodeURIComponent(startsAt)}`}
-            className="db-button-primary text-sm no-underline"
-          >
-            Add to Calendar
-          </a>
-          <Link
-            href="/api/calendar/feed"
-            className="db-button-secondary text-sm no-underline"
-          >
-            Subscribe to Calendar
-          </Link>
-          <Link
-            href="/events-festivals"
-            className="db-button-secondary text-sm no-underline"
-          >
-            Back to events
-          </Link>
-        </div>
-      </article>
-    </ContentPageFrame>
-  );
+  redirect(`/calendar?${search}`);
 }

@@ -15,6 +15,7 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  images: { qualities: [75, 85, 90] },
   async headers() {
     return [
       {

@@ -21,7 +21,6 @@ export function ElevatedFooter({ fields, isAdmin }: { fields: Record<string, str
         </div>
         <nav aria-label={isBn ? "ফুটার নেভিগেশন" : "Footer navigation"}>
           <Link href={withLang("/about", lang)}>{isBn ? "পরিচিতি" : "About"}</Link>
-          <Link href={withLang("/events-festivals", lang)}>{isBn ? "অনুষ্ঠান" : "Events"}</Link>
           <Link href={withLang("/calendar", lang)}>{isBn ? "ক্যালেন্ডার" : "Calendar"}</Link>
           <Link href={withLang("/get-involved", lang)}>{isBn ? "যুক্ত হোন" : "Get involved"}</Link>
           <Link href={withLang("/join-hands-to-build-durga-bari/", lang)}>{isBn ? "দান" : "Donate"}</Link>

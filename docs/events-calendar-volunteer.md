@@ -23,3 +23,10 @@
 - Public: read published public events and ICS.
 - Signed-in members: read public/member events and volunteer through `/portal/volunteer`.
 - `event_manager` + `super_admin`: full management via `/admin/events` and `/api/admin/events/*`.
+
+## Central calendar experience
+- `/calendar` is the shared home for events, festivals, and member RSVPs. Dates open a focused day view, and event-type filters live beside search. Space availability remains in the reservation and admin flows. Older `/events`, `/events-festivals`, and event detail links redirect into it.
+- `/api/calendar/hub?month=YYYY-MM` returns the visible month, including recurring occurrences and the signed-in user's own RSVPs. Responses are private and never cached. Restricted space-blocking events and approved reservations expose only anonymous busy times.
+- RSVP writes continue through `/api/events/[id]/rsvp`. Recurring events currently share one event-level RSVP; the event dialog explains this.
+- The calendar supports a scoped home-screen installation. Its service worker stores only a neutral offline explanation; event responses, member details, and RSVPs always require a network connection.
+- Run `node --test tests/calendar.test.cjs` for calendar dates, visibility, private booking redaction, RSVP ownership, access, and capacity checks.

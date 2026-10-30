@@ -6,8 +6,16 @@ import { useState } from "react";
 import { AvailabilityCalendar } from "@/components/availability-calendar";
 import { ReservationForm } from "@/components/reservation-form";
 
-export function ReserveEventContent({ canReserve, zeffyUrl }: { canReserve: boolean; zeffyUrl: string }) {
-  const [selectedDate, setSelectedDate] = useState("");
+export function ReserveEventContent({
+  canReserve,
+  zeffyUrl,
+  initialDate = "",
+}: {
+  canReserve: boolean;
+  zeffyUrl: string;
+  initialDate?: string;
+}) {
+  const [selectedDate, setSelectedDate] = useState(initialDate);
 
   return (
     <div className="mt-6 space-y-6">
@@ -18,9 +26,15 @@ export function ReserveEventContent({ canReserve, zeffyUrl }: { canReserve: bool
             <ReservationForm zeffyUrl={zeffyUrl} selectedDate={selectedDate} />
           ) : (
             <div className="space-y-4">
-              <h2 className="font-serif text-2xl font-bold text-[var(--db-text)]">A member account is required</h2>
-              <p className="text-[var(--db-text-soft)]">Please log in or create an account to request a private event at Durga Bari.</p>
-              <Link href="/login" className="db-button inline-flex px-5 py-3 font-semibold">Log in or create an account</Link>
+              <h2 className="font-serif text-2xl font-bold text-[var(--db-text)]">
+                A member account is required
+              </h2>
+              <p className="text-[var(--db-text-soft)]">
+                Please log in or create an account to request a private event at Durga Bari.
+              </p>
+              <Link href="/login" className="db-button inline-flex px-5 py-3 font-semibold">
+                Log in or create an account
+              </Link>
             </div>
           )}
         </div>
@@ -31,7 +45,10 @@ export function ReserveEventContent({ canReserve, zeffyUrl }: { canReserve: bool
             <li>Use your booking reference when paying through Zeffy.</li>
             <li>Durga Bari checks the payment and availability, then approves the booking.</li>
           </ol>
-          <p>Bookings may last up to 6 hours. All times are Pacific time. Payment alone does not confirm a reservation.</p>
+          <p>
+            Bookings may last up to 6 hours. All times are Pacific time. Payment alone does not
+            confirm a reservation.
+          </p>
         </aside>
       </div>
     </div>

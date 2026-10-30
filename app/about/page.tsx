@@ -1,14 +1,18 @@
-import { ContentHero, ContentModule, ContentPageFrame, ContentPlaceholder } from "@/components/content-page";
+import {
+  ContentHero,
+  ContentModule,
+  ContentPageFrame,
+  ContentPlaceholder,
+} from "@/components/content-page";
 import { CmsEditableBlock } from "@/components/cms/CmsEditableBlock";
 import { DurgacenterAboutPage } from "@/components/DurgacenterAboutPage";
 import { ElevatedAboutPage } from "@/components/elevated/ContentPages";
-import { PayloadPageView } from "@/components/payload/Page";
+import { CinematicAboutPage } from "@/components/about/CinematicAboutPage";
 import { canCurrentUserManageCms } from "@/lib/cms/access";
 import { getCmsPageContent } from "@/lib/cms/page-content";
 import { resolveLanguage } from "@/lib/i18n";
 import { cookies } from "next/headers";
 import { resolveSiteTheme, SITE_VIEW_COOKIE } from "@/lib/site-theme";
-import { getPublishedPayloadPage } from "@/lib/payload/pages";
 
 interface AboutPageProps {
   searchParams: Promise<{ lang?: string }>;
@@ -24,15 +28,15 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
   const params = await searchParams;
   const lang = resolveLanguage(params.lang);
   if (theme === "revamp") {
-    if (lang === "en") {
-      const page = await getPublishedPayloadPage("about");
-      if (page) return <PayloadPageView page={page} />;
-    }
+    if (lang === "en") return <CinematicAboutPage />;
     return <ElevatedAboutPage lang={lang} />;
   }
   const isBn = lang === "bn";
   const cmsSlug = lang === "bn" ? "about-bn" : "about";
-  const [canManageCms, cmsIntro] = await Promise.all([canCurrentUserManageCms(), getCmsPageContent(cmsSlug)]);
+  const [canManageCms, cmsIntro] = await Promise.all([
+    canCurrentUserManageCms(),
+    getCmsPageContent(cmsSlug),
+  ]);
   const aboutIntroDefaultHtml = isBn
     ? "<p>দুর্গা বাড়ি - Center for Spiritual and Cultural Excellence একটি কমিউনিটি উদ্যোগ, যেখানে মা দুর্গাকে কেন্দ্র করে ভক্তি, সংস্কৃতি ও সমাজ একসূত্রে মিলবে।</p>"
     : "<p>Durga Bari - Center for Spiritual and Cultural Excellence is a community initiative to establish a sacred space dedicated to Maa Durga, where devotion, culture, and community come together as one.</p>";
@@ -106,11 +110,19 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
         <div className="grid gap-4 md:grid-cols-2">
           <ContentPlaceholder
             label={isBn ? "মন্দিরের ভাবনা" : "Temple Vision"}
-            sublabel={isBn ? "ভবিষ্যৎ গর্ভগৃহ ও প্রার্থনা হলের ধারণা" : "Future sanctum and prayer hall concept"}
+            sublabel={
+              isBn
+                ? "ভবিষ্যৎ গর্ভগৃহ ও প্রার্থনা হলের ধারণা"
+                : "Future sanctum and prayer hall concept"
+            }
           />
           <ContentPlaceholder
             label={isBn ? "সাংস্কৃতিক অঙ্গন" : "Cultural Wing"}
-            sublabel={isBn ? "তরুণ, ভাষা ও ঐতিহ্যভিত্তিক কর্মসূচি" : "Youth, language, and heritage programming"}
+            sublabel={
+              isBn
+                ? "তরুণ, ভাষা ও ঐতিহ্যভিত্তিক কর্মসূচি"
+                : "Youth, language, and heritage programming"
+            }
           />
         </div>
 
@@ -130,4 +142,8 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
     </ContentPageFrame>
   );
 }
-export const metadata = { title: "About" };
+export const metadata = {
+  title: "Our Story — A Home for Maa Durga in San Jose",
+  description:
+    "Discover the purpose, guiding commitments, and beginnings of Durga Bari, a community-led spiritual and cultural home dedicated to Maa Durga in San Jose, California.",
+};

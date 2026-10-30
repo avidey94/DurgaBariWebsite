@@ -1,0 +1,27 @@
+.mark {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #f4eee2;
+}
+
+/* Frame the supplied emblem; the adjacent wordmark already names Durga Bari. */
+.image {
+  position: absolute;
+  top: -2%;
+  left: -18%;
+  width: 136%;
+  max-width: none;
+  height: auto;
+}
+
+@media (max-width: 540px) {
+  .mark {
+    width: 38px;
+    height: 38px;
+  }
+}

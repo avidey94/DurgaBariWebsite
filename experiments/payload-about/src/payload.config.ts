@@ -1,6 +1,7 @@
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { attachDatabasePool } from '@vercel/functions'
 import { readFileSync } from 'node:fs'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -35,6 +36,8 @@ const database = postgresURL
         connectionString: postgresConnection!.toString(),
         max: 2,
         idleTimeoutMillis: 1_000,
+        connectionTimeoutMillis: 5_000,
+        query_timeout: 15_000,
         ssl: { ca: certificate, rejectUnauthorized: true },
       },
       schemaName: 'payload_cms',
@@ -45,6 +48,12 @@ const database = postgresURL
   : sqliteAdapter({ client: { url: process.env.DATABASE_URL || 'file:./payload-about.db' } })
 
 export default buildConfig({
+  onInit: (payload) => {
+    if (process.env.VERCEL_URL && process.env.VERCEL_REGION && postgresURL) {
+      const pool = (payload.db as { pool?: Parameters<typeof attachDatabasePool>[0] }).pool
+      if (pool) attachDatabasePool(pool)
+    }
+  },
   admin: {
     user: Users.slug,
     autoLogin: process.env.NODE_ENV === 'development' && !postgresURL ? { email: 'editor@durgabari.local' } : false,

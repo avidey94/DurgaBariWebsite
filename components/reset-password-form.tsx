@@ -2,10 +2,19 @@
 
 import { useState, type FormEvent } from "react";
 
-export function ResetPasswordForm({ email }: { email: string }) {
+import { AuthArrow, AuthPasswordField, AuthStateIcon } from "@/components/auth-fields";
+import type { Language } from "@/lib/i18n";
+
+export function ResetPasswordForm({
+  email,
+  language = "en",
+}: {
+  email: string;
+  language?: Language;
+}) {
+  const isBn = language === "bn";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [complete, setComplete] = useState(false);
@@ -14,11 +23,15 @@ export function ResetPasswordForm({ email }: { email: string }) {
     event.preventDefault();
     if (busy) return;
     if (password.length < 8) {
-      setStatus("Use at least 8 characters for your new password.");
+      setStatus(
+        isBn
+          ? "কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন।"
+          : "Use at least 8 characters for your new password.",
+      );
       return;
     }
     if (password !== confirmPassword) {
-      setStatus("The two passwords do not match.");
+      setStatus(isBn ? "পাসওয়ার্ড দুটি মিলছে না।" : "The two passwords do not match.");
       return;
     }
 
@@ -39,87 +52,99 @@ export function ResetPasswordForm({ email }: { email: string }) {
       setConfirmPassword("");
       setComplete(true);
     } catch {
-      setStatus("Could not connect. Please try again.");
+      setStatus(
+        isBn ? "সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।" : "We couldn’t connect. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="db-panel overflow-hidden">
-      <div className="border-b border-[var(--db-border-soft)] bg-[var(--db-surface-soft)] px-6 py-5 md:px-8">
-        <p className="db-kicker">Member Access</p>
-        <h1 className="db-title mt-2">{complete ? "Password updated" : "Choose a new password"}</h1>
-      </div>
-      <div className="space-y-5 p-6 md:p-8">
-        {complete ? (
-          <>
-            <p className="text-sm leading-7 text-[var(--db-text-soft)]">
-              Your new password is ready. You can continue to your portal now.
-            </p>
-            <a href="/portal" className="db-button-primary w-full text-sm">
-              Continue to portal
-            </a>
-          </>
-        ) : (
-          <>
-            <p className="text-sm leading-7 text-[var(--db-text-soft)]">
-              Set a password for <strong>{email}</strong>. Save it so you can sign in again after
-              leaving the portal.
-            </p>
-            <form className="space-y-4" onSubmit={(event) => void submit(event)}>
-              <label className="block text-sm font-semibold">
-                New password
-                <input
-                  required
-                  minLength={8}
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="db-input mt-2"
-                />
-              </label>
-              <p className="text-xs text-[var(--db-text-soft)]">At least 8 characters.</p>
-              <label className="block text-sm font-semibold">
-                Confirm new password
-                <input
-                  required
-                  minLength={8}
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  className="db-input mt-2"
-                />
-              </label>
-              <label className="flex items-center gap-2 text-sm text-[var(--db-text-soft)]">
-                <input
-                  type="checkbox"
-                  checked={showPassword}
-                  onChange={(event) => setShowPassword(event.target.checked)}
-                />
-                Show passwords
-              </label>
-              {status && (
-                <p
-                  role="alert"
-                  className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-                >
-                  {status}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={busy}
-                className="db-button-primary w-full text-sm disabled:opacity-60"
-              >
-                {busy ? "Saving..." : "Save new password"}
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+    <section className="auth-form" aria-labelledby="reset-heading">
+      <p className="auth-eyebrow">
+        {isBn ? "দুর্গা বাড়ি · সদস্য পোর্টাল" : "Durga Bari · Member portal"}
+      </p>
+      <AuthStateIcon kind={complete ? "check" : "lock"} />
+      <h1 id="reset-heading" className="auth-heading">
+        {complete
+          ? isBn
+            ? "নতুন পাসওয়ার্ড তৈরি।"
+            : "You’re all set."
+          : isBn
+            ? "নতুন করে শুরু করুন।"
+            : "A fresh start."}
+      </h1>
+      {complete ? (
+        <div className="auth-sent-state" role="status">
+          <p className="auth-intro">
+            {isBn
+              ? "আপনার পাসওয়ার্ড পরিবর্তন হয়েছে। পোর্টালে ফিরে যান।"
+              : "Your password has been updated. You’re ready to return to your community."}
+          </p>
+          <a href="/portal" className="auth-submit">
+            {isBn ? "পোর্টালে যান" : "Continue to member portal"}
+            <AuthArrow />
+          </a>
+          <p className="auth-small-copy">
+            {isBn
+              ? "পরেরবার সাইন ইনের জন্য নতুন পাসওয়ার্ডটি সংরক্ষণ করুন।"
+              : "Save your new password in your password manager for next time."}
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="auth-intro">
+            {isBn
+              ? "আপনার অ্যাকাউন্টের জন্য নতুন পাসওয়ার্ড বেছে নিন।"
+              : "Choose a new password for your account. A longer, unique password helps keep it secure."}
+          </p>
+          <div className="auth-email-destination auth-reset-email">
+            <span>{isBn ? "আপনার অ্যাকাউন্ট" : "Your account"}</span>
+            <strong>{email}</strong>
+          </div>
+          <form onSubmit={(event) => void submit(event)} aria-busy={busy}>
+            <fieldset className="auth-fields" disabled={busy}>
+              <AuthPasswordField
+                id="new-password"
+                label={isBn ? "নতুন পাসওয়ার্ড" : "New password"}
+                value={password}
+                onChange={setPassword}
+                minLength={8}
+                autoComplete="new-password"
+                hint={isBn ? "কমপক্ষে ৮ অক্ষর।" : "Use at least 8 characters."}
+                isBn={isBn}
+              />
+              <AuthPasswordField
+                id="confirm-new-password"
+                label={isBn ? "নতুন পাসওয়ার্ড আবার দিন" : "Confirm new password"}
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                minLength={8}
+                autoComplete="new-password"
+                isBn={isBn}
+              />
+            </fieldset>
+            {status ? (
+              <p role="alert" className="auth-error">
+                {status}
+              </p>
+            ) : null}
+            <button type="submit" disabled={busy} className="auth-submit">
+              <span>
+                {busy
+                  ? isBn
+                    ? "সংরক্ষণ হচ্ছে…"
+                    : "Saving your password…"
+                  : isBn
+                    ? "নতুন পাসওয়ার্ড সংরক্ষণ করুন"
+                    : "Save new password"}
+              </span>
+              {busy ? <span className="auth-spinner" aria-hidden="true" /> : <AuthArrow />}
+            </button>
+          </form>
+        </>
+      )}
+    </section>
   );
 }

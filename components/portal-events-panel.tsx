@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { MemberEmptyState, MemberLoading, PortalArrow } from "@/components/portal-member-page";
+
 type RsvpStatus = "going" | "maybe" | "not_going";
 
 interface EventWithMyRsvp {
@@ -116,17 +118,49 @@ export function PortalEventsPanel({ elevated = false }: { elevated?: boolean }) 
       <section className="member-home-events" aria-labelledby="member-events-heading">
         <div className="member-home-section-heading member-home-events-heading">
           <div>
-            <h2 id="member-events-heading">Upcoming events</h2>
+            <div>
+              <p className="member-home-eyebrow">Come together</p>
+              <h2 id="member-events-heading">On the horizon</h2>
+            </div>
             <Link href="/calendar" className="member-home-calendar-link">
-              Calendar <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" /></svg>
+              Calendar{" "}
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 18 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" />
+              </svg>
             </Link>
           </div>
         </div>
 
-        {loading ? <p className="member-home-event-note">Loading events…</p> : null}
-        {error ? <p className="member-home-event-note" role="alert">{error}</p> : null}
+        {loading && events.length === 0 ? <MemberLoading label="Loading upcoming events…" /> : null}
+        {error ? (
+          <div className="member-feedback is-error" role="alert">
+            <p>{error}</p>
+            <button type="button" className="member-text-action" onClick={() => void loadEvents()}>
+              Try again
+            </button>
+          </div>
+        ) : null}
         {!loading && !error && events.length === 0 ? (
-          <p className="member-home-event-note">No upcoming events.</p>
+          <MemberEmptyState
+            icon="calendar"
+            title="Good things are on the way."
+            description="When the next gathering is announced, you’ll find it here. There’s always a place for you at Durga Bari."
+            compact
+          >
+            <Link href="/calendar" className="member-inline-link">
+              Explore the calendar <PortalArrow />
+            </Link>
+          </MemberEmptyState>
         ) : null}
 
         <div className="member-home-event-list">
@@ -141,27 +175,46 @@ export function PortalEventsPanel({ elevated = false }: { elevated?: boolean }) 
               <article key={event.id} className="member-home-event">
                 <time dateTime={event.start_time} className="member-home-event-date">
                   <span>{new Intl.DateTimeFormat("en-US", { month: "short" }).format(start)}</span>
-                  <strong>{new Intl.DateTimeFormat("en-US", { day: "numeric" }).format(start)}</strong>
+                  <strong>
+                    {new Intl.DateTimeFormat("en-US", { day: "numeric" }).format(start)}
+                  </strong>
                 </time>
                 <div className="member-home-event-body">
                   <h3>{event.title}</h3>
                   <p className="member-home-event-meta">
-                    {new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }).format(start)}
+                    {new Intl.DateTimeFormat("en-US", {
+                      weekday: "short",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    }).format(start)}
                     {event.location ? ` · ${event.location}` : ""}
                   </p>
-                  {event.description ? <p className="member-home-event-description">{event.description}</p> : null}
+                  {event.description ? (
+                    <p className="member-home-event-description">{event.description}</p>
+                  ) : null}
 
                   {event.is_rsvp_enabled ? (
                     <div className="member-home-rsvp">
                       {event.myRsvp ? (
-                        <p className="member-home-current-rsvp">Your RSVP: {event.myRsvp.status.replace("_", " ")}{event.myRsvp.status === "going" ? ` · ${formatHeadcount(event.myRsvp.headcount)}` : ""}</p>
+                        <p className="member-home-current-rsvp">
+                          Your RSVP: {event.myRsvp.status.replace("_", " ")}
+                          {event.myRsvp.status === "going"
+                            ? ` · ${formatHeadcount(event.myRsvp.headcount)}`
+                            : ""}
+                        </p>
                       ) : null}
                       <div className="member-home-rsvp-fields">
                         <label>
                           <span>RSVP</span>
                           <select
                             value={status}
-                            onChange={(e) => setStatusByEventId((current) => ({ ...current, [event.id]: e.target.value as RsvpStatus }))}
+                            disabled={isSaving}
+                            onChange={(e) =>
+                              setStatusByEventId((current) => ({
+                                ...current,
+                                [event.id]: e.target.value as RsvpStatus,
+                              }))
+                            }
                           >
                             <option value="going">Going</option>
                             <option value="maybe">Maybe</option>
@@ -174,21 +227,35 @@ export function PortalEventsPanel({ elevated = false }: { elevated?: boolean }) 
                             <input
                               type="number"
                               min={1}
+                              max={event.capacity ?? undefined}
+                              disabled={isSaving}
                               value={headcount}
-                              onChange={(e) => setHeadcountByEventId((current) => ({
-                                ...current,
-                                [event.id]: Math.max(1, Number(e.target.value || "1")),
-                              }))}
+                              onChange={(e) =>
+                                setHeadcountByEventId((current) => ({
+                                  ...current,
+                                  [event.id]: Math.max(1, Number(e.target.value || "1")),
+                                }))
+                              }
                             />
                           </label>
                         ) : null}
-                        <button type="button" onClick={() => void submitRsvp(event.id)} disabled={isSaving}>
+                        <button
+                          type="button"
+                          onClick={() => void submitRsvp(event.id)}
+                          disabled={isSaving}
+                        >
                           {isSaving ? "Saving…" : "Save RSVP"}
                         </button>
                       </div>
-                      {message ? <p className="member-home-rsvp-message" role="status">{message}</p> : null}
+                      {message ? (
+                        <p className="member-home-rsvp-message" role="status">
+                          {message}
+                        </p>
+                      ) : null}
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="member-home-event-meta">No RSVP needed. We’d love to see you.</p>
+                  )}
                 </div>
               </article>
             );
@@ -222,9 +289,15 @@ export function PortalEventsPanel({ elevated = false }: { elevated?: boolean }) 
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">{event.title}</h3>
-                  <p className="text-sm text-slate-700">{dateTimeFormatter.format(new Date(event.start_time))}</p>
-                  {event.location ? <p className="text-sm text-slate-700">{event.location}</p> : null}
-                  {event.description ? <p className="mt-1 text-sm text-slate-700">{event.description}</p> : null}
+                  <p className="text-sm text-slate-700">
+                    {dateTimeFormatter.format(new Date(event.start_time))}
+                  </p>
+                  {event.location ? (
+                    <p className="text-sm text-slate-700">{event.location}</p>
+                  ) : null}
+                  {event.description ? (
+                    <p className="mt-1 text-sm text-slate-700">{event.description}</p>
+                  ) : null}
                 </div>
                 {event.capacity !== null ? (
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-600">
@@ -241,7 +314,12 @@ export function PortalEventsPanel({ elevated = false }: { elevated?: boolean }) 
                     <span>Status</span>
                     <select
                       value={status}
-                      onChange={(e) => setStatusByEventId((current) => ({ ...current, [event.id]: e.target.value as RsvpStatus }))}
+                      onChange={(e) =>
+                        setStatusByEventId((current) => ({
+                          ...current,
+                          [event.id]: e.target.value as RsvpStatus,
+                        }))
+                      }
                       className="db-select min-w-[140px] px-2 py-1"
                     >
                       <option value="going">Going</option>

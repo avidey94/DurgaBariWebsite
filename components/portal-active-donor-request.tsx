@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { MemberIcon } from "@/components/portal-member-page";
 import type { ActiveDonorStatus, RequestedActiveDonorStatus } from "@/lib/portal/types";
 
 interface PortalActiveDonorRequestProps {
@@ -12,7 +13,10 @@ interface PortalActiveDonorRequestProps {
   elevated?: boolean;
 }
 
-const tierMeta: Record<RequestedActiveDonorStatus, { label: string; price: string; className: string }> = {
+const tierMeta: Record<
+  RequestedActiveDonorStatus,
+  { label: string; price: string; className: string }
+> = {
   bronze: {
     label: "Bronze",
     price: "$100/mo",
@@ -37,16 +41,17 @@ export function PortalActiveDonorRequest({
   allowedStatuses,
   elevated = false,
 }: PortalActiveDonorRequestProps) {
-  const [selectedStatus, setSelectedStatus] = useState<RequestedActiveDonorStatus>(
-    requestedStatus && allowedStatuses.includes(requestedStatus)
-      ? requestedStatus
-      : (allowedStatuses[0] ?? "bronze"),
+  const [selectedStatus, setSelectedStatus] = useState<RequestedActiveDonorStatus | "">(
+    requestedStatus && allowedStatuses.includes(requestedStatus) ? requestedStatus : "",
   );
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sentStatus, setSentStatus] = useState<RequestedActiveDonorStatus | null>(null);
+  const pendingStatus = sentStatus ?? requestedStatus;
 
   const submitRequest = async () => {
+    if (!selectedStatus || submitting || !allowedStatuses.includes(selectedStatus)) return;
     setSubmitting(true);
     setMessage(null);
     setError(null);
@@ -64,7 +69,10 @@ export function PortalActiveDonorRequest({
         throw new Error(payload.message ?? "Unable to submit request.");
       }
 
-      setMessage(`Request sent for ${tierMeta[selectedStatus].label} active donor status. An admin will review it.`);
+      setMessage(
+        `Request sent for ${tierMeta[selectedStatus].label} active donor status. An admin will review it.`,
+      );
+      setSentStatus(selectedStatus);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to submit request.");
     } finally {
@@ -74,15 +82,35 @@ export function PortalActiveDonorRequest({
 
   if (elevated) {
     return (
-      <section className="member-section member-tier-request" aria-labelledby="tier-request-heading">
+      <section
+        className="member-section member-tier-request"
+        aria-labelledby="tier-request-heading"
+      >
         <div className="member-section-heading">
           <div>
-            <h2 id="tier-request-heading">{currentStatus === "none" ? "Join active giving" : "Change your tier"}</h2>
-            <p className="member-section-lede">Choose a monthly level. Requests are reviewed before your status changes.</p>
+            <h2 id="tier-request-heading">
+              {currentStatus === "none" ? "Join active giving" : "Change your tier"}
+            </h2>
+            <p className="member-section-lede">
+              Choose a monthly level that works for your family. Our membership team reviews each
+              request.
+            </p>
           </div>
         </div>
-        {requestedStatus ? (
-          <p className="member-request-pending">Pending request: <strong>{tierMeta[requestedStatus].label}</strong>{requestedAt ? ` · ${new Date(requestedAt).toLocaleDateString("en-US")}` : ""}</p>
+        {pendingStatus ? (
+          <div className="member-request-pending">
+            <MemberIcon name="clock" size={21} />
+            <div>
+              <strong>{tierMeta[pendingStatus].label} request under review</strong>
+              <p>
+                {!sentStatus && requestedAt
+                  ? `Sent ${new Date(requestedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}. `
+                  : ""}
+                Your current membership stays active during review. You can submit a different
+                choice below to replace this request.
+              </p>
+            </div>
+          </div>
         ) : null}
         {allowedStatuses.length === 0 ? (
           <p className="member-empty">No other tier is available.</p>
@@ -91,7 +119,13 @@ export function PortalActiveDonorRequest({
             <legend className="sr-only">Choose a donor tier</legend>
             {allowedStatuses.map((status) => (
               <label key={status} className={selectedStatus === status ? "is-selected" : ""}>
-                <input type="radio" name="active-donor-request-elevated" checked={selectedStatus === status} onChange={() => setSelectedStatus(status)} />
+                <input
+                  type="radio"
+                  name="active-donor-request-elevated"
+                  checked={selectedStatus === status}
+                  onChange={() => setSelectedStatus(status)}
+                  disabled={submitting}
+                />
                 <span>{tierMeta[status].label}</span>
                 <strong>{tierMeta[status].price}</strong>
               </label>
@@ -99,13 +133,50 @@ export function PortalActiveDonorRequest({
           </fieldset>
         )}
         {allowedStatuses.length > 0 ? (
-          <button type="button" className="member-submit" disabled={submitting} onClick={() => void submitRequest()}>
-            {submitting ? "Sending…" : "Send request"}
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" /></svg>
+          <button
+            type="button"
+            className="member-submit"
+            disabled={submitting || !selectedStatus || pendingStatus === selectedStatus}
+            onClick={() => void submitRequest()}
+          >
+            {submitting
+              ? "Sending request…"
+              : pendingStatus === selectedStatus
+                ? "Request under review"
+                : pendingStatus
+                  ? "Update tier request"
+                  : selectedStatus
+                    ? `Request ${tierMeta[selectedStatus].label} level`
+                    : "Choose a level to continue"}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3.5 9h11M10 4.5 14.5 9 10 13.5" />
+            </svg>
           </button>
         ) : null}
-        {message ? <p className="member-feedback" role="status">{message}</p> : null}
-        {error ? <p className="member-feedback" role="alert">{error}</p> : null}
+        <p className="member-form-help">
+          This sends a membership request. Contributions are made separately; this does not set up
+          an automatic payment.
+        </p>
+        {message ? (
+          <p className="member-feedback is-success" role="status">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="member-feedback is-error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </section>
     );
   }
@@ -113,7 +184,9 @@ export function PortalActiveDonorRequest({
   return (
     <section className="db-card p-6">
       <h2 className="text-2xl font-semibold text-[var(--db-text)]">
-        {currentStatus === "none" ? "Request active donor status" : "Request an active donor tier change"}
+        {currentStatus === "none"
+          ? "Request active donor status"
+          : "Request an active donor tier change"}
       </h2>
       <p className="mt-2 text-sm text-slate-600">
         {currentStatus === "none"
@@ -158,7 +231,9 @@ export function PortalActiveDonorRequest({
                 />
                 <div>
                   <p className="font-semibold">{tierMeta[status].label}</p>
-                  <p className={`text-xs ${selectedStatus === status ? "text-[var(--db-text-soft)]" : "text-slate-600"}`}>
+                  <p
+                    className={`text-xs ${selectedStatus === status ? "text-[var(--db-text-soft)]" : "text-slate-600"}`}
+                  >
                     {tierMeta[status].price}
                   </p>
                 </div>
@@ -171,7 +246,7 @@ export function PortalActiveDonorRequest({
       <div className="mt-4">
         <button
           type="button"
-          disabled={submitting || allowedStatuses.length === 0}
+          disabled={submitting || !selectedStatus || allowedStatuses.length === 0}
           onClick={() => void submitRequest()}
           className="db-button-primary text-sm disabled:opacity-60"
         >

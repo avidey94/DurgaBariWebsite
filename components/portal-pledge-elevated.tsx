@@ -1,8 +1,18 @@
 import Image from "next/image";
+import Link from "next/link";
 
 import { PortalActiveDonorRequest } from "@/components/portal-active-donor-request";
-import { PortalMemberPage } from "@/components/portal-member-page";
-import type { ActiveDonorStatus, DonationLedgerEntry, RequestedActiveDonorStatus } from "@/lib/portal/types";
+import {
+  MemberEmptyState,
+  MemberIcon,
+  PortalArrow,
+  PortalMemberPage,
+} from "@/components/portal-member-page";
+import type {
+  ActiveDonorStatus,
+  DonationLedgerEntry,
+  RequestedActiveDonorStatus,
+} from "@/lib/portal/types";
 
 interface Tier {
   id: RequestedActiveDonorStatus;
@@ -20,7 +30,9 @@ const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amountCents / 100);
 
 const formatMonth = (monthKey: string) =>
-  new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(new Date(`${monthKey}-01T00:00:00.000Z`));
+  new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(
+    new Date(`${monthKey}-01T00:00:00.000Z`),
+  );
 
 const tierFromDonation = (type: DonationLedgerEntry["donationType"]) =>
   type === "active_donor_bronze" ? "Bronze" : type === "active_donor_silver" ? "Silver" : "Gold";
@@ -52,18 +64,41 @@ export function PortalPledgeElevated({
     <PortalMemberPage
       title={approvedTier ? "Your donor commitment" : "Active giving"}
       eyebrow="Active donor program"
-      description="Choose a monthly level of support for Durga Bari."
+      description="Steady support makes lasting things possible. Find a monthly level that feels right for your family, and follow your contributions here."
     >
       {approvedTier ? (
         <dl className="member-metrics member-metrics-two">
-          <div><dt>Current level</dt><dd>{currentTier?.title.replace(" Active Donor", "") ?? approvedTier}</dd><small>{currentTier?.contribution}</small></div>
-          <div><dt>Payments recorded</dt><dd>{formatCurrency(activeDonorTotalCents)}</dd></div>
+          <div>
+            <dt>Current level</dt>
+            <dd>{currentTier?.title.replace(" Active Donor", "") ?? approvedTier}</dd>
+            <small>{currentTier?.contribution}</small>
+          </div>
+          <div>
+            <dt>Payments recorded</dt>
+            <dd>{formatCurrency(activeDonorTotalCents)}</dd>
+          </div>
         </dl>
+      ) : null}
+
+      {!approvedTier ? (
+        <div className="member-workflow-note">
+          <MemberIcon name="heart" />
+          <div>
+            <strong>A small rhythm. A lasting difference.</strong>
+            <p>
+              Explore the levels below, send your membership request, and make your monthly
+              contributions separately. Our team will confirm your donor status after review.
+            </p>
+          </div>
+        </div>
       ) : null}
 
       <section className="member-section" aria-labelledby="donor-levels-heading">
         <div className="member-section-heading">
-          <div><h2 id="donor-levels-heading">Monthly levels</h2><p className="member-section-lede">Each level is a monthly commitment.</p></div>
+          <div>
+            <h2 id="donor-levels-heading">Monthly levels</h2>
+            <p className="member-section-lede">Each level is a monthly commitment.</p>
+          </div>
         </div>
         <div className="member-tier-list">
           {tiers.map((tier) => (
@@ -72,8 +107,17 @@ export function PortalPledgeElevated({
                 <h3>{tier.title.replace(" Active Donor", "")}</h3>
                 <strong>{tier.contribution}</strong>
               </div>
-              {approvedTier === tier.id ? <p className="member-tier-current">Your current level</p> : null}
-              <ul>{benefits[tier.id].map((benefit) => <li key={benefit}>{benefit}</li>)}</ul>
+              {approvedTier === tier.id ? (
+                <p className="member-tier-current">
+                  <MemberIcon name="check" size={16} />
+                  Your current level
+                </p>
+              ) : null}
+              <ul>
+                {benefits[tier.id].map((benefit) => (
+                  <li key={benefit}>{benefit}</li>
+                ))}
+              </ul>
             </article>
           ))}
         </div>
@@ -87,10 +131,22 @@ export function PortalPledgeElevated({
         elevated
       />
 
-      <section className="member-section member-donor-payment" aria-labelledby="donor-payment-heading">
+      <section
+        className="member-section member-donor-payment"
+        aria-labelledby="donor-payment-heading"
+      >
         <div>
           <h2 id="donor-payment-heading">Make a payment</h2>
-          <p className="member-section-lede">Scan the QR code to make your monthly contribution.</p>
+          <p className="member-section-lede">
+            Ready for your monthly gift? Scan the QR code with your phone, or visit our giving page
+            for payment instructions.
+          </p>
+          <Link href="/donate" className="member-primary-action">
+            View giving options <PortalArrow />
+          </Link>
+          <p className="member-form-help">
+            Your contribution appears here after the finance team records it.
+          </p>
         </div>
         <Image
           src="https://thedurgacenter.org/wp-content/uploads/2026/02/QR-Code-768x755.jpg"
@@ -103,14 +159,28 @@ export function PortalPledgeElevated({
 
       {approvedTier ? (
         <section className="member-section" aria-labelledby="donor-payments-heading">
-          <div className="member-section-heading"><h2 id="donor-payments-heading">Payment record</h2></div>
+          <div className="member-section-heading">
+            <h2 id="donor-payments-heading">Payment record</h2>
+          </div>
           {activeDonorDonations.length === 0 ? (
-            <p className="member-empty">No active donor payments have been recorded yet.</p>
+            <MemberEmptyState
+              icon="giving"
+              title="Your ongoing support, in one place."
+              description="Your active donor contributions will appear here once recorded by the finance team. You can make a gift using the payment options above."
+              compact
+            />
           ) : (
             <div className="member-ledger">
               {activeDonorDonations.slice(0, 12).map((donation) => (
                 <article key={donation.id} className="member-ledger-row">
-                  <div><strong>{tierFromDonation(donation.donationType)} donor</strong><p>{new Date(donation.occurredAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</p></div>
+                  <div>
+                    <strong>{tierFromDonation(donation.donationType)} donor</strong>
+                    <p>
+                      {new Date(donation.occurredAt).toLocaleDateString("en-US", {
+                        dateStyle: "medium",
+                      })}
+                    </p>
+                  </div>
                   <span>{formatCurrency(donation.amountCents)}</span>
                 </article>
               ))}
@@ -123,9 +193,14 @@ export function PortalPledgeElevated({
               <details className="member-year" key={year}>
                 <summary>{year}</summary>
                 <ul className="member-month-list">
-                  {monthRange.filter((month) => month.startsWith(year)).map((month) => (
-                    <li key={month}><span>{formatMonth(month)}</span><strong>{formatCurrency(monthTotals.get(month) ?? 0)}</strong></li>
-                  ))}
+                  {monthRange
+                    .filter((month) => month.startsWith(year))
+                    .map((month) => (
+                      <li key={month}>
+                        <span>{formatMonth(month)}</span>
+                        <strong>{formatCurrency(monthTotals.get(month) ?? 0)}</strong>
+                      </li>
+                    ))}
                 </ul>
               </details>
             ))}

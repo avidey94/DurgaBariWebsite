@@ -5,7 +5,11 @@ import { PortalActiveDonorRequest } from "@/components/portal-active-donor-reque
 import { PortalPledgeElevated } from "@/components/portal-pledge-elevated";
 import { getCurrentUser } from "@/lib/auth/session";
 import { isNewSitePortal } from "@/lib/portal/is-new-site";
-import { getCurrentFamilyPortalContext, listFamilyDonations } from "@/lib/portal/server";
+import {
+  canAccessMemberContent,
+  getCurrentFamilyPortalContext,
+  listFamilyDonations,
+} from "@/lib/portal/server";
 import type { DonationLedgerEntry, RequestedActiveDonorStatus } from "@/lib/portal/types";
 
 const tiers = [
@@ -47,7 +51,11 @@ const tiers = [
   },
 ] as const;
 
-const ACTIVE_DONOR_TYPES = ["active_donor_bronze", "active_donor_silver", "active_donor_gold"] as const;
+const ACTIVE_DONOR_TYPES = [
+  "active_donor_bronze",
+  "active_donor_silver",
+  "active_donor_gold",
+] as const;
 const formatCurrency = (amountCents: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -94,6 +102,8 @@ const formatMonthLabel = (monthKey: string) =>
     new Date(`${monthKey}-01T00:00:00.000Z`),
   );
 
+export const metadata = { title: "Active donor circle" };
+
 export default async function PortalPledgePage() {
   const user = await getCurrentUser();
 
@@ -103,18 +113,12 @@ export default async function PortalPledgePage() {
 
   const context = await getCurrentFamilyPortalContext();
 
-  if (!context) {
-    return (
-      <section className="db-shell max-w-6xl space-y-4">
-        <h1 className="db-title">Become an Active Donor</h1>
-        <p className="db-card-muted p-4 text-sm text-amber-900">
-          Family profile was not found for your account.
-        </p>
-      </section>
-    );
+  if (!context || !context.family.profileCompleted || !canAccessMemberContent(context)) {
+    redirect("/portal");
   }
 
-  const approvedTier = context.family.activeDonorStatus !== "none" ? context.family.activeDonorStatus : null;
+  const approvedTier =
+    context.family.activeDonorStatus !== "none" ? context.family.activeDonorStatus : null;
   const allowedStatuses = (["bronze", "silver", "gold"] as const).filter(
     (status) => status !== context.family.activeDonorStatus,
   ) as RequestedActiveDonorStatus[];
@@ -122,7 +126,10 @@ export default async function PortalPledgePage() {
   const activeDonorDonations = donations.filter((donation) =>
     ACTIVE_DONOR_TYPES.includes(donation.donationType as (typeof ACTIVE_DONOR_TYPES)[number]),
   );
-  const activeDonorTotalCents = activeDonorDonations.reduce((sum, donation) => sum + donation.amountCents, 0);
+  const activeDonorTotalCents = activeDonorDonations.reduce(
+    (sum, donation) => sum + donation.amountCents,
+    0,
+  );
   const monthTotals = activeDonorDonations.reduce<Map<string, number>>((map, donation) => {
     const monthKey = getActiveDonorMonthKey(donation);
     if (!monthKey || !isValidMonthKey(monthKey)) return map;
@@ -174,8 +181,12 @@ export default async function PortalPledgePage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">{tier.title}</h2>
-                <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{tier.contribution}</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-600">Non-cumulative monthly tier</p>
+                <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                  {tier.contribution}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-600">
+                  Non-cumulative monthly tier
+                </p>
               </div>
               <span
                 className={`rounded-full px-2.5 py-1 text-xs font-semibold ${approvedTier === tier.id ? "bg-emerald-50 text-emerald-700" : tier.badgeClass}`}
@@ -203,7 +214,8 @@ export default async function PortalPledgePage() {
       <section className="db-card p-6">
         <h2 className="text-xl font-semibold text-slate-900">Donate via QR code</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Scan this QR code to submit your monthly active donor contribution, then request the tier that matches your intended support below.
+          Scan this QR code to submit your monthly active donor contribution, then request the tier
+          that matches your intended support below.
         </p>
         <div className="db-card-muted mt-4 inline-block p-3">
           <Image
@@ -250,9 +262,15 @@ export default async function PortalPledgePage() {
                       <td className="px-3 py-2 text-slate-700">
                         {new Date(donation.occurredAt).toLocaleString("en-US")}
                       </td>
-                      <td className="px-3 py-2 text-slate-700">{toTierLabelFromDonationType(donation.donationType)}</td>
-                      <td className="px-3 py-2 text-slate-700">{getActiveDonorMonthKey(donation) ?? "N/A"}</td>
-                      <td className="px-3 py-2 font-semibold text-slate-900">{formatCurrency(donation.amountCents)}</td>
+                      <td className="px-3 py-2 text-slate-700">
+                        {toTierLabelFromDonationType(donation.donationType)}
+                      </td>
+                      <td className="px-3 py-2 text-slate-700">
+                        {getActiveDonorMonthKey(donation) ?? "N/A"}
+                      </td>
+                      <td className="px-3 py-2 font-semibold text-slate-900">
+                        {formatCurrency(donation.amountCents)}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -264,9 +282,16 @@ export default async function PortalPledgePage() {
             {monthRange.map((monthKey) => {
               const total = monthTotals.get(monthKey) ?? 0;
               return (
-                <article key={monthKey} className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                  <p className="text-xs uppercase tracking-wide text-slate-600">{formatMonthLabel(monthKey)}</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{formatCurrency(total)}</p>
+                <article
+                  key={monthKey}
+                  className="rounded-md border border-slate-200 bg-slate-50 p-2"
+                >
+                  <p className="text-xs uppercase tracking-wide text-slate-600">
+                    {formatMonthLabel(monthKey)}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {formatCurrency(total)}
+                  </p>
                 </article>
               );
             })}

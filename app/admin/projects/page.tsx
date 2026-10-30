@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { WorkspacePageHeader } from "@/components/workspace/workspace-ui";
 
 import { AdminProjectsManager } from "@/components/admin-projects-manager";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
+
+export const metadata = { title: "Funding projects" };
 
 export default async function AdminProjectsPage() {
   const access = await getAdminAccessContext();
@@ -16,11 +19,12 @@ export default async function AdminProjectsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Projects Admin</h1>
-        <p className="mt-2 text-sm text-slate-600">Create and manage community funding campaigns.</p>
-      </header>
+    <section className="workspace-domain-page db-shell space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Stewardship"
+        title="Funding projects"
+        description="Create funding projects, share their progress, and turn community support into a lasting place to belong."
+      />
       <AdminProjectsManager />
     </section>
   );

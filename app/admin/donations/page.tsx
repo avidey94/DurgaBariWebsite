@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { WorkspacePageHeader } from "@/components/workspace/workspace-ui";
 
 import { AdminDonationsManager } from "@/components/admin-donations-manager";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
+
+export const metadata = { title: "Donations" };
 
 export default async function AdminDonationsPage() {
   const access = await getAdminAccessContext();
@@ -16,11 +19,12 @@ export default async function AdminDonationsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Treasurer: Donations</h1>
-        <p className="mt-2 text-sm text-slate-600">Record and reconcile family donations.</p>
-      </header>
+    <section className="workspace-domain-page db-shell space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Stewardship"
+        title="Donations"
+        description="Record donations, connect each gift to a family or project, and keep contribution records accurate."
+      />
       <AdminDonationsManager />
     </section>
   );

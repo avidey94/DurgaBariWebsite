@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { PortalExpenseSubmission } from "@/components/portal-expense-submission";
 import { PortalMemberPage } from "@/components/portal-member-page";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCurrentFamilyPortalContext } from "@/lib/portal/server";
+import { canAccessMemberContent, getCurrentFamilyPortalContext } from "@/lib/portal/server";
 import { isNewSitePortal } from "@/lib/portal/is-new-site";
+
+export const metadata = { title: "Reimbursements" };
 
 export default async function PortalExpensePage() {
   const user = await getCurrentUser();
@@ -15,13 +17,17 @@ export default async function PortalExpensePage() {
 
   const context = await getCurrentFamilyPortalContext();
 
-  if (!context || !context.family.profileCompleted) {
+  if (!context || !context.family.profileCompleted || !canAccessMemberContent(context)) {
     redirect("/portal");
   }
 
   if (await isNewSitePortal()) {
     return (
-      <PortalMemberPage title="Expenses" eyebrow="Member finance" description="Submit and track project expenses.">
+      <PortalMemberPage
+        title="Reimbursements"
+        eyebrow="Support behind the scenes"
+        description="Bought something for a temple project? Share the details and follow your request from review to payment."
+      >
         <PortalExpenseSubmission elevated />
       </PortalMemberPage>
     );

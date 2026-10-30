@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { PortalEventsPanel } from "@/components/portal-events-panel";
 import { PortalMemberDashboard } from "@/components/portal-member-dashboard";
+import { MemberIcon } from "@/components/portal-member-page";
 import { PortalOnboardingForm } from "@/components/portal-onboarding-form";
 import { getCurrentUser } from "@/lib/auth/session";
 import {
@@ -80,28 +81,76 @@ export default async function PortalPage() {
   }
 
   if (!canAccessMemberContent(context)) {
+    const isSuspended = context.family.portalAccessState === "suspended";
     return (
-      <section className="db-shell max-w-4xl">
-        <div className="db-panel p-6 md:p-8">
-          <p className="db-kicker">Portal Access Pending</p>
-          <h1 className="db-title mt-3">Your account is awaiting approval</h1>
-          <p className="mt-3 text-sm text-[var(--db-text-soft)]">
-            Your family profile is set up, but member-only portal features stay locked until an
-            administrator approves access.
-          </p>
-          <p className="mt-4 text-sm text-[var(--db-text-soft)]">
-            Signed in as <strong>{user.email}</strong>. You can contact the temple administrators if
-            approval is urgent.
-          </p>
-          <form action="/api/auth/logout" method="post" className="mt-6">
-            <button
-              type="submit"
-              className="rounded-md border border-[var(--db-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--db-text)] hover:bg-[var(--db-muted)]"
-            >
-              Sign out
-            </button>
-          </form>
+      <section className="member-access-page">
+        <div className="member-access-art" aria-hidden="true">
+          <MemberIcon name={isSuspended ? "people" : "home"} size={62} />
+          <span />
+          <span />
         </div>
+        <p className="member-subpage-eyebrow">{isSuspended ? "Member access" : "One last step"}</p>
+        <h1>
+          {isSuspended
+            ? "Let’s reconnect your account."
+            : "Your place in the community is almost ready."}
+        </h1>
+        <p>
+          {isSuspended
+            ? "Member access for this family account is currently paused. Please contact the Durga Bari team to review your account and help you get connected again."
+            : "Your family profile is complete. Our membership team will review it before opening your member space."}
+        </p>
+        <div className="member-access-account">
+          <span className="member-badge">
+            <span aria-hidden="true" />
+            {isSuspended ? "Access paused" : "Awaiting review"}
+          </span>
+          <strong>{context.family.familyDisplayName}</strong>
+          <small>{user.email}</small>
+        </div>
+        {!isSuspended ? (
+          <ol className="member-access-steps">
+            <li>
+              <MemberIcon name="check" size={20} />
+              <span>
+                <strong>Account created</strong>Your sign-in is ready.
+              </span>
+            </li>
+            <li>
+              <MemberIcon name="check" size={20} />
+              <span>
+                <strong>Family profile complete</strong>We have your household details.
+              </span>
+            </li>
+            <li className="is-current">
+              <MemberIcon name="clock" size={20} />
+              <span>
+                <strong>Membership review</strong>Your member space opens after approval.
+              </span>
+            </li>
+          </ol>
+        ) : null}
+        <div className="member-access-actions">
+          {!isSuspended ? (
+            <a href="/portal" className="member-primary-action">
+              Check membership status
+            </a>
+          ) : null}
+          <Link
+            href="/contact"
+            className={isSuspended ? "member-primary-action" : "member-secondary-action"}
+          >
+            Contact the team
+          </Link>
+          <Link href="/calendar" className="member-secondary-action">
+            Explore public events
+          </Link>
+        </div>
+        <form action="/api/auth/logout" method="post">
+          <button type="submit" className="member-text-action">
+            Sign out of this account
+          </button>
+        </form>
       </section>
     );
   }

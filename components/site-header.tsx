@@ -166,6 +166,13 @@ export function SiteHeader({ user, preview, showAdminLink, adminNotificationCoun
     : pathname === "/contact" ? "contact"
     : pathname === "/get-involved" || pathname === "/be-part-of-something-sacred-and-lasting" ? "get-involved"
     : null;
+  if (theme === "revamp" && (
+    pathname === "/portal" || pathname.startsWith("/portal/") ||
+    pathname === "/admin" || pathname.startsWith("/admin/") ||
+    pathname === "/login" || pathname === "/reset-password"
+  )) {
+    return null;
+  }
   if (theme === "revamp" && cinematicPage && language === "en") {
     return <CinematicHeader user={user} showAdminLink={showAdminLink} adminNotificationCount={adminNotificationCount} preview={preview} page={cinematicPage} />;
   }

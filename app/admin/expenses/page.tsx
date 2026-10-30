@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { WorkspacePageHeader } from "@/components/workspace/workspace-ui";
 
 import { AdminExpensesManager } from "@/components/admin-expenses-manager";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
+
+export const metadata = { title: "Expenses & reimbursements" };
 
 export default async function AdminExpensesPage() {
   const access = await getAdminAccessContext();
@@ -16,13 +19,12 @@ export default async function AdminExpensesPage() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Treasurer: Expenses</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Capture and reconcile operating expenses with audit history and status tracking.
-        </p>
-      </header>
+    <section className="workspace-domain-page db-shell space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Stewardship"
+        title="Expenses & reimbursements"
+        description="Review reimbursement requests, record operating expenses, and follow each payment through reconciliation."
+      />
       <AdminExpensesManager />
     </section>
   );

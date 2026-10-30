@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { WorkspacePageHeader } from "@/components/workspace/workspace-ui";
 
 import { AdminReservationsManager } from "@/components/admin-reservations-manager";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
+
+export const metadata = { title: "Reservations" };
 
 export default async function AdminReservationsPage() {
   const access = await getAdminAccessContext();
@@ -10,12 +13,23 @@ export default async function AdminReservationsPage() {
   if (!hasPortalPermission(access.roles, "events.manage")) redirect("/admin");
 
   return (
-    <section className="db-shell max-w-6xl space-y-6">
-      <header className="db-panel p-6">
-        <p className="db-kicker">Administration</p>
-        <h1 className="db-title mt-2">Event Reservations</h1>
-        <p className="mt-2 text-sm text-[var(--db-text-soft)]">Match each booking reference and package line item to a completed Zeffy order before approving. Discounts and Zeffy’s optional platform contribution may change the checkout total. Approval confirms the time slot.</p>
-      </header>
+    <section className="workspace-domain-page db-shell space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Gatherings"
+        title="Reservations"
+        description="Review private gatherings, verify payment details, and confirm the temple space with confidence."
+      />
+      <div className="workspace-workflow" aria-label="Reservation review steps">
+        <div>
+          <b>1</b> Review gathering & availability
+        </div>
+        <div>
+          <b>2</b> Verify payment & reference
+        </div>
+        <div>
+          <b>3</b> Approve to confirm the space
+        </div>
+      </div>
       <AdminReservationsManager />
     </section>
   );

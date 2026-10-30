@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
+import { AuthArrow, AuthPasswordField, AuthStateIcon } from "@/components/auth-fields";
 import type { Language } from "@/lib/i18n";
 
 interface LoginFormProps {
@@ -9,7 +10,7 @@ interface LoginFormProps {
   supabaseConfigured: boolean;
   devBypassEnabled: boolean;
   initialError?: string;
-  initialMode?: "password" | "signup";
+  initialMode?: "password" | "signup" | "recovery";
   returnTo?: string;
 }
 
@@ -40,23 +41,31 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(
     initialError
       ? isBn
-        ? "ইমেইল লিংকটি সম্পূর্ণ করা যায়নি। আবার সাইন ইন করুন বা নতুন লিংক নিন।"
-        : "That email link could not be completed. It may have expired or already been used. Sign in or request a new link."
+        ? "ইমেইল লিংকটির মেয়াদ শেষ হয়ে থাকতে পারে। আবার সাইন ইন করুন বা নতুন লিংক নিন।"
+        : "This email link may have expired or already been used. Sign in below or request a new reset link."
       : "",
   );
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const previousMode = useRef(mode);
+
+  useEffect(() => {
+    if (previousMode.current !== mode) {
+      headingRef.current?.focus({ preventScroll: true });
+      previousMode.current = mode;
+    }
+  }, [mode]);
 
   const changeMode = (nextMode: AuthMode) => {
+    if (busy) return;
     setMode(nextMode);
     setStatus("");
     setPassword("");
     setConfirmPassword("");
-    setShowPassword(false);
   };
 
   const runAuth = async (event: FormEvent<HTMLFormElement>) => {
@@ -102,284 +111,310 @@ export function LoginForm({
       if (mode === "password" || result.nextStep === "portal") {
         window.location.assign(returnTo);
       } else {
-        changeMode(mode === "signup" ? "check-email" : "recovery-sent");
+        setMode(mode === "signup" ? "check-email" : "recovery-sent");
+        setPassword("");
+        setConfirmPassword("");
       }
     } catch {
       setStatus(
-        isBn ? "সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।" : "Could not connect. Please try again.",
+        isBn
+          ? "সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+          : "We couldn’t connect. Your details are still here; please try again.",
       );
     } finally {
       setBusy(false);
     }
   };
 
+  const emailSent = mode === "check-email" || mode === "recovery-sent";
+  const title =
+    mode === "signup"
+      ? isBn
+        ? "পরিবারে স্বাগতম।"
+        : "Make yourself at home."
+      : mode === "recovery"
+        ? isBn
+          ? "আবার যুক্ত হোন।"
+          : "Let’s get you back in."
+        : emailSent
+          ? isBn
+            ? "ইমেইল দেখুন।"
+            : "Check your inbox."
+          : isBn
+            ? "আবার স্বাগতম।"
+            : "Welcome home.";
+
   return (
-    <div className="space-y-6">
-      {devBypassEnabled && (
-        <div className="db-card-muted p-4 text-sm text-emerald-900">
-          {isBn
-            ? "DEV_LOGIN_EMAIL সক্রিয় আছে। ডেভেলপমেন্টে অথেন্টিকেশন বাইপাস করা হচ্ছে।"
-            : "DEV_LOGIN_EMAIL is enabled. Authentication is bypassed in development."}
-          <div className="mt-2">
-            <a className="font-semibold underline" href="/portal">
-              {isBn ? "পোর্টালে যান" : "Continue to portal"}
-            </a>
-          </div>
+    <section className="auth-form" aria-labelledby="auth-heading">
+      {devBypassEnabled ? (
+        <div className="auth-notice auth-notice-development">
+          <span>
+            {isBn
+              ? "ডেভেলপমেন্ট প্রিভিউ · সাইন ইন বাইপাস সক্রিয়।"
+              : "Development preview · sign-in bypass is active."}
+          </span>
+          <a href="/portal">
+            {isBn ? "পোর্টালে যান" : "Open member portal"} <span aria-hidden="true">↗</span>
+          </a>
         </div>
-      )}
+      ) : null}
 
-      {!supabaseConfigured && (
-        <p className="db-card-muted p-4 text-sm text-amber-900">
-          {isBn
-            ? "Supabase এখনও কনফিগার করা হয়নি।"
-            : "Supabase is not configured yet. Sign-in is unavailable."}
-        </p>
-      )}
-
-      <div className="db-panel overflow-hidden">
-        <div className="border-b border-[var(--db-border-soft)] bg-[var(--db-surface-soft)] px-6 py-5 md:px-8">
-          <p className="db-kicker">{isBn ? "সদস্য প্রবেশ" : "Member Access"}</p>
-          <h1 className="db-title mt-2">
-            {mode === "signup"
+      <p className="auth-eyebrow">
+        {isBn ? "দুর্গা বাড়ি · সদস্য পোর্টাল" : "Durga Bari · Member portal"}
+      </p>
+      {emailSent ? <AuthStateIcon /> : null}
+      <h1 id="auth-heading" className="auth-heading" ref={headingRef} tabIndex={-1}>
+        {title}
+      </h1>
+      <p className="auth-intro">
+        {mode === "signup"
+          ? isBn
+            ? "আমাদের সম্প্রদায়ের সঙ্গে যুক্ত হতে আপনার অ্যাকাউন্ট তৈরি করুন।"
+            : "Create your account and take the first step into our community."
+          : mode === "recovery"
+            ? isBn
+              ? "আপনার অ্যাকাউন্টের ইমেইল দিন। আমরা পাসওয়ার্ড বদলানোর লিংক পাঠাব।"
+              : "Enter your account email. We’ll send you a link to choose a new password."
+            : mode === "check-email"
               ? isBn
-                ? "আপনার অ্যাকাউন্ট তৈরি করুন"
-                : "Create your account"
-              : mode === "recovery" || mode === "recovery-sent"
+                ? "ইমেইল নিশ্চিত করুন, তারপর পরিবারের প্রোফাইল তৈরি করুন।"
+                : "Confirm your email, then tell us a little about your family."
+              : mode === "recovery-sent"
                 ? isBn
-                  ? "পাসওয়ার্ড পুনরুদ্ধার"
-                  : "Reset your password"
-                : mode === "check-email"
-                  ? isBn
-                    ? "ইমেইল দেখুন"
-                    : "Check your email"
-                  : isBn
-                    ? "স্বাগতম"
-                    : "Welcome back"}
-          </h1>
-        </div>
+                  ? "এই ইমেইলে অ্যাকাউন্ট থাকলে পাসওয়ার্ড পরিবর্তনের লিংক পাবেন।"
+                  : "If there’s an account with this address, a reset link will be on its way."
+                : isBn
+                  ? "আপনার পরিবার, আপনার সেবা এবং আমাদের আগামী উৎসব—সব এক জায়গায়।"
+                  : "Your family, your contributions and what’s coming next. All in one place."}
+      </p>
 
-        <div className="space-y-6 p-6 md:p-8">
-          {mode === "check-email" || mode === "recovery-sent" ? (
-            <div className="space-y-5">
-              <div className="rounded-2xl border border-[var(--db-border-soft)] bg-[var(--db-surface-soft)] p-5">
-                <p className="font-semibold text-[var(--db-text)]">
-                  {mode === "check-email"
-                    ? isBn
-                      ? "পরবর্তী ধাপ: ইমেইল নিশ্চিত করুন"
-                      : "Next step: confirm your email"
-                    : isBn
-                      ? "ইমেইলে লিংক পাঠানো হয়েছে"
-                      : "Look for a reset link"}
-                </p>
-                <p className="mt-2 break-all text-sm text-[var(--db-text-soft)]">
-                  {email.trim().toLowerCase()}
-                </p>
-              </div>
-              <p className="text-sm leading-7 text-[var(--db-text-soft)]">
-                {mode === "check-email"
-                  ? isBn
-                    ? "ইমেইলের নিশ্চিতকরণ লিংক খুলুন। তারপর আপনার পরিবারের প্রোফাইল পূরণ করুন। পরে সাইন ইন করতে এখন তৈরি করা পাসওয়ার্ড ব্যবহার করুন।"
-                    : "Open the confirmation link in your email, then complete your family profile. Keep the password you just chose for future sign-ins."
-                  : isBn
-                    ? "এই ইমেইলে অ্যাকাউন্ট থাকলে পাসওয়ার্ড পরিবর্তনের লিংক পাবেন।"
-                    : "If this email has an account, a password reset link will arrive. Check spam or promotions too."}
-              </p>
-              {mode === "check-email" && (
-                <>
-                  <p className="text-sm leading-7 text-[var(--db-text-soft)]">
+      {emailSent ? (
+        <div className="auth-sent-state">
+          <div className="auth-email-destination">
+            <span>{isBn ? "আপনার ইমেইল" : "Your email address"}</span>
+            <strong>{email.trim().toLowerCase()}</strong>
+          </div>
+          {mode === "check-email" ? (
+            <ol className="auth-next-steps" aria-label={isBn ? "পরবর্তী ধাপ" : "What happens next"}>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>{isBn ? "ইমেইলের লিংক খুলুন" : "Open the confirmation link"}</strong>
+                  <p>
                     {isBn
-                      ? "প্রোফাইল সেটআপ সম্পূর্ণ করার পর প্রশাসকের অনুমোদন পর্যন্ত সদস্য সুবিধা অপেক্ষমাণ থাকবে।"
-                      : "After profile setup, member access stays pending until a Durga Bari administrator approves it."}
+                      ? "প্রয়োজনে স্প্যাম ফোল্ডার দেখুন।"
+                      : "Check your spam or promotions folder, too."}
                   </p>
-                  <p className="text-sm leading-7 text-[var(--db-text-soft)]">
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>{isBn ? "আপনার পরিবারের পরিচয় দিন" : "Introduce your household"}</strong>
+                  <p>
                     {isBn
-                      ? "ইমেইল না পেলে স্প্যাম দেখুন। আগে অ্যাকাউন্ট তৈরি করে থাকলে সাইন ইন করুন বা পাসওয়ার্ড বদলান।"
-                      : "No email? Check spam. If you already have an account, sign in or reset your password."}
+                      ? "আপনার পরিবারের সদস্য ও যোগাযোগের তথ্য দিন।"
+                      : "Add your family members and contact details."}
                   </p>
-                </>
-              )}
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>{isBn ? "সদস্যপদের পর্যালোচনা" : "We’ll review your membership"}</strong>
+                  <p>
+                    {isBn
+                      ? "প্রশাসকের অনুমোদনে সদস্য সুবিধা চালু হবে।"
+                      : "An administrator will approve your member access."}
+                  </p>
+                </div>
+              </li>
+            </ol>
+          ) : (
+            <p className="auth-small-copy">
+              {isBn
+                ? "লিংকটি না পেলে স্প্যাম ফোল্ডার দেখুন। রিসেট লিংক খুলে নতুন পাসওয়ার্ড বেছে নিন।"
+                : "Check spam if it hasn’t arrived. Open the link in the email to set your new password."}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => changeMode("password")}
+            className="auth-submit auth-submit-secondary"
+          >
+            {isBn ? "সাইন ইনে ফিরুন" : "Back to sign in"}
+            <AuthArrow />
+          </button>
+          <button
+            type="button"
+            onClick={() => changeMode(mode === "check-email" ? "signup" : "recovery")}
+            className="auth-text-button"
+          >
+            {isBn ? "অন্য ইমেইল ব্যবহার করুন" : "Use a different email address"}
+          </button>
+        </div>
+      ) : (
+        <>
+          {mode !== "recovery" ? (
+            <div
+              className="auth-mode-switch"
+              role="group"
+              aria-label={isBn ? "অ্যাকাউন্ট প্রবেশ" : "Account access"}
+            >
               <button
                 type="button"
+                aria-pressed={mode === "password"}
+                disabled={busy}
                 onClick={() => changeMode("password")}
-                className="db-button-secondary w-full text-sm"
               >
-                {isBn ? "সাইন ইনে ফিরুন" : "Back to sign in"}
+                {isBn ? "সাইন ইন" : "Sign in"}
+              </button>
+              <button
+                type="button"
+                aria-pressed={mode === "signup"}
+                disabled={busy}
+                onClick={() => changeMode("signup")}
+              >
+                {isBn ? "অ্যাকাউন্ট তৈরি" : "Create account"}
               </button>
             </div>
-          ) : (
-            <>
-              {mode !== "recovery" && (
-                <div
-                  className="grid grid-cols-2 gap-2 rounded-full bg-[var(--db-surface-soft)] p-1"
-                  aria-label="Account access"
-                >
-                  <button
-                    type="button"
-                    aria-pressed={mode === "password"}
-                    onClick={() => changeMode("password")}
-                    className={`rounded-full px-3 py-2 text-sm font-semibold ${mode === "password" ? "bg-[var(--db-panel-strong)] text-[var(--db-text)] shadow-sm" : "text-[var(--db-text-soft)]"}`}
-                  >
-                    {isBn ? "সাইন ইন" : "Sign in"}
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={mode === "signup"}
-                    onClick={() => changeMode("signup")}
-                    className={`rounded-full px-3 py-2 text-sm font-semibold ${mode === "signup" ? "bg-[var(--db-panel-strong)] text-[var(--db-text)] shadow-sm" : "text-[var(--db-text-soft)]"}`}
-                  >
-                    {isBn ? "অ্যাকাউন্ট তৈরি" : "Create account"}
-                  </button>
-                </div>
-              )}
+          ) : null}
 
-              {mode === "signup" && (
-                <div
-                  className="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-[var(--db-text-soft)]"
-                  aria-label="Account setup steps"
-                >
-                  <span className="rounded-xl bg-[var(--db-surface-soft)] p-2">
-                    1. {isBn ? "তৈরি" : "Create"}
-                  </span>
-                  <span className="rounded-xl bg-[var(--db-surface-soft)] p-2">
-                    2. {isBn ? "নিশ্চিত" : "Confirm email"}
-                  </span>
-                  <span className="rounded-xl bg-[var(--db-surface-soft)] p-2">
-                    3. {isBn ? "প্রোফাইল" : "Profile"}
-                  </span>
-                </div>
-              )}
+          {!supabaseConfigured ? (
+            <p className="auth-notice" role="status">
+              {isBn
+                ? "সাইন ইন এখন উপলব্ধ নয়। অনুগ্রহ করে পরে চেষ্টা করুন বা আমাদের সঙ্গে যোগাযোগ করুন।"
+                : "Sign-in is temporarily unavailable. Please try again later or contact us for help."}
+            </p>
+          ) : null}
 
-              <p className="text-sm leading-7 text-[var(--db-text-soft)]">
-                {mode === "signup"
-                  ? isBn
-                    ? "নিজের পাসওয়ার্ড বেছে নিন। আমরা আপনার ইমেইলে একটি নিশ্চিতকরণ লিংক পাঠাব।"
-                    : "Choose a password you can use again. We’ll email you a link to confirm your address."
-                  : mode === "recovery"
-                    ? isBn
-                      ? "আপনার ইমেইল দিন, আমরা পাসওয়ার্ড পরিবর্তনের লিংক পাঠাব।"
-                      : "Enter your account email and we’ll send a password reset link."
-                    : isBn
-                      ? "আপনার ইমেইল ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
-                      : "Sign in with the email and password you chose when you created your account."}
-              </p>
-
-              <form className="space-y-4" onSubmit={(event) => void runAuth(event)}>
-                <label className="block text-sm font-semibold text-[var(--db-text)]">
-                  {isBn ? "ইমেইল" : "Email address"}
-                  <input
-                    required
-                    type="email"
-                    autoComplete="email"
-                    inputMode="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@example.org"
-                    className="db-input mt-2"
-                  />
-                </label>
-
-                {mode !== "recovery" && (
-                  <div className="text-sm font-semibold text-[var(--db-text)]">
-                    <label htmlFor="account-password">{isBn ? "পাসওয়ার্ড" : "Password"}</label>
-                    <div className="relative mt-2">
-                      <input
-                        id="account-password"
-                        required
-                        minLength={mode === "signup" ? 8 : undefined}
-                        type={showPassword ? "text" : "password"}
-                        autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        className="db-input pr-20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        className="absolute inset-y-0 right-3 text-sm font-semibold text-[var(--db-link)]"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                      >
-                        {showPassword ? (isBn ? "লুকান" : "Hide") : isBn ? "দেখুন" : "Show"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {mode === "signup" && (
-                  <>
-                    <p className="text-xs text-[var(--db-text-soft)]">
-                      {isBn
-                        ? "কমপক্ষে ৮ অক্ষর।"
-                        : "At least 8 characters. Save it in your password manager."}
-                    </p>
-                    <label className="block text-sm font-semibold text-[var(--db-text)]">
-                      {isBn ? "পাসওয়ার্ড আবার দিন" : "Confirm password"}
-                      <input
-                        required
-                        minLength={8}
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="new-password"
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
-                        className="db-input mt-2"
-                      />
-                    </label>
-                  </>
-                )}
-
-                {status && (
-                  <p
-                    role="alert"
-                    className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-                  >
-                    {status}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={busy || !supabaseConfigured}
-                  className="db-button-primary w-full text-sm disabled:cursor-wait disabled:opacity-60"
-                >
-                  {busy
-                    ? isBn
-                      ? "অপেক্ষা করুন..."
-                      : "Please wait..."
-                    : mode === "signup"
+          <form onSubmit={(event) => void runAuth(event)} aria-busy={busy}>
+            <fieldset className="auth-fields" disabled={busy || !supabaseConfigured}>
+              <div className="auth-field">
+                <label htmlFor="account-email">{isBn ? "ইমেইল" : "Email address"}</label>
+                <input
+                  id="account-email"
+                  name="email"
+                  required
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                />
+              </div>
+              {mode !== "recovery" ? (
+                <AuthPasswordField
+                  key={`${mode}-password`}
+                  id="account-password"
+                  label={isBn ? "পাসওয়ার্ড" : "Password"}
+                  value={password}
+                  onChange={setPassword}
+                  minLength={mode === "signup" ? 8 : undefined}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  hint={
+                    mode === "signup"
                       ? isBn
-                        ? "অ্যাকাউন্ট তৈরি করুন"
-                        : "Create account"
-                      : mode === "recovery"
-                        ? isBn
-                          ? "রিসেট লিংক পাঠান"
-                          : "Send reset link"
-                        : isBn
-                          ? "সাইন ইন"
-                          : "Sign in"}
-                </button>
-              </form>
-
-              {mode === "password" && (
+                        ? "কমপক্ষে ৮ অক্ষর।"
+                        : "Use at least 8 characters."
+                      : undefined
+                  }
+                  isBn={isBn}
+                />
+              ) : null}
+              {mode === "signup" ? (
+                <AuthPasswordField
+                  id="confirm-password"
+                  label={isBn ? "পাসওয়ার্ড আবার দিন" : "Confirm password"}
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  minLength={8}
+                  autoComplete="new-password"
+                  isBn={isBn}
+                />
+              ) : null}
+            </fieldset>
+            {mode === "password" ? (
+              <div className="auth-recovery-link">
                 <button
                   type="button"
+                  disabled={busy}
                   onClick={() => changeMode("recovery")}
-                  className="w-full text-center text-sm font-semibold underline"
+                  className="auth-text-button"
                 >
                   {isBn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot your password?"}
                 </button>
-              )}
-              {mode === "recovery" && (
-                <button
-                  type="button"
-                  onClick={() => changeMode("password")}
-                  className="w-full text-center text-sm font-semibold underline"
-                >
-                  {isBn ? "সাইন ইনে ফিরুন" : "Back to sign in"}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+              </div>
+            ) : null}
+            {status ? (
+              <p role="alert" className="auth-error">
+                {status}
+              </p>
+            ) : null}
+            <button type="submit" disabled={busy || !supabaseConfigured} className="auth-submit">
+              <span>
+                {busy
+                  ? isBn
+                    ? "অপেক্ষা করুন…"
+                    : mode === "recovery"
+                      ? "Sending your link…"
+                      : mode === "signup"
+                        ? "Creating your account…"
+                        : "Signing you in…"
+                  : mode === "signup"
+                    ? isBn
+                      ? "অ্যাকাউন্ট তৈরি করুন"
+                      : "Create account"
+                    : mode === "recovery"
+                      ? isBn
+                        ? "রিসেট লিংক পাঠান"
+                        : "Send reset link"
+                      : isBn
+                        ? "সাইন ইন"
+                        : "Sign in"}
+              </span>
+              {busy ? <span className="auth-spinner" aria-hidden="true" /> : <AuthArrow />}
+            </button>
+          </form>
+
+          {mode === "signup" ? (
+            <div className="auth-membership-note">
+              <AuthStateIcon kind="lock" />
+              <p>
+                {isBn
+                  ? "অ্যাকাউন্ট তৈরি → ইমেইল নিশ্চিতকরণ → পরিবারের পরিচয়। সদস্য সুবিধা প্রশাসকের অনুমোদনের পর চালু হবে।"
+                  : "Create your account, confirm your email and complete your family profile. Member access follows an administrator’s review."}
+              </p>
+            </div>
+          ) : null}
+          {mode === "recovery" ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => changeMode("password")}
+              className="auth-text-button auth-bottom-link"
+            >
+              <span aria-hidden="true">←</span> {isBn ? "সাইন ইনে ফিরুন" : "Back to sign in"}
+            </button>
+          ) : null}
+          {mode === "password" ? (
+            <p className="auth-support-copy">
+              {isBn ? "প্রথমবার এসেছেন?" : "New to Durga Bari?"}{" "}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => changeMode("signup")}
+                className="auth-text-button"
+              >
+                {isBn ? "আমাদের পরিবারে যুক্ত হোন" : "Join our community"}
+              </button>
+            </p>
+          ) : null}
+        </>
+      )}
+    </section>
   );
 }

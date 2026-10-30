@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
-import { PortalMemberPage } from "@/components/portal-member-page";
+import {
+  MemberEmptyState,
+  MemberLoading,
+  PortalArrow,
+  PortalMemberPage,
+} from "@/components/portal-member-page";
 
 interface FamilyMemberOption {
   name: string;
@@ -64,6 +70,7 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
   const [error, setError] = useState<string | null>(null);
   const [savingSlotId, setSavingSlotId] = useState<string | null>(null);
   const [selectedBySlot, setSelectedBySlot] = useState<Record<string, string[]>>({});
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,7 +91,9 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
       setFamilyMembers(payload.familyMembers ?? []);
       setSelectedBySlot({});
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load volunteer opportunities.");
+      setError(
+        loadError instanceof Error ? loadError.message : "Unable to load volunteer opportunities.",
+      );
     } finally {
       setLoading(false);
     }
@@ -97,7 +106,9 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
   const toggleMemberForSlot = (slotId: string, name: string) => {
     setSelectedBySlot((current) => {
       const existing = current[slotId] ?? [];
-      const next = existing.includes(name) ? existing.filter((entry) => entry !== name) : [...existing, name];
+      const next = existing.includes(name)
+        ? existing.filter((entry) => entry !== name)
+        : [...existing, name];
       return { ...current, [slotId]: next };
     });
   };
@@ -111,6 +122,7 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
 
     setSavingSlotId(slotId);
     setError(null);
+    setMessage(null);
     try {
       const response = await fetch("/api/portal/volunteer/signup", {
         method: "POST",
@@ -122,6 +134,7 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
         throw new Error(payload.message ?? "Unable to sign up.");
       }
       await load();
+      setMessage("You’re signed up. Your new commitment is listed below.");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to sign up.");
     } finally {
@@ -132,6 +145,7 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
   const cancelSignup = async (slotId: string, participantName: string) => {
     setSavingSlotId(slotId);
     setError(null);
+    setMessage(null);
     try {
       const response = await fetch("/api/portal/volunteer/signup", {
         method: "DELETE",
@@ -143,6 +157,7 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
         throw new Error(payload.message ?? "Unable to cancel.");
       }
       await load();
+      setMessage(`${participantName}’s volunteer signup has been cancelled.`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to cancel.");
     } finally {
@@ -158,24 +173,84 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
 
   if (elevated) {
     return (
-      <PortalMemberPage title="Volunteer" eyebrow="Member service" description="Find a place to help at upcoming events.">
-        {error ? <p className="member-feedback" role="alert">{error}</p> : null}
+      <PortalMemberPage
+        title="There’s a place for you to help."
+        eyebrow="Volunteer together"
+        description="A few hours of your time can make a gathering feel like home. Choose an opportunity, then select the family members joining you."
+      >
+        {error ? (
+          <div className="member-feedback is-error" role="alert">
+            <p>{error}</p>
+            {!savingSlotId ? (
+              <button type="button" className="member-text-action" onClick={() => void load()}>
+                Refresh opportunities
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {message ? (
+          <p className="member-feedback is-success" role="status">
+            {message}
+          </p>
+        ) : null}
+
+        <dl className="member-metrics member-metrics-two">
+          <div>
+            <dt>Upcoming commitments</dt>
+            <dd>{loading ? "—" : commitments.length}</dd>
+            <small>Family volunteer signups</small>
+          </div>
+          <div>
+            <dt>Gatherings with opportunities</dt>
+            <dd>{loading ? "—" : events.length}</dd>
+            <small>Find your next place to serve below</small>
+          </div>
+        </dl>
 
         <section className="member-section" aria-labelledby="commitments-heading">
-          <div className="member-section-heading"><h2 id="commitments-heading">Your commitments</h2></div>
-          {loading ? <p className="member-empty">Loading commitments…</p> : commitments.length === 0 ? (
-            <p className="member-empty">No upcoming commitments.</p>
+          <div className="member-section-heading">
+            <h2 id="commitments-heading">Your commitments</h2>
+          </div>
+          {loading && commitments.length === 0 ? (
+            <MemberLoading label="Loading your commitments…" />
+          ) : commitments.length === 0 && !error ? (
+            <MemberEmptyState
+              icon="volunteer"
+              title="Your next act of service starts here."
+              description="You haven’t signed up for an upcoming opportunity yet. Choose a role below and we’ll keep your family’s commitments together."
+              compact
+            >
+              <a href="#opportunities-heading" className="member-inline-link">
+                Find a place to help <PortalArrow />
+              </a>
+            </MemberEmptyState>
           ) : (
             <div className="member-ledger">
               {commitments.map((commitment) => (
                 <article key={commitment.signup_id} className="member-ledger-row">
                   <div>
                     <strong>{commitment.event_title}</strong>
-                    <p>{commitment.slot_title} · {new Date(commitment.start_time).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p>
-                    <small>{commitment.participant_name}{commitment.location ? ` · ${commitment.location}` : ""}</small>
+                    <p>
+                      {commitment.slot_title} ·{" "}
+                      {new Date(commitment.start_time).toLocaleString("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </p>
+                    <small>
+                      {commitment.participant_name}
+                      {commitment.location ? ` · ${commitment.location}` : ""}
+                    </small>
                   </div>
-                  <button type="button" className="member-text-action" disabled={savingSlotId === commitment.slot_id} onClick={() => void cancelSignup(commitment.slot_id, commitment.participant_name)}>
-                    Cancel
+                  <button
+                    type="button"
+                    className="member-text-action"
+                    disabled={savingSlotId === commitment.slot_id}
+                    onClick={() =>
+                      void cancelSignup(commitment.slot_id, commitment.participant_name)
+                    }
+                  >
+                    {savingSlotId === commitment.slot_id ? "Updating…" : "Cancel signup"}
                   </button>
                 </article>
               ))}
@@ -184,14 +259,31 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
         </section>
 
         <section className="member-section" aria-labelledby="opportunities-heading">
-          <div className="member-section-heading"><h2 id="opportunities-heading">Open opportunities</h2></div>
-          {!loading && events.length === 0 ? <p className="member-empty">No volunteer openings right now.</p> : null}
+          <div className="member-section-heading">
+            <h2 id="opportunities-heading">Open opportunities</h2>
+          </div>
+          {!loading && !error && events.length === 0 ? (
+            <MemberEmptyState
+              icon="calendar"
+              title="A quiet moment before what’s next."
+              description="Our team is preparing future opportunities. Check the community calendar for upcoming gatherings and ways to stay connected."
+            >
+              <Link href="/calendar" className="member-secondary-action">
+                Visit the calendar <PortalArrow />
+              </Link>
+            </MemberEmptyState>
+          ) : null}
           <div className="member-volunteer-events">
             {events.map((event) => (
               <article key={event.id} className="member-volunteer-event">
                 <div className="member-volunteer-event-head">
                   <div>
-                    <p className="member-section-eyebrow">{new Date(event.start_time).toLocaleDateString("en-US", { dateStyle: "medium" })}{event.visibility === "members" ? " · Members only" : ""}</p>
+                    <p className="member-section-eyebrow">
+                      {new Date(event.start_time).toLocaleDateString("en-US", {
+                        dateStyle: "medium",
+                      })}
+                      {event.visibility === "members" ? " · Members only" : ""}
+                    </p>
                     <h3>{event.title}</h3>
                     {event.location ? <p>{event.location}</p> : null}
                     {event.short_summary ? <p>{event.short_summary}</p> : null}
@@ -202,31 +294,92 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
                     const full = slot.confirmed_count >= slot.capacity;
                     const closed = slot.slot_state === "closed";
                     const busy = savingSlotId === slot.id;
-                    const myNames = new Set(slot.my_signups.map((signup) => signup.participant_name));
-                    const availableMembers = familyMembers.filter((member) => !myNames.has(member.name));
+                    const myNames = new Set(
+                      slot.my_signups.map((signup) => signup.participant_name),
+                    );
+                    const availableMembers = familyMembers.filter(
+                      (member) => !myNames.has(member.name),
+                    );
                     const selectedMembers = selectedBySlot[slot.id] ?? [];
                     const canSignup = !full && !closed && selectedMembers.length > 0;
                     return (
-                      <section key={slot.id} className="member-volunteer-slot" aria-label={`${slot.title} volunteer slot`}>
+                      <section
+                        key={slot.id}
+                        className="member-volunteer-slot"
+                        aria-label={`${slot.title} volunteer slot`}
+                      >
                         <div className="member-volunteer-slot-head">
-                          <div><h4>{slot.title}</h4><p>{new Date(slot.start_time).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</p></div>
-                          <small>{closed ? "Closed" : full ? "Full" : `${slot.capacity - slot.confirmed_count} places left`}</small>
+                          <div>
+                            <h4>{slot.title}</h4>
+                            <p>
+                              {new Date(slot.start_time).toLocaleString("en-US", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}
+                            </p>
+                          </div>
+                          <small>
+                            {closed
+                              ? "Closed"
+                              : full
+                                ? "Full"
+                                : `${slot.capacity - slot.confirmed_count} places left`}
+                          </small>
                         </div>
-                        {slot.description ? <p className="member-volunteer-slot-description">{slot.description}</p> : null}
-                        {slot.my_signups.length > 0 ? <p className="member-volunteer-signed">Signed up: {slot.my_signups.map((signup) => signup.participant_name).join(", ")}</p> : null}
+                        {slot.description ? (
+                          <p className="member-volunteer-slot-description">{slot.description}</p>
+                        ) : null}
+                        {slot.my_signups.length > 0 ? (
+                          <p className="member-volunteer-signed">
+                            Signed up:{" "}
+                            {slot.my_signups.map((signup) => signup.participant_name).join(", ")}
+                          </p>
+                        ) : null}
+                        <div
+                          className="member-capacity-track"
+                          role="img"
+                          aria-label={`${slot.confirmed_count} of ${slot.capacity} volunteer places filled`}
+                        >
+                          <span
+                            style={{
+                              width: `${slot.capacity > 0 ? Math.min(100, (slot.confirmed_count / slot.capacity) * 100) : 0}%`,
+                            }}
+                          />
+                        </div>
                         {availableMembers.length > 0 && !full && !closed ? (
                           <fieldset className="member-volunteer-people">
                             <legend>Who will volunteer?</legend>
                             {availableMembers.map((member) => (
                               <label key={`${slot.id}-${member.name}`}>
-                                <input type="checkbox" checked={selectedMembers.includes(member.name)} onChange={() => toggleMemberForSlot(slot.id, member.name)} disabled={busy} />
-                                <span>{member.name} <small>({familyMemberTypeByName.get(member.name) ?? member.type})</small></span>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedMembers.includes(member.name)}
+                                  onChange={() => toggleMemberForSlot(slot.id, member.name)}
+                                  disabled={busy}
+                                />
+                                <span>
+                                  {member.name}{" "}
+                                  <small>
+                                    ({familyMemberTypeByName.get(member.name) ?? member.type})
+                                  </small>
+                                </span>
                               </label>
                             ))}
                           </fieldset>
-                        ) : !full && !closed ? <p className="member-volunteer-signed">Everyone in your household is signed up.</p> : null}
+                        ) : !full && !closed ? (
+                          <p className="member-volunteer-signed">
+                            {familyMembers.length === 0
+                              ? "Your family profile needs participant names before you can sign up. Please contact the membership team."
+                              : "Everyone in your household is signed up."}
+                          </p>
+                        ) : null}
                         {!full && !closed ? (
-                          <button type="button" className="member-submit" disabled={busy || !canSignup} onClick={() => void signup(slot.id)}>
+                          <button
+                            type="button"
+                            className="member-submit"
+                            disabled={busy || !canSignup}
+                            onClick={() => void signup(slot.id)}
+                          >
                             {busy ? "Saving…" : "Confirm volunteers"}
                           </button>
                         ) : null}
@@ -252,8 +405,14 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
         </p>
       </header>
 
-      {error ? <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
-      {loading ? <p className="text-sm text-slate-600">Loading volunteer opportunities...</p> : null}
+      {error ? (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+      {loading ? (
+        <p className="text-sm text-slate-600">Loading volunteer opportunities...</p>
+      ) : null}
 
       <section className="db-card p-6">
         <h2 className="text-2xl font-semibold text-[var(--db-text)]">Your upcoming commitments</h2>
@@ -264,10 +423,12 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
             {commitments.map((commitment) => (
               <article key={commitment.signup_id} className="db-card-muted p-4">
                 <p className="text-sm font-semibold text-slate-900">
-                  {commitment.participant_name} ({commitment.participant_type}) - {commitment.event_title}
+                  {commitment.participant_name} ({commitment.participant_type}) -{" "}
+                  {commitment.event_title}
                 </p>
                 <p className="text-xs text-slate-600">
-                  {commitment.slot_title} • {new Date(commitment.start_time).toLocaleString("en-US")}
+                  {commitment.slot_title} •{" "}
+                  {new Date(commitment.start_time).toLocaleString("en-US")}
                   {commitment.location ? ` • ${commitment.location}` : ""}
                 </p>
                 <button
@@ -285,7 +446,9 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">Open volunteer opportunities</h2>
-        {events.length === 0 && !loading ? <p className="text-sm text-slate-600">No open opportunities right now.</p> : null}
+        {events.length === 0 && !loading ? (
+          <p className="text-sm text-slate-600">No open opportunities right now.</p>
+        ) : null}
 
         {events.map((event) => (
           <article key={event.id} className="db-card p-5">
@@ -297,9 +460,13 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
                 </span>
               ) : null}
             </div>
-            <p className="text-sm text-slate-600">{new Date(event.start_time).toLocaleString("en-US")}</p>
+            <p className="text-sm text-slate-600">
+              {new Date(event.start_time).toLocaleString("en-US")}
+            </p>
             {event.location ? <p className="text-sm text-slate-600">{event.location}</p> : null}
-            {event.short_summary ? <p className="mt-2 text-sm text-slate-700">{event.short_summary}</p> : null}
+            {event.short_summary ? (
+              <p className="mt-2 text-sm text-slate-700">{event.short_summary}</p>
+            ) : null}
 
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               {event.volunteer_slots.map((slot) => {
@@ -307,21 +474,28 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
                 const closed = slot.slot_state === "closed";
                 const busy = savingSlotId === slot.id;
                 const myNames = new Set(slot.my_signups.map((signup) => signup.participant_name));
-                const availableMembers = familyMembers.filter((member) => !myNames.has(member.name));
+                const availableMembers = familyMembers.filter(
+                  (member) => !myNames.has(member.name),
+                );
                 const selectedMembers = selectedBySlot[slot.id] ?? [];
                 const canSignup = !full && !closed && selectedMembers.length > 0;
 
                 return (
                   <div key={slot.id} className="db-card-muted p-4">
                     <p className="font-medium text-slate-900">{slot.title}</p>
-                    {slot.description ? <p className="mt-1 text-sm text-slate-700">{slot.description}</p> : null}
+                    {slot.description ? (
+                      <p className="mt-1 text-sm text-slate-700">{slot.description}</p>
+                    ) : null}
                     <p className="mt-1 text-xs text-slate-600">
-                      {new Date(slot.start_time).toLocaleString("en-US")} • {slot.confirmed_count}/{slot.capacity} filled
+                      {new Date(slot.start_time).toLocaleString("en-US")} • {slot.confirmed_count}/
+                      {slot.capacity} filled
                     </p>
 
                     {slot.my_signups.length > 0 ? (
                       <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 p-2">
-                        <p className="text-xs font-semibold text-emerald-800">Signed up family members</p>
+                        <p className="text-xs font-semibold text-emerald-800">
+                          Signed up family members
+                        </p>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {slot.my_signups.map((signup) => (
                             <span
@@ -337,9 +511,14 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
 
                     {availableMembers.length > 0 ? (
                       <div className="mt-2 space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Select family members</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          Select family members
+                        </p>
                         {availableMembers.map((member) => (
-                          <label key={`${slot.id}-${member.name}`} className="flex items-center gap-2 text-xs text-slate-700">
+                          <label
+                            key={`${slot.id}-${member.name}`}
+                            className="flex items-center gap-2 text-xs text-slate-700"
+                          >
                             <input
                               type="checkbox"
                               checked={selectedMembers.includes(member.name)}
@@ -347,13 +526,16 @@ export function PortalVolunteerCenter({ elevated = false }: { elevated?: boolean
                               disabled={busy || closed || full}
                             />
                             <span>
-                              {member.name} ({familyMemberTypeByName.get(member.name) ?? member.type})
+                              {member.name} (
+                              {familyMemberTypeByName.get(member.name) ?? member.type})
                             </span>
                           </label>
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-2 text-xs text-slate-600">All family members are already signed up for this slot.</p>
+                      <p className="mt-2 text-xs text-slate-600">
+                        All family members are already signed up for this slot.
+                      </p>
                     )}
 
                     <div className="mt-3">

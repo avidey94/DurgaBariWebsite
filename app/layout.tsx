@@ -15,6 +15,8 @@ import "./globals.css";
 import "../styles/elevated.css";
 import "../styles/member-portal.css";
 import "../styles/member-subpages.css";
+import "../styles/workspace.css";
+import "../styles/admin-workflows.css";
 
 export const metadata: Metadata = {
   title: {

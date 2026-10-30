@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import { WorkspacePageHeader } from "@/components/workspace/workspace-ui";
 
 import { AdminEventsManager } from "@/components/admin-events-manager";
 import { getAdminAccessContext } from "@/lib/portal/admin-auth";
 import { hasPortalPermission } from "@/lib/portal/rbac";
+
+export const metadata = { title: "Events & service" };
 
 export default async function AdminEventsPage() {
   const access = await getAdminAccessContext();
@@ -16,11 +19,12 @@ export default async function AdminEventsPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl space-y-6 px-6 py-8">
-      <header className="rounded-lg border border-slate-200 bg-white p-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Events Admin</h1>
-        <p className="mt-2 text-sm text-slate-600">Manage events and RSVP attendance.</p>
-      </header>
+    <section className="workspace-domain-page db-shell space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Gatherings"
+        title="Events & service"
+        description="Plan gatherings, publish event details, organize volunteer roles, and keep track of who’s joining us."
+      />
       <AdminEventsManager />
     </section>
   );

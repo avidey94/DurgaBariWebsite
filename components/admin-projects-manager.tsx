@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  WorkspaceEmpty,
+  WorkspaceIcon,
+  WorkspaceNotice,
+} from "@/components/workspace/workspace-ui";
+import { parseDollarAmount } from "@/lib/portal/currency";
 import type { ProjectStatus } from "@/lib/portal/types";
 
 interface ProjectRow {
@@ -30,11 +36,18 @@ interface ProjectsPayload {
 }
 
 const formatCurrency = (amountCents: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
-    amountCents / 100,
-  );
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amountCents / 100);
 
 export function AdminProjectsManager() {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedId, setExpandedId] = useState("");
+  const [success, setSuccess] = useState("");
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [funding, setFunding] = useState<FundingRow[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Partial<ProjectRow>>>({});
@@ -46,7 +59,8 @@ export function AdminProjectsManager() {
   const [newShortDescription, setNewShortDescription] = useState("");
   const [newFullDescription, setNewFullDescription] = useState("");
   const [newCoverImageUrl, setNewCoverImageUrl] = useState("");
-  const [newGoal, setNewGoal] = useState("100000");
+  const [newGoal, setNewGoal] = useState("1000");
+  const [goalInputs, setGoalInputs] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
 
   const loadProjects = async () => {
@@ -101,6 +115,10 @@ export function AdminProjectsManager() {
       return;
     }
 
+    if (goalInputs[id] !== undefined && parseDollarAmount(goalInputs[id]) === null) {
+      setError("Enter a funding goal in dollars, with no more than two decimal places.");
+      return;
+    }
     setSavingById((current) => ({ ...current, [id]: true }));
     setError(null);
 
@@ -128,9 +146,12 @@ export function AdminProjectsManager() {
       }
 
       if (payload.project) {
-        setProjects((current) => current.map((row) => (row.id === id ? payload.project as ProjectRow : row)));
+        setProjects((current) =>
+          current.map((row) => (row.id === id ? (payload.project as ProjectRow) : row)),
+        );
       }
 
+      setSuccess("Project changes saved.");
       setDrafts((current) => {
         const next = { ...current };
         delete next[id];
@@ -145,6 +166,11 @@ export function AdminProjectsManager() {
 
   const createProject = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const goalCents = parseDollarAmount(newGoal);
+    if (goalCents === null) {
+      setError("Enter a valid funding goal in dollars.");
+      return;
+    }
     setCreating(true);
     setError(null);
 
@@ -157,7 +183,7 @@ export function AdminProjectsManager() {
           shortDescription: newShortDescription,
           fullDescription: newFullDescription,
           coverImageUrl: newCoverImageUrl,
-          fundingGoalCents: Number(newGoal),
+          fundingGoalCents: goalCents,
           status: "planned",
           featured: false,
           isPublic: true,
@@ -174,11 +200,13 @@ export function AdminProjectsManager() {
         setProjects((current) => [payload.project as ProjectRow, ...current]);
       }
 
+      setShowCreateForm(false);
+      setSuccess("Project created. Add campaign details and update its status when it is ready.");
       setNewTitle("");
       setNewShortDescription("");
       setNewFullDescription("");
       setNewCoverImageUrl("");
-      setNewGoal("100000");
+      setNewGoal("1000");
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : "Unable to create project.");
     } finally {
@@ -186,180 +214,371 @@ export function AdminProjectsManager() {
     }
   };
 
+  const visibleRows = rows.filter(
+    (row) =>
+      (statusFilter === "all" || row.status === statusFilter) &&
+      `${row.title} ${row.short_description}`.toLowerCase().includes(search.trim().toLowerCase()),
+  );
+
   return (
-    <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <header>
-        <h2 className="text-xl font-semibold text-slate-900">Projects</h2>
-        <p className="text-sm text-slate-700">Manage project campaigns and publish status.</p>
-      </header>
-
-      <form className="grid gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-5" onSubmit={createProject}>
-        <input
-          value={newTitle}
-          onChange={(event) => setNewTitle(event.target.value)}
-          placeholder="Title"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          required
-        />
-        <input
-          value={newGoal}
-          onChange={(event) => setNewGoal(event.target.value)}
-          type="number"
-          min={1}
-          placeholder="Goal cents"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          required
-        />
-        <input
-          value={newShortDescription}
-          onChange={(event) => setNewShortDescription(event.target.value)}
-          placeholder="Short description"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          required
-        />
-        <input
-          value={newCoverImageUrl}
-          onChange={(event) => setNewCoverImageUrl(event.target.value)}
-          placeholder="Image URL"
-          type="url"
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-        />
+    <section className="admin-workflow">
+      <div className="workflow-context">
+        <div className="workflow-context-icon">
+          <WorkspaceIcon name="folder" size={22} />
+        </div>
+        <div>
+          <p className="workflow-eyebrow">Building our future</p>
+          <h2>Purpose behind every project</h2>
+          <p>
+            Turn community priorities into clear campaigns, and show families what their giving
+            makes possible.
+          </p>
+        </div>
         <button
-          type="submit"
-          disabled={creating}
-          className="rounded-md bg-slate-900 px-3 py-1 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+          type="button"
+          className="workflow-button workflow-button-primary"
+          onClick={() => setShowCreateForm((value) => !value)}
+          aria-expanded={showCreateForm}
+          aria-controls="create-project-form"
         >
-          {creating ? "Creating..." : "Create"}
+          <WorkspaceIcon name={showCreateForm ? "close" : "plus"} size={17} />
+          {showCreateForm ? "Close form" : "New project"}
         </button>
-        <textarea
-          value={newFullDescription}
-          onChange={(event) => setNewFullDescription(event.target.value)}
-          placeholder="Full description"
-          className="md:col-span-5 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm"
-          rows={3}
-          required
+      </div>
+      <div className="workflow-stats">
+        <div>
+          <span>
+            {loading ? "—" : projects.filter((project) => project.status === "active").length}
+          </span>
+          <p>Active campaigns</p>
+        </div>
+        <div>
+          <span>
+            {loading
+              ? "—"
+              : formatCurrency(
+                  funding.reduce((total, item) => total + item.funded_amount_cents, 0),
+                )}
+          </span>
+          <p>Community funding</p>
+        </div>
+        <div>
+          <span>
+            {loading ? "—" : projects.filter((project) => project.status === "completed").length}
+          </span>
+          <p>Completed projects</p>
+        </div>
+      </div>
+      {showCreateForm ? (
+        <form id="create-project-form" className="workflow-create-panel" onSubmit={createProject}>
+          <div>
+            <p className="workflow-eyebrow">A new community priority</p>
+            <h3>Create a project</h3>
+            <p className="workflow-helper">
+              New projects start as planned and are public. You can adjust visibility after creating
+              the project.
+            </p>
+          </div>
+          <div className="workflow-form-grid">
+            <label className="workflow-field">
+              Project title
+              <input
+                value={newTitle}
+                onChange={(event) => setNewTitle(event.target.value)}
+                required
+                placeholder="What are we building together?"
+              />
+            </label>
+            <label className="workflow-field">
+              Funding goal (USD)
+              <input
+                value={newGoal}
+                onChange={(event) => setNewGoal(event.target.value)}
+                inputMode="decimal"
+                type="number"
+                min={0.01}
+                step="0.01"
+                required
+              />
+            </label>
+            <label className="workflow-field">
+              Short description
+              <input
+                value={newShortDescription}
+                onChange={(event) => setNewShortDescription(event.target.value)}
+                required
+                placeholder="A clear introduction for families"
+              />
+            </label>
+            <label className="workflow-field">
+              Cover image URL (optional)
+              <input
+                value={newCoverImageUrl}
+                onChange={(event) => setNewCoverImageUrl(event.target.value)}
+                type="url"
+                placeholder="https://"
+              />
+            </label>
+          </div>
+          <label className="workflow-field">
+            Full project story
+            <textarea
+              value={newFullDescription}
+              onChange={(event) => setNewFullDescription(event.target.value)}
+              rows={4}
+              required
+              placeholder="Explain the need, the plan and the impact."
+            />
+          </label>
+          <div className="workflow-actions">
+            <button
+              type="submit"
+              disabled={creating}
+              className="workflow-button workflow-button-primary"
+            >
+              {creating ? "Creating project…" : "Create project"}
+              <WorkspaceIcon name="arrow" size={16} />
+            </button>
+            <button
+              type="button"
+              className="workflow-button workflow-button-quiet"
+              onClick={() => setShowCreateForm(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+      {error ? (
+        <WorkspaceNotice tone="error">
+          {error}{" "}
+          <button type="button" onClick={() => void loadProjects()}>
+            Try again
+          </button>
+        </WorkspaceNotice>
+      ) : null}
+      {success ? <WorkspaceNotice tone="success">{success}</WorkspaceNotice> : null}
+      <div className="workflow-toolbar">
+        <label className="workflow-search">
+          <WorkspaceIcon name="search" size={17} />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            aria-label="Search projects"
+            placeholder="Find a community project"
+          />
+        </label>
+        <label className="workflow-filter">
+          Status
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <option value="all">All projects</option>
+            {["planned", "active", "funded", "completed", "archived"].map((status) => (
+              <option key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {loading ? (
+        <div className="workflow-loading" role="status">
+          <span className="workflow-loading-dot" /> Gathering community projects…
+        </div>
+      ) : null}
+      {!loading && !error && !visibleRows.length ? (
+        <WorkspaceEmpty
+          icon="folder"
+          eyebrow={search || statusFilter !== "all" ? "Project results" : "Community impact"}
+          title={
+            search || statusFilter !== "all"
+              ? "No projects match this view"
+              : "A shared vision starts with one project"
+          }
+          description={
+            search || statusFilter !== "all"
+              ? "Try another search or view all project statuses."
+              : "Introduce a community need, set a funding goal and give families a meaningful way to help build Durga Bari’s future."
+          }
+          action={
+            search || statusFilter !== "all" ? (
+              <button
+                type="button"
+                className="workflow-button"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear filters
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="workflow-button workflow-button-primary"
+                onClick={() => setShowCreateForm(true)}
+              >
+                <WorkspaceIcon name="plus" size={17} />
+                Create the first project
+              </button>
+            )
+          }
         />
-      </form>
-
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      {loading ? <p className="text-sm text-slate-600">Loading projects...</p> : null}
-
+      ) : null}
       {!loading ? (
-        <div className="overflow-x-auto rounded-md border border-slate-200">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-700">
-              <tr>
-                <th className="px-3 py-2 font-semibold">Title</th>
-                <th className="px-3 py-2 font-semibold">Short Description</th>
-                <th className="px-3 py-2 font-semibold">Full Description</th>
-                <th className="px-3 py-2 font-semibold">Image URL</th>
-                <th className="px-3 py-2 font-semibold">Goal</th>
-                <th className="px-3 py-2 font-semibold">Funded</th>
-                <th className="px-3 py-2 font-semibold">Status</th>
-                <th className="px-3 py-2 font-semibold">Flags</th>
-                <th className="px-3 py-2 font-semibold">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const fundingRow = fundingByProjectId.get(row.id);
-                return (
-                  <tr key={row.id} className="border-t border-slate-100">
-                    <td className="px-3 py-2">
+        <div className="project-campaign-grid">
+          {visibleRows.map((row) => {
+            const funded = fundingByProjectId.get(row.id);
+            const expanded = expandedId === row.id;
+            return (
+              <article className="project-campaign-card" key={row.id}>
+                <div className="project-campaign-heading">
+                  <span className="project-campaign-icon">
+                    <WorkspaceIcon name="folder" size={22} />
+                  </span>
+                  <span className={`workflow-badge workflow-badge-${row.status}`}>
+                    {row.status}
+                  </span>
+                </div>
+                <h3>{row.title}</h3>
+                <p>{row.short_description}</p>
+                <div className="project-campaign-progress">
+                  <div>
+                    <strong>{formatCurrency(funded?.funded_amount_cents ?? 0)}</strong>
+                    <span>of {formatCurrency(row.funding_goal_cents)}</span>
+                  </div>
+                  <progress
+                    max={100}
+                    value={Math.max(0, Math.min(100, funded?.percent_funded ?? 0))}
+                    aria-label={`Funding progress for ${row.title}`}
+                  />
+                  <p>
+                    {(funded?.percent_funded ?? 0).toFixed(1)}% funded ·{" "}
+                    {row.is_public ? "Public" : "Private"}
+                    {row.featured ? " · Featured" : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="workflow-button"
+                  aria-expanded={expanded}
+                  aria-controls={`project-editor-${row.id}`}
+                  onClick={() => setExpandedId(expanded ? "" : row.id)}
+                >
+                  {expanded ? "Close project details" : "Manage project"}
+                  <WorkspaceIcon name="arrow" size={16} />
+                </button>
+                {expanded ? (
+                  <div id={`project-editor-${row.id}`} className="project-campaign-editor">
+                    <label className="workflow-field">
+                      Project title
                       <input
                         value={row.title}
                         onChange={(event) => updateDraft(row.id, "title", event.target.value)}
-                        className="w-52 rounded-md border border-slate-300 px-2 py-1"
                       />
-                      <p className="mt-1 text-xs text-slate-500">/{row.slug}</p>
-                    </td>
-                    <td className="px-3 py-2">
+                    </label>
+                    <label className="workflow-field">
+                      Short description
                       <input
                         value={row.short_description}
-                        onChange={(event) => updateDraft(row.id, "short_description", event.target.value)}
-                        className="w-72 rounded-md border border-slate-300 px-2 py-1"
+                        onChange={(event) =>
+                          updateDraft(row.id, "short_description", event.target.value)
+                        }
                       />
-                    </td>
-                    <td className="px-3 py-2">
+                    </label>
+                    <label className="workflow-field">
+                      Full project story
                       <textarea
                         value={row.full_description}
-                        onChange={(event) => updateDraft(row.id, "full_description", event.target.value)}
-                        className="w-96 rounded-md border border-slate-300 px-2 py-1"
-                        rows={3}
+                        onChange={(event) =>
+                          updateDraft(row.id, "full_description", event.target.value)
+                        }
+                        rows={4}
                       />
-                    </td>
-                    <td className="px-3 py-2">
+                    </label>
+                    <label className="workflow-field">
+                      Cover image URL
                       <input
                         value={row.cover_image_url ?? ""}
-                        onChange={(event) => updateDraft(row.id, "cover_image_url", event.target.value || null)}
-                        placeholder="https://..."
+                        onChange={(event) =>
+                          updateDraft(row.id, "cover_image_url", event.target.value || null)
+                        }
                         type="url"
-                        className="w-72 rounded-md border border-slate-300 px-2 py-1"
                       />
-                      {row.cover_image_url ? (
-                        <p className="mt-1 truncate text-xs text-slate-500">{row.cover_image_url}</p>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min={1}
-                        value={row.funding_goal_cents}
-                        onChange={(event) => updateDraft(row.id, "funding_goal_cents", Number(event.target.value))}
-                        className="w-32 rounded-md border border-slate-300 px-2 py-1"
-                      />
-                      <p className="mt-1 text-xs text-slate-500">{formatCurrency(row.funding_goal_cents)}</p>
-                    </td>
-                    <td className="px-3 py-2 text-slate-700">
-                      {formatCurrency(fundingRow?.funded_amount_cents ?? 0)}
-                      <p className="text-xs text-slate-500">{(fundingRow?.percent_funded ?? 0).toFixed(1)}%</p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <select
-                        value={row.status}
-                        onChange={(event) => updateDraft(row.id, "status", event.target.value as ProjectStatus)}
-                        className="rounded-md border border-slate-300 bg-white px-2 py-1"
-                      >
-                        <option value="planned">Planned</option>
-                        <option value="active">Active</option>
-                        <option value="funded">Funded</option>
-                        <option value="completed">Completed</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </td>
-                    <td className="px-3 py-2">
-                      <label className="flex items-center gap-2 text-xs text-slate-700">
+                    </label>
+                    <div className="workflow-form-grid">
+                      <label className="workflow-field">
+                        Funding goal (USD)
+                        <input
+                          type="number"
+                          min={0.01}
+                          step="0.01"
+                          value={goalInputs[row.id] ?? String(row.funding_goal_cents / 100)}
+                          inputMode="decimal"
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            setGoalInputs((current) => ({ ...current, [row.id]: value }));
+                            updateDraft(
+                              row.id,
+                              "funding_goal_cents",
+                              parseDollarAmount(value) ?? 0,
+                            );
+                          }}
+                        />
+                      </label>
+                      <label className="workflow-field">
+                        Project stage
+                        <select
+                          value={row.status}
+                          onChange={(event) =>
+                            updateDraft(row.id, "status", event.target.value as ProjectStatus)
+                          }
+                        >
+                          {["planned", "active", "funded", "completed", "archived"].map(
+                            (status) => (
+                              <option value={status} key={status}>
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="workflow-actions">
+                      <label className="workflow-checkbox">
                         <input
                           type="checkbox"
                           checked={row.featured}
-                          onChange={(event) => updateDraft(row.id, "featured", event.target.checked)}
+                          onChange={(event) =>
+                            updateDraft(row.id, "featured", event.target.checked)
+                          }
                         />
-                        Featured
+                        <span>Featured campaign</span>
                       </label>
-                      <label className="mt-1 flex items-center gap-2 text-xs text-slate-700">
+                      <label className="workflow-checkbox">
                         <input
                           type="checkbox"
                           checked={row.is_public}
-                          onChange={(event) => updateDraft(row.id, "is_public", event.target.checked)}
+                          onChange={(event) =>
+                            updateDraft(row.id, "is_public", event.target.checked)
+                          }
                         />
-                        Public
+                        <span>Publicly visible</span>
                       </label>
-                    </td>
-                    <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        disabled={savingById[row.id]}
-                        onClick={() => void saveProject(row.id)}
-                        className="rounded-md bg-slate-900 px-3 py-1 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-60"
-                      >
-                        {savingById[row.id] ? "Saving..." : "Save"}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                    <p className="workflow-helper">Public page: /projects/{row.slug}</p>
+                    <button
+                      type="button"
+                      className="workflow-button workflow-button-primary"
+                      disabled={savingById[row.id] || !drafts[row.id]}
+                      onClick={() => void saveProject(row.id)}
+                    >
+                      {savingById[row.id] ? "Saving…" : "Save project changes"}
+                    </button>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       ) : null}
     </section>

@@ -43,6 +43,7 @@ export const getAdminAccessContext = async (): Promise<AdminAccessContext | null
 
 export const canAccessAdminHome = (ctx: AdminAccessContext): boolean => {
   return (
+    hasPortalPermission(ctx.roles, "cms.manage") ||
     hasPortalPermission(ctx.roles, "events.manage") ||
     hasPortalPermission(ctx.roles, "donations.manage") ||
     hasPortalPermission(ctx.roles, "expenses.manage") ||

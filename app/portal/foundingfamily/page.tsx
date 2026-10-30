@@ -2,7 +2,12 @@ import { redirect } from "next/navigation";
 
 import { PortalMemberPage } from "@/components/portal-member-page";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getCurrentFamilyPortalContext, getFamilyFoundingPledgeProgress, listFamilyDonations } from "@/lib/portal/server";
+import {
+  canAccessMemberContent,
+  getCurrentFamilyPortalContext,
+  getFamilyFoundingPledgeProgress,
+  listFamilyDonations,
+} from "@/lib/portal/server";
 import type { DonationLedgerEntry } from "@/lib/portal/types";
 import { isNewSitePortal } from "@/lib/portal/is-new-site";
 
@@ -49,6 +54,8 @@ const formatMonthLabel = (monthKey: string) =>
     new Date(`${monthKey}-01T00:00:00.000Z`),
   );
 
+export const metadata = { title: "Founding family" };
+
 export default async function PortalFoundingFamilyPage() {
   const user = await getCurrentUser();
 
@@ -58,7 +65,7 @@ export default async function PortalFoundingFamilyPage() {
 
   const context = await getCurrentFamilyPortalContext();
 
-  if (!context || !context.family.profileCompleted) {
+  if (!context || !context.family.profileCompleted || !canAccessMemberContent(context)) {
     redirect("/portal");
   }
 
@@ -71,7 +78,9 @@ export default async function PortalFoundingFamilyPage() {
     listFamilyDonations(context.family.id, 5000),
   ]);
 
-  const foundingDonations = donations.filter((donation) => donation.donationType === "founding_pledge");
+  const foundingDonations = donations.filter(
+    (donation) => donation.donationType === "founding_pledge",
+  );
   const amountByFoundingMonth = foundingDonations.reduce<Map<string, number>>((acc, donation) => {
     const monthKey = getFoundingMonthKey(donation);
     if (!monthKey) {
@@ -86,32 +95,60 @@ export default async function PortalFoundingFamilyPage() {
 
   if (await isNewSitePortal()) {
     return (
-      <PortalMemberPage title="Founding family" eyebrow="Your pledge" description="Recorded progress on your founding commitment.">
+      <PortalMemberPage
+        title="Founding family"
+        eyebrow="Your pledge"
+        description="Recorded progress on your founding commitment."
+      >
         {progress ? (
           <dl className="member-metrics">
-            <div><dt>Contributed</dt><dd>{formatCurrency(progress.totalDonatedCents)}</dd></div>
-            <div><dt>Target to date</dt><dd>{formatCurrency(progress.targetDonatedByNowCents)}</dd><small>{progress.progressStatus.replace("_", " ")}</small></div>
-            <div><dt>Remaining</dt><dd>{formatCurrency(progress.remainingBalanceCents)}</dd></div>
+            <div>
+              <dt>Contributed</dt>
+              <dd>{formatCurrency(progress.totalDonatedCents)}</dd>
+            </div>
+            <div>
+              <dt>Target to date</dt>
+              <dd>{formatCurrency(progress.targetDonatedByNowCents)}</dd>
+              <small>{progress.progressStatus.replace("_", " ")}</small>
+            </div>
+            <div>
+              <dt>Remaining</dt>
+              <dd>{formatCurrency(progress.remainingBalanceCents)}</dd>
+            </div>
           </dl>
         ) : null}
         <section className="member-section" aria-labelledby="founding-months-heading">
           <div className="member-section-heading">
-            <div><h2 id="founding-months-heading">Monthly record</h2><p className="member-section-lede">Payments recorded from 2026 through 2028. Monthly target: {formatCurrency(FOUNDING_MONTHLY_TARGET_CENTS)}.</p></div>
+            <div>
+              <h2 id="founding-months-heading">Monthly record</h2>
+              <p className="member-section-lede">
+                Payments recorded from 2026 through 2028. Monthly target:{" "}
+                {formatCurrency(FOUNDING_MONTHLY_TARGET_CENTS)}.
+              </p>
+            </div>
           </div>
           {["2026", "2027", "2028"].map((year) => (
             <details className="member-year" key={year} open={year === "2026"}>
               <summary>{year}</summary>
               <ul className="member-month-list">
-                {foundingMonths.filter((month) => month.startsWith(year)).map((month) => {
-                  const amount = amountByFoundingMonth.get(month) ?? 0;
-                  return (
-                    <li key={month}>
-                      <span>{formatMonthLabel(month)}</span>
-                      <strong>{formatCurrency(amount)}</strong>
-                      <em>{amount === 0 ? "No record" : amount >= FOUNDING_MONTHLY_TARGET_CENTS ? "On target" : "Partial"}</em>
-                    </li>
-                  );
-                })}
+                {foundingMonths
+                  .filter((month) => month.startsWith(year))
+                  .map((month) => {
+                    const amount = amountByFoundingMonth.get(month) ?? 0;
+                    return (
+                      <li key={month}>
+                        <span>{formatMonthLabel(month)}</span>
+                        <strong>{formatCurrency(amount)}</strong>
+                        <em>
+                          {amount === 0
+                            ? "No record"
+                            : amount >= FOUNDING_MONTHLY_TARGET_CENTS
+                              ? "On target"
+                              : "Partial"}
+                        </em>
+                      </li>
+                    );
+                  })}
               </ul>
             </details>
           ))}
@@ -135,24 +172,34 @@ export default async function PortalFoundingFamilyPage() {
           <div className="mb-5 grid gap-4 md:grid-cols-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Total donated</p>
-              <p className="text-xl font-semibold text-slate-900">{formatCurrency(progress.totalDonatedCents)}</p>
+              <p className="text-xl font-semibold text-slate-900">
+                {formatCurrency(progress.totalDonatedCents)}
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Target by now</p>
-              <p className="text-xl font-semibold text-slate-900">{formatCurrency(progress.targetDonatedByNowCents)}</p>
+              <p className="text-xl font-semibold text-slate-900">
+                {formatCurrency(progress.targetDonatedByNowCents)}
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Remaining</p>
-              <p className="text-xl font-semibold text-slate-900">{formatCurrency(progress.remainingBalanceCents)}</p>
+              <p className="text-xl font-semibold text-slate-900">
+                {formatCurrency(progress.remainingBalanceCents)}
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
-              <p className="text-xl font-semibold capitalize text-slate-900">{progress.progressStatus.replace("_", " ")}</p>
+              <p className="text-xl font-semibold capitalize text-slate-900">
+                {progress.progressStatus.replace("_", " ")}
+              </p>
             </div>
           </div>
         ) : null}
 
-        <h2 className="text-lg font-semibold text-slate-900">Monthly Payment Tracker (Jan 2026 - Dec 2028)</h2>
+        <h2 className="text-lg font-semibold text-slate-900">
+          Monthly Payment Tracker (Jan 2026 - Dec 2028)
+        </h2>
         <p className="mt-1 text-sm text-slate-600">
           Each month reflects payments entered by treasurer in the donation ledger.
         </p>
@@ -170,12 +217,18 @@ export default async function PortalFoundingFamilyPage() {
                   paid ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-slate-50"
                 }`}
               >
-                <p className="text-xs uppercase tracking-wide text-slate-600">{formatMonthLabel(monthKey)}</p>
-                <p className={`mt-2 text-sm font-semibold ${paid ? "text-emerald-800" : "text-slate-700"}`}>
+                <p className="text-xs uppercase tracking-wide text-slate-600">
+                  {formatMonthLabel(monthKey)}
+                </p>
+                <p
+                  className={`mt-2 text-sm font-semibold ${paid ? "text-emerald-800" : "text-slate-700"}`}
+                >
                   {paid ? "Paid" : "Not paid"}
                 </p>
                 <p className="mt-1 text-sm text-slate-700">{formatCurrency(monthTotal)}</p>
-                <p className="mt-1 text-xs text-slate-600">{paid ? (onTarget ? "On target" : "Partial") : "Target: $100"}</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  {paid ? (onTarget ? "On target" : "Partial") : "Target: $100"}
+                </p>
               </article>
             );
           })}

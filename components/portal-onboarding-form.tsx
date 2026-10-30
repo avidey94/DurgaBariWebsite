@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { formatUsPhoneNumber } from "@/lib/phone";
+import { AuthArrow } from "@/components/auth-fields";
+import { formatUsPhoneNumber, normalizeUsPhoneNumber } from "@/lib/phone";
+
+import "@/styles/auth-workspace.css";
 
 interface PortalOnboardingFormProps {
   email: string;
@@ -10,17 +13,6 @@ interface PortalOnboardingFormProps {
   initialAdultsCount?: number;
   initialChildrenCount?: number;
 }
-
-const resizeNames = (current: string[], targetCount: number) => {
-  const next = [...current];
-  if (targetCount < next.length) {
-    return next.slice(0, targetCount);
-  }
-  while (next.length < targetCount) {
-    next.push("");
-  }
-  return next;
-};
 
 export function PortalOnboardingForm({
   email,
@@ -30,20 +22,58 @@ export function PortalOnboardingForm({
 }: PortalOnboardingFormProps) {
   const [familyDisplayName, setFamilyDisplayName] = useState(initialName);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [adultsCount, setAdultsCount] = useState(String(initialAdultsCount));
-  const [childrenCount, setChildrenCount] = useState(String(initialChildrenCount));
-  const [adultNames, setAdultNames] = useState<string[]>(
-    resizeNames(initialName ? [initialName] : [], initialAdultsCount),
+  const [adultNames, setAdultNames] = useState<string[]>(() =>
+    Array.from({ length: Math.max(1, initialAdultsCount) }, (_, index) =>
+      index === 0 ? initialName : "",
+    ),
   );
-  const [childNames, setChildNames] = useState<string[]>(resizeNames([], initialChildrenCount));
+  const [childNames, setChildNames] = useState<string[]>(() =>
+    Array.from({ length: Math.max(0, initialChildrenCount) }, () => ""),
+  );
+  const [step, setStep] = useState<"details" | "review">("details");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const previousStep = useRef(step);
+  const pendingFocus = useRef<string | null>(null);
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (previousStep.current !== step) {
+      headingRef.current?.focus({ preventScroll: true });
+      previousStep.current = step;
+    }
+  }, [step]);
+
+  const addPerson = (kind: "adult" | "child") => {
+    const names = kind === "adult" ? adultNames : childNames;
+    pendingFocus.current = `${kind}-${names.length}`;
+    if (kind === "adult") setAdultNames((current) => [...current, ""]);
+    else setChildNames((current) => [...current, ""]);
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitting(true);
+    if (submitting) return;
     setError(null);
 
+    if (step === "details") {
+      if (
+        !familyDisplayName.trim() ||
+        adultNames.some((name) => !name.trim()) ||
+        childNames.some((name) => !name.trim())
+      ) {
+        setError("Please enter your household name and a name for each family member.");
+        return;
+      }
+      if (!normalizeUsPhoneNumber(phoneNumber)) {
+        setError("Enter a US phone number with 10 digits, including the area code.");
+        return;
+      }
+      setStep("review");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const response = await fetch("/api/portal/onboarding", {
         method: "POST",
@@ -51,23 +81,21 @@ export function PortalOnboardingForm({
         body: JSON.stringify({
           familyDisplayName,
           phoneNumber,
-          adultsCount: Number(adultsCount),
-          childrenCount: Number(childrenCount),
+          adultsCount: adultNames.length,
+          childrenCount: childNames.length,
           adultNames,
           childNames,
         }),
       });
-
       const payload = (await response.json()) as { message?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Unable to complete profile setup.");
-      }
-
-      window.location.href = "/portal";
+      if (!response.ok)
+        throw new Error(payload.message ?? "We couldn’t save your profile. Please try again.");
+      window.location.assign("/portal");
     } catch (submitError) {
       setError(
-        submitError instanceof Error ? submitError.message : "Unable to complete profile setup.",
+        submitError instanceof Error
+          ? submitError.message
+          : "We couldn’t save your profile. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -75,157 +103,304 @@ export function PortalOnboardingForm({
   };
 
   return (
-    <section className="db-panel p-6 md:p-8">
-      <p className="db-kicker">Step 3 of 3 · Family Profile</p>
-      <h1 className="db-title mt-3">One last step to set up your account</h1>
-      <div className="mt-5 grid gap-2 text-center text-xs font-semibold text-[var(--db-text-soft)] sm:grid-cols-3">
-        <span className="rounded-xl bg-[var(--db-surface-soft)] p-3">✓ Account created</span>
-        <span className="rounded-xl bg-[var(--db-surface-soft)] p-3">✓ Email confirmed</span>
-        <span className="rounded-xl border border-[var(--db-border-soft)] bg-[var(--db-panel-strong)] p-3 text-[var(--db-text)]">
-          3. Complete your profile
-        </span>
-      </div>
-      <p className="mt-5 text-sm leading-7 text-[var(--db-text-soft)]">
-        Signed in as <strong>{email}</strong>. Tell us who is in your household so Durga Bari can
-        review your membership.
-      </p>
-      <p className="mt-2 text-sm leading-7 text-[var(--db-text-soft)]">
-        Your details are saved when you tap <strong>Complete profile</strong>. If you leave now,
-        sign in again to return here. Member access begins after an administrator approves your
-        profile.
-      </p>
-
-      <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={submit}>
-        <label className="text-sm text-slate-700">
-          Family or household name
-          <input
-            value={familyDisplayName}
-            onChange={(event) => setFamilyDisplayName(event.target.value)}
-            className="db-input mt-1 block"
-            placeholder="The Sharma family"
-            autoComplete="organization"
-            required
-          />
-        </label>
-
-        <label className="text-sm text-slate-700">
-          Contact phone number
-          <input
-            value={phoneNumber}
-            onChange={(event) => setPhoneNumber(formatUsPhoneNumber(event.target.value))}
-            className="db-input mt-1 block"
-            placeholder="925-555-1234"
-            type="tel"
-            autoComplete="tel"
-            required
-          />
-        </label>
-
-        <label className="text-sm text-slate-700">
-          Adults
-          <input
-            type="number"
-            min={1}
-            value={adultsCount}
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              setAdultsCount(nextValue);
-              const parsed = Number(nextValue);
-              if (Number.isFinite(parsed) && parsed >= 1) {
-                setAdultNames((current) => resizeNames(current, Math.floor(parsed)));
-              }
-            }}
-            className="db-input mt-1 block"
-            required
-          />
-        </label>
-
-        <label className="text-sm text-slate-700">
-          Children
-          <input
-            type="number"
-            min={0}
-            value={childrenCount}
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              setChildrenCount(nextValue);
-              const parsed = Number(nextValue);
-              if (Number.isFinite(parsed) && parsed >= 0) {
-                setChildNames((current) => resizeNames(current, Math.floor(parsed)));
-              }
-            }}
-            className="db-input mt-1 block"
-            required
-          />
-        </label>
-
-        <div className="sm:col-span-2">
-          <p className="text-sm font-semibold text-slate-800">Adult names</p>
-          <p className="mt-1 text-xs text-[var(--db-text-soft)]">
-            Enter the name of each adult in your household.
-          </p>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            {adultNames.map((name, index) => (
-              <input
-                key={`adult-${index + 1}`}
-                value={name}
-                onChange={(event) =>
-                  setAdultNames((current) =>
-                    current.map((entry, currentIndex) =>
-                      currentIndex === index ? event.target.value : entry,
-                    ),
-                  )
-                }
-                placeholder={`Adult ${index + 1} name`}
-                className="db-input text-sm"
-                required
-              />
-            ))}
-          </div>
+    <section className="auth-onboarding" aria-labelledby="family-setup-heading">
+      <aside className="auth-onboarding-aside">
+        <p className="auth-eyebrow">A place for your family</p>
+        <h2>
+          Community starts
+          <br />
+          with connection.
+        </h2>
+        <p>
+          A few details help us welcome your household and keep your family’s membership together.
+        </p>
+        <ol className="auth-onboarding-progress" aria-label="Account setup progress">
+          <li className="is-complete">
+            <span aria-hidden="true">✓</span>
+            <div>
+              <strong>Account created</strong>
+              <small>You have a place here.</small>
+            </div>
+          </li>
+          <li className="is-complete">
+            <span aria-hidden="true">✓</span>
+            <div>
+              <strong>Email confirmed</strong>
+              <small>Your address is verified.</small>
+            </div>
+          </li>
+          <li aria-current="step">
+            <span aria-hidden="true">03</span>
+            <div>
+              <strong>Your family profile</strong>
+              <small>
+                {step === "review"
+                  ? "Review and submit your details."
+                  : "Introduce your household."}
+              </small>
+            </div>
+          </li>
+          <li>
+            <span aria-hidden="true">04</span>
+            <div>
+              <strong>Membership review</strong>
+              <small>Our team will review your access.</small>
+            </div>
+          </li>
+        </ol>
+        <div className="auth-onboarding-account">
+          <span>Signed in as</span>
+          <strong>{email}</strong>
         </div>
+      </aside>
 
-        <div className="sm:col-span-2">
-          <p className="text-sm font-semibold text-slate-800">Children&apos;s names</p>
-          {childNames.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-600">No children added.</p>
-          ) : (
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {childNames.map((name, index) => (
+      <div className="auth-onboarding-main">
+        <header>
+          <p className="auth-eyebrow">
+            Family profile · {step === "review" ? "Review" : "Your details"}
+          </p>
+          <h1 ref={headingRef} tabIndex={-1} id="family-setup-heading" className="auth-heading">
+            {step === "review" ? "A quick check, then you’re ready." : "Let’s meet your family."}
+          </h1>
+          <p className="auth-intro">
+            {step === "review"
+              ? "Review your details before sending them to the Durga Bari team."
+              : "Add your household and contact details. You’ll have a chance to review everything before submitting."}
+          </p>
+        </header>
+
+        <form onSubmit={(event) => void submit(event)} aria-busy={submitting}>
+          {step === "details" ? (
+            <div className="auth-onboarding-fields">
+              <div className="auth-field">
+                <label htmlFor="household-name">Family or household name</label>
                 <input
-                  key={`child-${index + 1}`}
-                  value={name}
-                  onChange={(event) =>
-                    setChildNames((current) =>
-                      current.map((entry, currentIndex) =>
-                        currentIndex === index ? event.target.value : entry,
-                      ),
-                    )
-                  }
-                  placeholder={`Child ${index + 1} name`}
-                  className="db-input text-sm"
+                  id="household-name"
+                  name="household"
+                  value={familyDisplayName}
+                  onChange={(event) => setFamilyDisplayName(event.target.value)}
+                  placeholder="The Banerjee family"
+                  autoComplete="organization"
                   required
                 />
-              ))}
+              </div>
+              <div className="auth-field">
+                <label htmlFor="household-phone">Contact phone number</label>
+                <input
+                  id="household-phone"
+                  name="phone"
+                  value={phoneNumber}
+                  onChange={(event) => setPhoneNumber(formatUsPhoneNumber(event.target.value))}
+                  placeholder="925-555-1234"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  aria-describedby="household-phone-hint"
+                  required
+                />
+                <p id="household-phone-hint" className="auth-field-hint">
+                  US number, including the area code.
+                </p>
+              </div>
+
+              <fieldset className="auth-household-group">
+                <legend>
+                  Adults <span>{adultNames.length}</span>
+                </legend>
+                <p>Include each adult in your household.</p>
+                <div className="auth-person-list">
+                  {adultNames.map((name, index) => (
+                    <div key={`adult-${index}`} className="auth-person-row">
+                      <div className="auth-field">
+                        <label htmlFor={`adult-${index}`}>
+                          {index === 0 ? "Your full name" : `Adult ${index + 1} full name`}
+                        </label>
+                        <input
+                          ref={(node) => {
+                            if (node && pendingFocus.current === `adult-${index}`) {
+                              node.focus();
+                              pendingFocus.current = null;
+                            }
+                          }}
+                          id={`adult-${index}`}
+                          name={`adult-${index}`}
+                          value={name}
+                          onChange={(event) =>
+                            setAdultNames((current) =>
+                              current.map((entry, currentIndex) =>
+                                currentIndex === index ? event.target.value : entry,
+                              ),
+                            )
+                          }
+                          autoComplete={index === 0 ? "name" : "off"}
+                          required
+                        />
+                      </div>
+                      {index > 0 ? (
+                        <button
+                          type="button"
+                          className="auth-remove-person"
+                          aria-label={`Remove adult ${index + 1}`}
+                          onClick={() =>
+                            setAdultNames((current) =>
+                              current.filter((_, currentIndex) => currentIndex !== index),
+                            )
+                          }
+                        >
+                          ×
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addPerson("adult")}
+                  className="auth-add-person"
+                >
+                  <span aria-hidden="true">+</span> Add an adult
+                </button>
+              </fieldset>
+
+              <fieldset className="auth-household-group">
+                <legend>
+                  Children <span>{childNames.length}</span>
+                  <small>Optional</small>
+                </legend>
+                <p>
+                  {childNames.length === 0
+                    ? "Have children in your household? Add them here so your family profile is complete."
+                    : "Add each child’s full name."}
+                </p>
+                <div className="auth-person-list">
+                  {childNames.map((name, index) => (
+                    <div key={`child-${index}`} className="auth-person-row">
+                      <div className="auth-field">
+                        <label htmlFor={`child-${index}`}>Child {index + 1} full name</label>
+                        <input
+                          ref={(node) => {
+                            if (node && pendingFocus.current === `child-${index}`) {
+                              node.focus();
+                              pendingFocus.current = null;
+                            }
+                          }}
+                          id={`child-${index}`}
+                          name={`child-${index}`}
+                          value={name}
+                          onChange={(event) =>
+                            setChildNames((current) =>
+                              current.map((entry, currentIndex) =>
+                                currentIndex === index ? event.target.value : entry,
+                              ),
+                            )
+                          }
+                          autoComplete="off"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="auth-remove-person"
+                        aria-label={`Remove child ${index + 1}`}
+                        onClick={() =>
+                          setChildNames((current) =>
+                            current.filter((_, currentIndex) => currentIndex !== index),
+                          )
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addPerson("child")}
+                  className="auth-add-person"
+                >
+                  <span aria-hidden="true">+</span> Add a child
+                </button>
+              </fieldset>
+            </div>
+          ) : (
+            <div className="auth-profile-review">
+              <div className="auth-review-heading">
+                <span className="auth-eyebrow">Your household</span>
+                <button
+                  type="button"
+                  className="auth-text-button"
+                  disabled={submitting}
+                  onClick={() => {
+                    setStep("details");
+                    setError(null);
+                  }}
+                >
+                  Edit details
+                </button>
+              </div>
+              <h2>{familyDisplayName}</h2>
+              <dl>
+                <div>
+                  <dt>Email</dt>
+                  <dd>{email}</dd>
+                </div>
+                <div>
+                  <dt>Phone</dt>
+                  <dd>{phoneNumber}</dd>
+                </div>
+                <div>
+                  <dt>
+                    {adultNames.length === 1 ? "Adult" : "Adults"} · {adultNames.length}
+                  </dt>
+                  <dd>{adultNames.join(", ")}</dd>
+                </div>
+                {childNames.length > 0 ? (
+                  <div>
+                    <dt>
+                      {childNames.length === 1 ? "Child" : "Children"} · {childNames.length}
+                    </dt>
+                    <dd>{childNames.join(", ")}</dd>
+                  </div>
+                ) : null}
+              </dl>
+              <div className="auth-review-next">
+                <strong>What happens next?</strong>
+                <p>
+                  Your details will be saved and your membership will be ready for our team to
+                  review. Member features become available after approval.
+                </p>
+              </div>
             </div>
           )}
-        </div>
-
-        <div className="sm:col-span-2">
-          <p className="mb-3 text-xs leading-6 text-[var(--db-text-soft)]">
-            Please review these details before submitting. After setup, changes are handled by a
-            Durga Bari administrator.
-          </p>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="db-button-primary text-sm disabled:opacity-60"
-          >
-            {submitting ? "Saving..." : "Complete profile"}
-          </button>
-        </div>
-      </form>
-
-      {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+          {error ? (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="auth-onboarding-actions">
+            <button type="submit" disabled={submitting} className="auth-submit">
+              <span>
+                {submitting
+                  ? "Saving your family profile…"
+                  : step === "details"
+                    ? "Review family profile"
+                    : "Submit for membership review"}
+              </span>
+              {submitting ? <span className="auth-spinner" aria-hidden="true" /> : <AuthArrow />}
+            </button>
+            {step === "details" ? (
+              <p className="auth-small-copy">
+                Your details are saved when you submit. Changes after setup can be made by an
+                administrator.
+              </p>
+            ) : (
+              <p className="auth-small-copy">
+                You can return here by signing in if you leave before submitting.
+              </p>
+            )}
+          </div>
+        </form>
+      </div>
     </section>
   );
 }

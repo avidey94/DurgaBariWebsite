@@ -16,18 +16,18 @@ const deities = [
     role: "The Divine Mother",
     blessing: "Strength. Protection. Hope.",
     body: "At the heart of Durga Puja is Maa Durga: the mother who protects, the warrior who overcomes evil. At the heart of our new home in San Jose is our devotion to her.",
-    x: 47,
-    y: 63,
+    x: 50,
+    y: 60,
   },
   {
     id: "lakshmi",
-    name: "Lakshmi",
+    name: "Laxmi",
     bengali: "লক্ষ্মী",
     role: "Goddess of prosperity",
     blessing: "Prosperity, shared with others.",
-    body: "Lakshmi represents wealth, good fortune, and abundance. Her presence invites us to think of prosperity as something that nourishes our families and the community around us.",
-    x: 23,
-    y: 65,
+    body: "Laxmi represents wealth, good fortune, and abundance. Her presence invites us to think of prosperity as something that nourishes our families and the community around us.",
+    x: 22,
+    y: 62,
   },
   {
     id: "saraswati",
@@ -37,32 +37,29 @@ const deities = [
     blessing: "Wisdom for the next generation.",
     body: "Saraswati represents knowledge, learning, music, and the arts. She inspires our hope for a place where children can discover their language, express themselves, and grow close to their heritage.",
     x: 76,
-    y: 69,
+    y: 62,
   },
   {
     id: "ganesha",
-    name: "Ganesha",
+    name: "Ganesh",
     bengali: "গণেশ",
     role: "Remover of obstacles",
     blessing: "Grace in every beginning.",
-    body: "Ganesha is honored as the remover of obstacles and the god of auspicious beginnings. As Durga Bari takes its first steps, his presence is a fitting reminder to begin with humility and care.",
-    x: 19,
-    y: 86,
+    body: "Ganesh is honored as the remover of obstacles and the god of auspicious beginnings. As Durga Bari takes its first steps, his presence is a fitting reminder to begin with humility and care.",
+    x: 10,
+    y: 70,
   },
   {
     id: "kartikeya",
-    name: "Kartikeya",
+    name: "Kartik",
     bengali: "কার্তিক",
     role: "God of courage & victory",
     blessing: "The courage to carry it forward.",
-    body: "Kartikeya, also known as Skanda, represents courage, action, and victory. His resolve inspires the patient, collective effort of building a spiritual home for generations to come.",
-    x: 75,
-    y: 91,
+    body: "Kartik, also known as Skanda, represents courage, action, and victory. His resolve inspires the patient, collective effort of building a spiritual home for generations to come.",
+    x: 88,
+    y: 68,
   },
 ] as const;
-
-const familyCredit =
-  "https://commons.wikimedia.org/wiki/File:Durga_Idol_with_Traditional_Decoration.jpg";
 
 function subscribeSystemMotion(onChange: () => void) {
   const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -88,8 +85,6 @@ export function HomePageCinematic() {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const familyRef = useRef<HTMLElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const viewerTriggerRef = useRef<HTMLButtonElement>(null);
   const [selected, setSelected] = useState(0);
   const [manualOverride, setManualReduced] = useState<boolean | null>(null);
   const savedMotion = useSyncExternalStore(subscribeSavedMotion, getSavedMotion, getServerMotion);
@@ -171,15 +166,6 @@ export function HomePageCinematic() {
     event.preventDefault();
     setSelected(next);
     document.getElementById(`deity-tab-${deities[next].id}`)?.focus();
-  }
-
-  function openViewer() {
-    dialogRef.current?.showModal();
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeViewer() {
-    dialogRef.current?.close();
   }
 
   return (
@@ -289,8 +275,8 @@ export function HomePageCinematic() {
               </h2>
             </div>
             <p>
-              In the Bengali tradition, Maa Durga is welcomed with Lakshmi, Saraswati, Ganesha, and
-              Kartikeya. Discover the blessings each brings.
+              In the Bengali tradition, Maa Durga is welcomed with Laxmi, Saraswati, Ganesh, and
+              Kartik. Discover the blessings each brings.
             </p>
           </div>
           <div className={styles.familyExperience}>
@@ -298,8 +284,8 @@ export function HomePageCinematic() {
               <div className={styles.familyCanvas}>
                 <Image
                   className={styles.familyPhoto}
-                  src="/home/divine-family.jpg"
-                  alt="A traditional Durga Puja tableau, with Durga at the center, Lakshmi and Ganesha to the viewer’s left, Saraswati and Kartikeya to the right"
+                  src="/home/durga-bari-family.jpg"
+                  alt="Durga Puja at Durga Bari: Ganesh and Laxmi to the viewer’s left, Maa Durga at center, Saraswati and Kartik to the right"
                   fill
                   sizes="(max-width: 800px) 100vw, 68vw"
                   quality={85}
@@ -320,23 +306,7 @@ export function HomePageCinematic() {
                 ))}
               </div>
               <div className={styles.stageVignette} />
-              <span className={styles.stageLabel}>A traditional Durga Puja tableau</span>
-              <button
-                type="button"
-                ref={viewerTriggerRef}
-                className={styles.expandButton}
-                onClick={openViewer}
-                aria-label="View the complete Durga Puja photograph"
-              >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
+              <span className={styles.stageLabel}>Durga Bari · San Jose</span>
             </div>
             <div className={styles.deityAside}>
               <div
@@ -373,10 +343,6 @@ export function HomePageCinematic() {
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  <div className={styles.deityNumber}>
-                    <span>0{selected + 1}</span>
-                    <span>/ 05</span>
-                  </div>
                   <p className={styles.deityBengali} lang="bn">
                     {deity.bengali}
                   </p>
@@ -387,7 +353,6 @@ export function HomePageCinematic() {
                   <p className={styles.deityBody}>{deity.body}</p>
                 </div>
                 <div className={styles.deityNavigation}>
-                  <span>Select a name or a point on the image</span>
                   <button
                     type="button"
                     aria-label={`Next: ${deities[(selected + 1) % 5].name}`}
@@ -398,12 +363,6 @@ export function HomePageCinematic() {
                 </div>
               </div>
             </div>
-          </div>
-          <div className={styles.familyFootnote}>
-            <span>One family. Many blessings. Maa Durga at the center.</span>
-            <a href={familyCredit} target="_blank" rel="noreferrer">
-              Photograph: ARI · CC BY-SA 4.0 <Arrow diagonal />
-            </a>
           </div>
         </div>
       </section>
@@ -573,52 +532,6 @@ export function HomePageCinematic() {
       </section>
 
       <CinematicFooter />
-
-      <dialog
-        ref={dialogRef}
-        className={styles.photoDialog}
-        aria-labelledby="photo-dialog-title"
-        onClick={(event) => {
-          if (event.target === event.currentTarget) closeViewer();
-        }}
-        onClose={() => {
-          document.body.style.overflow = "";
-          viewerTriggerRef.current?.focus();
-        }}
-      >
-        <div className={styles.dialogInner}>
-          <div className={styles.dialogBar}>
-            <h2 id="photo-dialog-title">Maa Durga & her family</h2>
-            <button type="button" onClick={closeViewer} aria-label="Close photograph" autoFocus>
-              Close <span aria-hidden="true">×</span>
-            </button>
-          </div>
-          <div className={styles.dialogPhoto}>
-            <Image
-              src="/home/divine-family.jpg"
-              alt="The complete Durga Puja tableau with all five deities"
-              fill
-              sizes="100vw"
-              quality={90}
-            />
-          </div>
-          <p>
-            A traditional Durga Puja tableau in West Bengal. Photograph by{" "}
-            <a href={familyCredit} target="_blank" rel="noreferrer">
-              ARI
-            </a>
-            , licensed under{" "}
-            <a
-              href="https://creativecommons.org/licenses/by-sa/4.0/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              CC BY-SA 4.0
-            </a>
-            . Display crops vary; original photograph unaltered.
-          </p>
-        </div>
-      </dialog>
     </div>
   );
 }

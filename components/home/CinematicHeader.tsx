@@ -19,7 +19,7 @@ export function CinematicHeader({
   showAdminLink: boolean;
   adminNotificationCount: number;
   preview: PreviewState | null;
-  page?: "home" | "about" | "calendar" | "contact" | "get-involved";
+  page?: "home" | "about" | "calendar" | "contact" | "get-involved" | "journey";
 }) {
   const isAbout = page === "about";
   const isHome = page === "home";

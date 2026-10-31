@@ -165,6 +165,7 @@ export function SiteHeader({ user, preview, showAdminLink, adminNotificationCoun
     : pathname === "/calendar" ? "calendar"
     : pathname === "/contact" ? "contact"
     : pathname === "/get-involved" || pathname === "/be-part-of-something-sacred-and-lasting" ? "get-involved"
+    : pathname === "/our-sacred-journey-from-vision-to-temple" ? "journey"
     : null;
   if (theme === "revamp" && (
     pathname === "/portal" || pathname.startsWith("/portal/") ||
